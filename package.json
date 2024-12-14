@@ -1,0 +1,26 @@
+{
+	"name": "@neocomp/full",
+	"version": "0.0.0",
+	"description": "new generation of reactivity and speed",
+	"author": "aliibrahim123",
+	"scripts": {
+		"start": "vite .",
+		"build": "vite build",
+		"generate-js-source": "node scripts/generateJSSource.js", 
+		"generate-test-html": "node scripts/generateTestHTML.js"
+	},
+	"type": "module",
+	"homepage": "https://aliibrahim123.github.io/neoproto.js/",
+	"bugs": {
+		"url": "https://github.com/aliibrahim123/neoproto.js/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/aliibrahim123/neoproto.js.git"
+	},
+	"license": "MIT",
+	"devDependencies": {
+		"vite": "^6.0.2",
+		"vite-plugin-directory-index": "^3.0.1"
+	}
+}
