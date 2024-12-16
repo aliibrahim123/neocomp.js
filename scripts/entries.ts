@@ -1,6 +1,8 @@
 type EntryMap = { [key: string]: EntryMap | '' | string[]};
 const entryMap: EntryMap = {
-	
+	'dom-base': {
+		index: ''
+	}
 }
 
 //as straight path, without src/ or .ts

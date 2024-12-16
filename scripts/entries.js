@@ -1,4 +1,8 @@
-const entryMap = {};
+const entryMap = {
+  "dom-base": {
+    index: ""
+  }
+};
 const entries = [];
 function flatternEntry(entry, path = "") {
   path = path === "" ? "" : path + "/";
