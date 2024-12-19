@@ -1,3 +1,5 @@
+//typebase for html element: attributes, tags, events
+
 //taken from https://github.com/stagas/html-jsx file index.d.ts version 1.0.0
 //edited for small size
 //removed comments

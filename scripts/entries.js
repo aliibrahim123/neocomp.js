@@ -1,5 +1,9 @@
 const entryMap = {
   "dom-base": {
+    index: "",
+    elements: ""
+  },
+  "zro-router": {
     index: ""
   }
 };

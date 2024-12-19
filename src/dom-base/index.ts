@@ -1,3 +1,5 @@
+//simple utility for creating elements in typesafe manner
+
 import type { AttrsMap as AttrMap, EventMap, TypeMap } from './typebase.ts';
 
 export function from (a: string | Element | Element[] | ArrayLike<Element>, Throw = false): Element[] {

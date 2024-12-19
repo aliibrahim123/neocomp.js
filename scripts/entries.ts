@@ -1,6 +1,10 @@
 type EntryMap = { [key: string]: EntryMap | '' | string[]};
 const entryMap: EntryMap = {
 	'dom-base': {
+		index: '',
+		elements: ''
+	},
+	'zro-router': {
 		index: ''
 	}
 }
