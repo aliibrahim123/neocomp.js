@@ -6,6 +6,10 @@ const entryMap: EntryMap = {
 	},
 	'zro-router': {
 		index: ''
+	},
+	'litedom': {
+		core: '',
+		parse: ''
 	}
 }
 

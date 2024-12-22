@@ -5,6 +5,10 @@ const entryMap = {
   },
   "zro-router": {
     index: ""
+  },
+  "litedom": {
+    core: "",
+    parse: ""
   }
 };
 const entries = [];
