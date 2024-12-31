@@ -1,5 +1,5 @@
 const entryMap = {
-  "dom-base": {
+  "rawdom": {
     index: "",
     elements: ""
   },
@@ -9,6 +9,9 @@ const entryMap = {
   "litedom": {
     core: "",
     parse: ""
+  },
+  "comp-base": {
+    core: ""
   }
 };
 const entries = [];

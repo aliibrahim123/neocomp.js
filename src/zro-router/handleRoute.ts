@@ -1,8 +1,9 @@
 //the routing logic
 
 import type { fn } from "../common/types.ts";
-import { query } from "../dom-base/index.ts";
-import { ZRORouter, Options } from "./index.ts";
+import { query } from "../rawdom/index.ts";
+import type { ZRORouter } from "./index.ts";
+import type { Options } from "./index.ts";
 
 const defer = (fn: fn) => setTimeout(fn, 5);
 
@@ -120,7 +121,7 @@ function updateHead (page: Document, options: Options) {
 	}
 }
 
-function updateOtherHeadEls (elements: { old: Element[], New: Element[] }, preserveClass) {
+function updateOtherHeadEls (elements: { old: Element[], New: Element[] }, preserveClass: string) {
 	const head = document.head;
 	//remove old elements if not preserved
 	for (const oldElement of elements.old) 

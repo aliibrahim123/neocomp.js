@@ -704,7 +704,8 @@ interface HTMLVideoAttrs extends HTMLAttrs {
 	width?: number | string;
 }
 
-export type TypeMap = HTMLElementTagNameMap; 
+export type TypeMap = HTMLElementTagNameMap;
+
 export interface AttrsMap {
 	a         : HTMLAAttrs,
 	area      : HTMLAreaAttrs,

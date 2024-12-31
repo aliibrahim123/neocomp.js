@@ -6,10 +6,14 @@
 	"scripts": {
 		"start": "vite .",
 		"build": "vite build",
-		"generate-js-source": "node scripts/generateJSSource.js", 
+		"generate-js-source": "node scripts/generateJSSource.js",
 		"generate-test-html": "node scripts/generateTestHTML.js"
 	},
 	"type": "module",
+	"exports": {
+		"./dist/": "./dist/",
+		"./": "./src/"
+	},
 	"homepage": "https://aliibrahim123.github.io/neoproto.js/",
 	"bugs": {
 		"url": "https://github.com/aliibrahim123/neoproto.js/issues"
@@ -22,5 +26,8 @@
 	"devDependencies": {
 		"vite": "^6.0.2",
 		"vite-plugin-directory-index": "^3.0.1"
+	},
+	"dependencies": {
+		"vite-bundle-visualizer": "^1.2.1"
 	}
 }

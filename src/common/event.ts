@@ -20,11 +20,56 @@ export class Event <Listener extends fn> {
 	}
 
 	once (listener: Listener) {
-		function fn (...args) {
+		const fn = (...args: any[]) => {
 			listener(...args);
-			this.off(fn);
+			this.off(fn as Listener);
 		}
 		this.#listeners.push(fn as Listener);
 		return this;
+	}
+	
+	async awaitForIt (): Promise<Parameters<Listener>> {
+		return new Promise(res => 
+			this.on(((...args: any[]) => res(args as any)) as Listener)
+		)
+	}
+}
+
+//one time init event
+export class OTIEvent <Listener extends fn> {
+	#listeners: Listener[] = [];
+	#inited: boolean = false;
+	#args: Parameters<Listener> = undefined as any; 
+	
+	on (listener: Listener) {
+		if (this.#inited) listener(...this.#args);
+		else this.#listeners.push(listener);
+		return this
+	}
+	off (listener: Listener) {
+		this.#listeners = this.#listeners.filter(fn => fn !== listener)
+		return this
+	}
+
+	trigger (...args: Parameters<Listener>) {
+		for (const listener of this.#listeners) listener(...args);
+		this.#inited = true;
+		this.#args = args;
+		return this
+	}
+
+	once (listener: Listener) {
+		const fn = (...args: any[]) => {
+			listener(...args);
+			this.off(fn as Listener);
+		}
+		this.on(fn as Listener);
+		return this;
+	}
+
+	async awaitForIt (): Promise<Parameters<Listener>> {
+		return new Promise(res => 
+			this.on(((...args: any[]) => res(args as any)) as Listener)
+		)
 	}
 }

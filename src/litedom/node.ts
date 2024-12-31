@@ -4,11 +4,12 @@ export class LiteNode {
 	classList: Set<string>;
 	children: (string | LiteNode)[];
 	parent: LiteNode | undefined;
+	meta = new Map<string, any>();
 
 	constructor (
 		//attrs.T contains string[] since of class attr, it doesnt reflect true string[] attr support
 		tag: string, attrs: Record<string, string | number | boolean | string[]> = {},
-		children: (string | LiteNode)[] = []
+		children: (string | LiteNode)[] = [], meta: Record<string, any> = {}
 	) {
 		this.tag = tag;
 		//handle special attrs
@@ -21,6 +22,8 @@ export class LiteNode {
 		this.children = children;
 		for (const child of children) 
 			if (child instanceof LiteNode) child.parent = this;
+
+		for (const key in meta) this.meta.set(key, meta[key]);
 	}
 
 	get childIndex () {
@@ -93,7 +96,7 @@ export class LiteNode {
 		this.children.splice(ind, 1);
 		return this
 	}
-	replaceChild (ind, child: LiteNode | string): this {
+	replaceChild (ind: number, child: LiteNode | string): this {
 		if (this.children[ind] instanceof LiteNode) this.children[ind].parent = undefined;
 		this.children[ind] = child;
 		if (child instanceof LiteNode) child.parent = this.parent;

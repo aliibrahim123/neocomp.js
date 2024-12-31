@@ -22,7 +22,7 @@ export interface Options {
 	onCData: (parent: LiteNode, text: string) => void;
 }
 
-const defaultOptions: Options = {
+export const defaultOptions: Options = {
 	rootTag: 'html',
 	keepWhiteSpace: false,
 	//auto close (no end tag)
@@ -67,7 +67,7 @@ export function parse (source: string, opts: Partial<Options>): LiteNode {
 		//slice text, if not '<' found, take till end of input
 		let text = source.slice(ind, nextBracket === -1 ? source.length : nextBracket);
 		//if there are actual text (not whitespace)
-		if (text && text !== ' ') {
+		if (text && !text.match(/^\s+$/g)) {
 			//remove whitespace
 			if (!(keepWhiteSpace || parentWSTags > 0 || rawTextTags.has(curNode.tag)))
 				text = text.replaceAll(/\s+/g, ' ');
@@ -80,7 +80,7 @@ export function parse (source: string, opts: Partial<Options>): LiteNode {
 		if (nextBracket === -1) break;
 		//ind is now at next '<'
 		ind = nextBracket;
-		const afterBracket = source[nextBracket + 1];
+		const afterBracket = source[nextBracket + 1] as string;
 		//comment
 		if (afterBracket === '!' && source.slice(ind, ind + 4) === '<!--') {
 			parseComment(curNode);
@@ -97,7 +97,7 @@ export function parse (source: string, opts: Partial<Options>): LiteNode {
 			continue
 		}
 		//tag end
-		if (afterBracket === '/' && tagStart.test(source[ind + 2])) {
+		if (afterBracket === '/' && tagStart.test(source[ind + 2] as string)) {
 			parseEndTag(curNode);
 			continue
 		}
@@ -108,7 +108,7 @@ export function parse (source: string, opts: Partial<Options>): LiteNode {
 	}
 
 	if (stack.length > 1) throw new 
-		SyntaxError(`litedom.parse: ended input with (${stack.length -1}) unclosed tags`);
+		SyntaxError(`litedom.parse: ended input with ${stack.length -1} unclosed tags`);
 	return root;
 
 	function parseStartTag (parentNode: LiteNode) {
@@ -145,11 +145,12 @@ export function parse (source: string, opts: Partial<Options>): LiteNode {
 			//case empty value
 			const thereIsNoWS = skipWhiteSpace();
 			if (source[ind] !== '=') {
-				if (source[ind] === '>' || source[ind] === '/') break;
-				if (thereIsNoWS) throw new 
+				const isEnd = source[ind] === '>' || source[ind] === '/';
+				if (!isEnd && thereIsNoWS) throw new 
 					SyntaxError(`litedom.parse: unexpected token at (${ind})`);
 				thereWasWS = true;
 				node.attrs.set(lowerAttr ? attr.toLowerCase() : attr, '');
+				if (isEnd) break;
 				continue;
 			}
 			ind++; //skip '='

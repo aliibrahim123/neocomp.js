@@ -1,5 +1,5 @@
 import type { ZRORouter } from "./index.ts";
-import { construct } from "../dom-base";
+import { construct } from "../rawdom/index.ts";
 
 export function defaultErrorPage (router: ZRORouter, url: URL, error: Error | Response) {
 	document.body.replaceChildren(...construct(

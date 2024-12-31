@@ -1,5 +1,5 @@
 import type { ZRORouter } from "./index.ts";
-import { query } from '../dom-base/index.ts';
+import { query } from '../rawdom/index.ts';
 
 const hasVisited = Symbol('zro:has-visited');
 

@@ -1,0 +1,19 @@
+{
+	"compilerOptions": {
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"target": "esnext",
+		"allowJs": true,
+		"resolveJsonModule": true,
+		"moduleDetection": "force",
+		"isolatedModules": true,
+		"verbatimModuleSyntax": true,	
+		"strict": true,
+		"allowImportingTsExtensions": true,
+		"noImplicitOverride": true,	
+		"module": "preserve",
+		"noEmit": true,
+		"lib": ["esnext", "dom", "dom.iterable", "decorators"]
+	},
+	"include": ["src/**/*", "scripts/**/*"],
+	}

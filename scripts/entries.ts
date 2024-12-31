@@ -1,6 +1,6 @@
 type EntryMap = { [key: string]: EntryMap | '' | string[]};
 const entryMap: EntryMap = {
-	'dom-base': {
+	'rawdom': {
 		index: '',
 		elements: ''
 	},
@@ -10,6 +10,9 @@ const entryMap: EntryMap = {
 	'litedom': {
 		core: '',
 		parse: ''
+	},
+	'comp-base': {
+		core: '',
 	}
 }
 
