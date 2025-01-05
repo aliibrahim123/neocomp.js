@@ -9,6 +9,9 @@ export function throw_adding_existing_class (name: string) {
 export function throw_getting_undefined_class (name: string) {
 	throw new CompError(`registry: getting undefined class (${name})`);
 }
+export function throw_using_undefined_provider (name: string) {
+	throw new CompError(`registry: using undefined provider (${name})`);
+}
 export function throw_adding_existing_provider (name: string) {
 	throw new CompError(`registry: adding exsisitng provider (${name})`);
 }

@@ -1,6 +1,6 @@
 {
 	"name": "@neocomp/full",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "new generation of reactivity and speed",
 	"author": "aliibrahim123",
 	"scripts": {
@@ -24,10 +24,11 @@
 	},
 	"license": "MIT",
 	"devDependencies": {
+		"@types/node": "^22.10.5",
 		"vite": "^6.0.2",
-		"vite-plugin-directory-index": "^3.0.1"
+		"vite-plugin-directory-index": "^3.0.1",
+		"vite-bundle-visualizer": "^1.2.1"
 	},
 	"dependencies": {
-		"vite-bundle-visualizer": "^1.2.1"
 	}
 }

@@ -6,6 +6,7 @@ import type { WalkOptions } from "../walker.ts";
 import type { Node } from "../walkInterface.ts";
 import { addDoAttr } from "./do.ts";
 import { addEffectAttr } from "./effect.ts";
+import { addInOutAttrs } from "./inout.ts";
 import { addOnAttr } from "./on.ts";
 import { addRefAttr } from "./ref.ts";
 
@@ -28,3 +29,4 @@ addRefAttr();
 addDoAttr();
 addEffectAttr();
 addOnAttr();
+addInOutAttrs();

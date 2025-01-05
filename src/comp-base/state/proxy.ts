@@ -3,7 +3,7 @@
 
 import { Store } from "./store.ts";
 
-export function storeToProxy <Props extends Record<string, any>> (store: Store<Props>) {
+export function $proxy <Props extends Record<string, any>> (store: Store<Props>) {
 	return new Proxy(store, handler) as any as Props
 }
 

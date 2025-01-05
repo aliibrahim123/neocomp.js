@@ -40,10 +40,25 @@ export function removeChildren (node: Node) {
 	if (node instanceof LiteNode) node.children = [];
 	else node.replaceChildren();
 }
+export function getText (node: Node) {
+	if (node instanceof LiteNode) {
+		if (node.children.some(node => node instanceof LiteNode)) return undefined;
+		else return node.children[0] as string
+	}
+	return node.childElementCount === 0 ? node.innerText : undefined
+}
 
-export type Fn = ((...args: any[]) => any) | { $$isFn: true, args: string[], source: string }
+export type Fn = ((...args: any[]) => any) | SerializedFn;
+export class SerializedFn {
+	args: string[]; 
+	source: string
+	constructor (args: string[], source: string) {
+		this.args = args;
+		this.source = source;
+	}
+}
 export function toFun (options: WalkOptions, args: string[], source: string): Fn {
-	if (options.serialize) return { $$isFn: true, source, args };
+	if (options.serialize) return new SerializedFn(args, source);
 	return new Function(...args, source) as Fn;
 }
 export function decodeAttrArg (value: string, options: WalkOptions) {

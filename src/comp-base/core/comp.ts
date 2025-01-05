@@ -43,6 +43,8 @@ export type CompOptions = {
 export const attachedComp = Symbol('neocomp:attached-comp');
 
 export class Component <TMap extends BaseMap> implements Linkable {
+	typemap = undefined as any as TMap;
+
 	constructor (el?: HTMLElement) {
 		this.options = (this.constructor as typeof Component).defaults;
 		this.el = el as HTMLElement;
@@ -155,10 +157,12 @@ export class Component <TMap extends BaseMap> implements Linkable {
 	onChildUnlink = new Event<(comp: this, child: AnyComp) => void>();
 	parent?: AnyComp;
 	children: AnyComp[] = [];
+	childmap: TMap['childmap'] = {};
 	addChild (child: AnyComp, ind = -1) {
 		//add
 		if (ind === -1) this.children.push(child);
 		else this.children.splice(ind, 0, child);
+		(this.childmap[child.id] as any) = child;
 
 		//trigger events
 		this.onChildAdded.trigger(this, child);
@@ -171,12 +175,14 @@ export class Component <TMap extends BaseMap> implements Linkable {
 	}
 	unlinkParent () {
 		if (!this.parent) throw_unlink_no_parent(this);
+		this.parent?.unlinkChild(this);
 		this.onUnlinkedFromParent.trigger(this, this.parent as AnyComp);
 		this.parent = undefined;
 	}
 	unlinkChild (child: AnyComp) {
 		let childCount = this.children.length;
 		this.children = this.children.filter(_child => _child !== child);
+		(this.childmap[child.id] as any) = undefined;
 		if (childCount === this.children.length) throw_unlink_unowned_child(this, child);
 		this.onChildUnlink.trigger(this, child);
 	}

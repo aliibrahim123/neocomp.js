@@ -3,7 +3,7 @@
 import type { ConstructorFor } from "../../common/types.ts";
 import type { AnyComp } from "./comp.ts";
 import { Component } from "./comp.ts";
-import { throw_adding_existing_class, throw_adding_existing_provider, throw_adding_root_while_there, throw_getting_undefined_class, throw_remove_unexisting_root } from "./errors.ts";
+import { throw_adding_existing_class, throw_adding_existing_provider, throw_adding_root_while_there, throw_getting_undefined_class, throw_remove_unexisting_root, throw_using_undefined_provider } from "./errors.ts";
 import { onAdd, onRootAdd, onRootRemove } from "./globalEvents.ts";
 
 const classRegistry = new Map<string, ConstructorFor<AnyComp>>;
@@ -26,8 +26,9 @@ export function has (name: string) {
 export function get (name: string) {
 	if (name[0] === '@') {
 		const separatorInd = name.indexOf(':');
-		return providers.get(name.slice(1, separatorInd))
-			?.(name.slice(separatorInd + 1)) as ConstructorFor<AnyComp>;
+		const provider = providers.get(name.slice(1, separatorInd)) 
+		if (!provider) throw_using_undefined_provider(name.slice(1, separatorInd));
+		return provider?.(name.slice(separatorInd + 1)) as ConstructorFor<AnyComp>;
 	}
 	if (!classRegistry.has(name)) throw_getting_undefined_class(name);
 	return classRegistry.get(name) as ConstructorFor<AnyComp>

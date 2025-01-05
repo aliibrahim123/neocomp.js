@@ -9,6 +9,6 @@ export interface CompThisAction extends Action {
 export function addCompAction () {
 	addAction('comp:this', (comp, el, action) => {
 		const child = new (get((action as CompThisAction).comp))(el);
-		comp.addChild(child);
+		child.onInit.on((child) => comp.addChild(child));
 	})
 }  

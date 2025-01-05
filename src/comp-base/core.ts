@@ -10,6 +10,7 @@ export * from './core/error.ts';
 export * from './core/linkable.ts';
 export type * from './core/linkable.ts';
 export * from './core/context.ts';
+export * from './core/lazy.ts';
 
 export * from './state/signal.ts';
 export * from './state/store.ts';
@@ -17,6 +18,7 @@ export type * from './state/store.ts';
 export type * from './state/updateDispatcher.ts';
 export * from './state/updateDispatcher.ts';
 export * from './state/proxy.ts';
+export * from './state/inout.ts';
 
 export * from './action/actions.ts';
 export type * from './action/actions.ts';
@@ -32,6 +34,7 @@ export * from './view/walker.ts';
 export type * from './view/walker.ts';
 export * from './view/tempAttr.ts';
 export type * from './view/tempAttr.ts';
-export * as walkFns from './view/walkInterface.ts';
+import * as walkFnsMode from './view/walkInterface.ts';
+export const walkFns = { ...walkFnsMode };
 export type { Node as WalkNode, Fn as WalkFn } from './view/walkInterface.ts';
 export { addActionAttr } from './view/actAttrs/index.ts';

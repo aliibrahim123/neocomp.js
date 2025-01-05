@@ -5,10 +5,11 @@ import type { Action } from "../action/actions.ts";
 import type { AttrAction } from "../action/attr.ts";
 import type { CompThisAction } from "../action/comp.ts";
 import { getActionAttr } from "./actAttrs/index.ts";
-import { throw_comp_this_multiple, throw_tattr_unended_prop_args_in_name } from "./errors.ts";
+import { throw_comp_this_multiple, throw_tattr_no_text, throw_tattr_unended_prop_args_in_name } from "./errors.ts";
 import { parseTAttr } from "./tempAttr.ts";
 import { 
-	hasAttr, attrsOf, decodeAttrArg, setAttr, removeAttr, getTarget, childrenOf
+	hasAttr, attrsOf, decodeAttrArg, setAttr, removeAttr, getTarget, childrenOf,
+	getText
 } from "./walkInterface.ts";
 import type { Node } from "./walkInterface.ts";
 
@@ -27,19 +28,29 @@ export function walk (node: Node, options: Partial<WalkOptions> = {}) {
 function handleTAttr (
 	node: Node, attr: string, value: string, options: WalkOptions, actions: Action[]
 ) {
-	const paranInd = attr.indexOf('(');
-	const name = attr.slice(1, paranInd !== -1 ? paranInd : attr.length);
+	const paranInd = attr.indexOf('('), hasProps = paranInd !== -1;
+	const name = attr.slice(1, hasProps ? paranInd : attr.length);
 
-	const paranEnd = attr.indexOf(')', paranInd);
-	if (paranEnd === -1) throw_tattr_unended_prop_args_in_name(attr);
-
-	//get props
-	const props = decodeAttrArg(attr.slice(paranInd +1, paranEnd), options).split(',');
 	const staticProps: string[] = [], dynamicProps: string[] = [];
-	for (const prop of props) 
-		if (prop[0] === '$') staticProps.push(prop.slice(1));
-		else dynamicProps.push(prop);
-	
+	if (hasProps) {
+		//get props end
+		const paranEnd = attr.indexOf(')', paranInd);
+		if (paranEnd === -1) throw_tattr_unended_prop_args_in_name(attr);
+
+		//get props
+		const props = decodeAttrArg(attr.slice(paranInd +1, paranEnd), options).split(',');
+		for (const prop of props) 
+			if (prop[0] === '$') staticProps.push(prop.slice(1));
+			else dynamicProps.push(prop);
+	}
+
+	//case text
+	if (name === 'text') {
+		const text = getText(node);
+		if (text === undefined) return throw_tattr_no_text(attr);
+		value = text;
+	}
+
 	//parse attr
 	const parts = parseTAttr(value, attr, options, ['comp', 'el'].concat(staticProps, dynamicProps));
 

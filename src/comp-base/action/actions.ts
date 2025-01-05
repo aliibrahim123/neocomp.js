@@ -7,6 +7,7 @@ import { addCompAction } from "./comp.ts";
 import { addDoAction } from "./do.ts";
 import { addEffectAction } from "./effect.ts";
 import { throw_adding_existing_action, throw_undefined_action } from "./errors.ts";
+import { addInOutActions } from "./inout.ts";
 import { addOnAction } from "./on.ts";
 import { addRefAction } from "./ref.ts";
 
@@ -30,6 +31,7 @@ addRefAction();
 addDoAction();
 addEffectAction();
 addOnAction();
+addInOutActions();
 
 function doAction (comp: PureComp, el: HTMLElement, action: Action) {
 	const handler = registry.get(action.type);
