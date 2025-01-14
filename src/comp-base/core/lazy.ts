@@ -3,7 +3,7 @@
 import { OTIEvent } from "../../common/event.ts";
 import { attachedComp, type AnyComp } from "./comp.ts";
 import { onAdd } from "./globalEvents.ts";
-import { addProvider, get, has } from "./registry.ts";
+import { addProvider, get, has, registry } from "./registry.ts";
 
 export class LazyComp {
 	el: HTMLElement | undefined;
@@ -13,6 +13,7 @@ export class LazyComp {
 		onAdd.on((added, constructor) => {
 			if (added !== name) return;
 			const comp = new constructor(this.el);
+			if (registry.root === this as any) registry.root = comp;
 			this.onInit.trigger(comp);
 		})
 	}
