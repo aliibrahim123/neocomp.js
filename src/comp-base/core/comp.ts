@@ -73,7 +73,7 @@ export class Component <TMap extends BaseMap> implements Linkable {
 		view: {}
 	}
 	
-	protected initCore () {
+	initCore () {
 		if (this.status !== status.preInit) 
 			throw_incorrect_init_sequence(this, status.coreInit, this.status);
 		this.status = status.coreInit;
@@ -81,7 +81,7 @@ export class Component <TMap extends BaseMap> implements Linkable {
 		this.store = new Store(this, this.options.store);
 		this.view = new View(this, this.el, this.options.view);
 	}
-	protected initDom () {
+	initDom () {
 		if (this.status !== status.coreInit) 
 			throw_incorrect_init_sequence(this, status.initDom, this.status);
 		this.status = status.initDom;
@@ -89,7 +89,7 @@ export class Component <TMap extends BaseMap> implements Linkable {
 		this.view.initDom();
 		this.onDomInit.trigger(this);
 	}
-	protected fireInit () {
+	fireInit () {
 		if (this.status !== status.initDom) 
 			throw_incorrect_init_sequence(this, status.inited, this.status);
 		this.status = status.inited;
@@ -104,7 +104,7 @@ export class Component <TMap extends BaseMap> implements Linkable {
 	onDomInit = new OTIEvent<(comp: this) => void>();
 	onInitInternal = new OTIEvent<(comp: this) => void>();
 	onInit = new OTIEvent<(comp: this) => void>();
-	protected init () {
+	init () {
 		throw throw_no_initFn(this);
 	}
 
