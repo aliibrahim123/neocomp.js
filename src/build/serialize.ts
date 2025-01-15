@@ -38,7 +38,10 @@ serializers.set(String, (value: string) =>
 	'`' + value.replaceAll('$', '\\$') + '`'
 );
 serializers.set(LiteNode, (value: LiteNode, data, options) => {
-	const attrs = serialize(mapToObject(value.attrs), data, options);
+	const attrs = serialize({ 
+		...mapToObject(value.attrs), 
+		'class': Array.from(value.classList)
+	}, data, options);
 	const children = serialize(value.children, data, options);
 	const meta = serialize(mapToObject(value.meta), data, options);
 	return `new LiteNode('${value.tag}', ${attrs}, ${children}, ${meta})`
