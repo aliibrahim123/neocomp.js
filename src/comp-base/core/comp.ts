@@ -1,6 +1,7 @@
 //the component class
 
 import { Event, OTIEvent } from "../../common/event.ts";
+import type { fn } from "../../common/types.ts";
 import { Store } from "../state/store.ts";
 import type { StoreOptions } from "../state/store.ts";
 import { View } from "../view/view.ts";
@@ -228,4 +229,9 @@ export class Component <TMap extends BaseMap> implements Linkable {
 }
 
 export type PureComp = Component<BaseMap>;
-export type AnyComp = Component<any>;
+export type AnyComp = {
+	[k in keyof Component<any>]: 
+	  Component<any>[k] extends Event<fn> ? Event<fn> :
+	  Component<any>[k] extends OTIEvent<fn> ? OTIEvent<fn> :
+	  Component<any>[k]
+};
