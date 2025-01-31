@@ -5,6 +5,7 @@ import { generateFromString, type Plugin } from '../comp-base/view/generation.ts
 import { readFile } from 'node:fs/promises';
 import { serialize, type Serializer } from './serialize.ts';
 import type { WalkOptions } from '../comp-base/view/walker.ts';
+import { resolve, dirname } from 'node:path';
 
 export interface Options {
 	libPath: string,
@@ -25,18 +26,24 @@ export interface GenData {
 	consts: Record<string, string>
 }
 
+const virtmodNS = 'virtual:neo-template';
 export function neoTempPlugin (options: Partial<Options> = {}): VitePlugin {
 	const opts = { ...defaultOptions, ...options };
 
 	return {
+		enforce: 'pre',
 		name: 'neo-template',
+		resolveId(id, importer) {
+			if (!id.endsWith('.neo.html') || !importer) return;
+			return `${virtmodNS}/${resolve(dirname(importer), id + '.js')}`
+		},
 		async load (id) {
-			if (!id.endsWith('.neo.html')) return;
-			
-			let file: string;
-			try { file = await readFile(id, { encoding: 'utf-8' }) }
+			if (!id.startsWith(virtmodNS)) return;
+
+			let file: string, path = id.slice(virtmodNS.length + 1, -3);
+			try { file = await readFile(path, { encoding: 'utf-8' }) }
 			catch (error) {
-				throw new Error(`neotemp: no file at path ${id}`);
+				throw new Error(`neotemp: no file at path ${path}`);
 			}
 
 			return { code: transform(file, opts) }
@@ -66,7 +73,7 @@ function transform (source: string, options: Options) {
 		chunks.push(`const ${name} = ${data.consts[name]}`);
 
 	chunks.push('export default ' + serialize(contents, data, options));
-
+	
 	return chunks.join('\n');
 }
 
