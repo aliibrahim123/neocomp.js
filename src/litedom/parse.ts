@@ -54,7 +54,7 @@ export function parse (source: string, opts: Partial<Options>): LiteNode {
 		keepWhiteSpaceTags, rawTextTags
 	} = options;
 	const root = new LiteNode(options.rootTag), stack = [root];
-	let lastTag = '', parentWSTags = 0;
+	let parentWSTags = 0;
 	let ind = 0;
 	
 	while (ind < source.length) {
@@ -119,12 +119,11 @@ export function parse (source: string, opts: Partial<Options>): LiteNode {
 		ind += 1 + tag.length;
 
 		//case self close
-		if (lastTag === tag && options.selfCloseTags.has(tag)) stack.pop();
+		if (stack.at(-1)?.tag === tag && options.selfCloseTags.has(tag)) stack.pop();
 
 		const node = new LiteNode(tag);
 		stack.at(-1)?.append(node);
 		stack.push(node);
-		lastTag = tag;
 		
 		//attributes
 		let thereWasWS = false;
