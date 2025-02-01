@@ -34,12 +34,14 @@ export function neoTempPlugin (options: Partial<Options> = {}): VitePlugin {
 		enforce: 'pre',
 		name: 'neo-template',
 		resolveId(id, importer) {
+			//convert to virtual module with .js extention to make as normal module
 			if (!id.endsWith('.neo.html') || !importer) return;
 			return `${virtmodNS}/${resolve(dirname(importer), id + '.js')}`
 		},
 		async load (id) {
 			if (!id.startsWith(virtmodNS)) return;
 
+			//load file
 			let file: string, path = id.slice(virtmodNS.length + 1, -3);
 			try { file = await readFile(path, { encoding: 'utf-8' }) }
 			catch (error) {
@@ -47,6 +49,19 @@ export function neoTempPlugin (options: Partial<Options> = {}): VitePlugin {
 			}
 
 			return { code: transform(file, opts) }
+		},
+		handleHotUpdate ({ file, server, timestamp }) {
+			if (!file.endsWith('.neo.html')) return;
+
+			//hot reload
+			const id = `${virtmodNS}/${file}.js`;
+			const mod = server.moduleGraph.getModuleById(id);
+			if (!mod) return;
+			server.moduleGraph.invalidateModule(mod);
+			server.ws.send({
+				type: 'full-reload',
+				path: id
+			  });
 		},
 	}
 }
