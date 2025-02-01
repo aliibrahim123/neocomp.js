@@ -99,18 +99,18 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 		return prop
 	}
 
-	get <P extends keyof Props & string> (name: P | symbol): Props[P] | undefined {
+	get <P extends keyof Props & string> (name: P | symbol): Props[P] {
 		const prop = typeof(name) === 'string' ? 
 			this.#propsByName.get(name) : 
 			this.#propsBySymbol.get(name);
 		
-		if (!prop) return undefined;
+		if (!prop) return undefined as any;
 		return prop.getter ? prop.getter.call(prop) : prop.value
 	}
-	getProp <P extends keyof Props & string> (name: P | symbol): Prop<Props[P]> | undefined {
+	getProp <P extends keyof Props & string> (name: P | symbol): Prop<Props[P]> {
 		return typeof(name) === 'string' ? 
 			this.#propsByName.get(name) : 
-			this.#propsBySymbol.get(name);
+			this.#propsBySymbol.get(name) as any;
 	}
 	getSymbolFor (name: keyof Props & string): symbol {
 		//case added before
