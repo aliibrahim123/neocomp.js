@@ -1,4 +1,4 @@
-import { Component, type AnyComp } from "./comp";
+import { Component, type AnyComp, type Status } from "./comp";
 import { CompError } from "./error";
 import type { Linkable } from "./linkable.ts";
 
@@ -29,11 +29,8 @@ export function compInfo (comp: AnyComp, name = 'comp') {
 export function throw_no_initFn (comp: AnyComp) {
 	throw new CompError(`init: component without init function (${compInfo(comp)})`)
 }
-function statusName (status: symbol) {
-	return String(status).slice(15);
-}
-export function throw_incorrect_init_sequence (comp: AnyComp, calling: symbol, at: symbol) {
-	throw new CompError(`init: incorrect init sequence (calling ${statusName(calling)} at ${statusName(at)}, ${compInfo(comp)})`);
+export function throw_incorrect_init_sequence (comp: AnyComp, calling: Status, at: Status) {
+	throw new CompError(`init: incorrect init sequence (calling (${calling}) at (${at}), ${compInfo(comp)})`);
 }
 //hierarchy
 export function throw_link_Parent_while_has (comp: AnyComp, parent: AnyComp) {

@@ -13,7 +13,7 @@ export function throw_getting_undefined_template (name: string) {
 
 //init dom
 export function throw_not_into_query (comp: AnyComp) {
-	throw new CompError(`view: no into query while insertMode is .into (${compInfo(comp)})`);
+	throw new CompError(`view: no into query while insertMode is into (${compInfo(comp)})`);
 }
 export function throw_into_query_no_match (comp: AnyComp, query: string) {
 	throw new CompError(`view: into query has not match (query: ${query}, ${compInfo(comp)})`);

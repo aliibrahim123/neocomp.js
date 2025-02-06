@@ -17,23 +17,10 @@ import type { Linkable } from "./linkable.ts";
 import { addToIdMap, registry, removeFromIdMap, removeRoot } from "./registry.ts";
 import type { BaseMap } from "./typemap.ts";
 
-const status = {
-	preInit: Symbol('neocomp:status.pre-init'),
-	coreInit: Symbol('neocomp:status.core-init'),
-	initDom: Symbol('neocomp:status.dom-init'),
-	inited: Symbol('neocomp:status.inited'),
-	removing: Symbol('neocomp:status.removing'),
-	removed: Symbol('neocomp:status.removed'),
-} as const;
-
-const initMode = {
-	minimal: Symbol('neocomp:initMode.minimal'),
-	standared: Symbol('neocomp:initMode.standared'),
-	fullControl: Symbol('neocomp:initMode.fullControl')
-} as const;
+export type Status = 'preInit' | 'coreInit' | 'initDom' | 'inited' | 'removing' | 'removed';
 
 export type CompOptions = {
-	initMode: symbol;
+	initMode: 'minimal' | 'standared' | 'fullControl';
 	anonymous: boolean;
 	defaultId: () => string;
 	removeChildren: boolean;
@@ -51,8 +38,8 @@ export class Component <TMap extends BaseMap> implements Linkable {
 		this.el = el as HTMLElement;
 		this.id = el?.id || this.options.defaultId();
 
-		if (this.options.initMode !== initMode.fullControl) this.initCore();
-		if (this.options.initMode === initMode.minimal) {
+		if (this.options.initMode !== 'fullControl') this.initCore();
+		if (this.options.initMode === 'minimal') {
 			this.initDom();
 			this.init();
 			this.fireInit();
@@ -61,39 +48,37 @@ export class Component <TMap extends BaseMap> implements Linkable {
 	}
 	
 	id: string = '';
-	status: symbol = status.preInit;
-	static status = status;
-	static initMode = initMode;
+	status: Status = 'preInit';
 	options: CompOptions;
 	static defaults: CompOptions = {
 		anonymous: false,
 		defaultId: () => '',
 		removeChildren: true,
-		initMode: initMode.standared,
+		initMode: 'standared',
 		store: {},
 		view: {}
 	}
 	
 	initCore () {
-		if (this.status !== status.preInit) 
-			throw_incorrect_init_sequence(this, status.coreInit, this.status);
-		this.status = status.coreInit;
+		if (this.status !== 'preInit') 
+			throw_incorrect_init_sequence(this, 'coreInit', this.status);
+		this.status = 'coreInit';
 
 		this.store = new Store(this, this.options.store);
 		this.view = new View(this, this.el, this.options.view);
 	}
 	initDom () {
-		if (this.status !== status.coreInit) 
-			throw_incorrect_init_sequence(this, status.initDom, this.status);
-		this.status = status.initDom;
+		if (this.status !== 'coreInit') 
+			throw_incorrect_init_sequence(this, 'initDom', this.status);
+		this.status = 'initDom';
 
 		this.view.initDom();
 		this.onDomInit.trigger(this);
 	}
 	fireInit () {
-		if (this.status !== status.initDom) 
-			throw_incorrect_init_sequence(this, status.inited, this.status);
-		this.status = status.inited;
+		if (this.status !== 'initDom') 
+			throw_incorrect_init_sequence(this, 'inited', this.status);
+		this.status = 'inited';
 
 		this.onInitInternal.trigger(this);
 		this.onInit.trigger(this);
@@ -190,9 +175,9 @@ export class Component <TMap extends BaseMap> implements Linkable {
 
 	onRemove = new Event<(comp: this) => void>();
 	remove () {
-		if (this.status === status.removed) throw_removing_removed_comp(this);
-		if (this.status === status.removing) return;
-		this.status = status.removing;
+		if (this.status === 'removed') throw_removing_removed_comp(this);
+		if (this.status === 'removing') return;
+		this.status = 'removing';
 		this.onRemove.trigger(this);
 
 		//links
@@ -224,7 +209,7 @@ export class Component <TMap extends BaseMap> implements Linkable {
 		//root
 		if (registry.root === this) removeRoot();
 		
-		this.status = status.removed;
+		this.status = 'removed';
 	}
 }
 

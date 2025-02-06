@@ -33,10 +33,10 @@ addEffectAction();
 addOnAction();
 addInOutActions();
 
-function doAction (comp: PureComp, el: HTMLElement, action: Action) {
+function doAction (comp: AnyComp, el: HTMLElement, action: Action) {
 	const handler = registry.get(action.type);
 	if (!handler) return throw_undefined_action(action.type);
-	handler(comp, el, action);
+	handler(comp as PureComp, el, action);
 }
 export function doActions (comp: AnyComp, actions: Action[]) {
 	for (const action of actions) doAction(comp, action.target as HTMLElement, action);

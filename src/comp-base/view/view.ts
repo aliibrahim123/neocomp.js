@@ -15,20 +15,13 @@ import { LiteNode } from "../../litedom/node.ts";
 export interface ViewOptions {
 	defaultEl: (comp: AnyComp) => HTMLElement;
 	template: Template;
-	insertMode: symbol;
+	insertMode: InsertMode;
 	into: string | undefined;
 	walkInPreContent: boolean;
 	removeEl: boolean;
 }
 
-const insertMode = {
-	asDefault: Symbol('neocomp:insertMode.asDefault'),
-	replace: Symbol('neocomp:insertMode.replace'),
-	atTop: Symbol('neocomp:insertMode.atTop'),
-	into: Symbol('neocomp:insertMode.into'),
-	atBottom: Symbol('neocomp:insertMode.atBottom'),
-	none: Symbol('neocomp:insertMode.none'),
-} as const
+export type InsertMode = 'asDefault' | 'replace' | 'atTop' | 'into' | 'atBottom' | 'none';
 
 export class View <Refs extends Record<string, HTMLElement>> {
 	#comp: AnyComp;
@@ -47,11 +40,10 @@ export class View <Refs extends Record<string, HTMLElement>> {
 		if (this.options.removeEl) comp.onRemove.on(() => this.el.remove());
 	}
 	options: ViewOptions;
-	static insertMode = insertMode;
 	static defaults: ViewOptions = {
 		defaultEl (comp) { return document.createElement('div') },
 		template: get('empty'),
-		insertMode: insertMode.asDefault,
+		insertMode: 'asDefault',
 		into: undefined,
 		walkInPreContent: false,
 		removeEl: true
@@ -65,8 +57,8 @@ export class View <Refs extends Record<string, HTMLElement>> {
 		//generate from template
 		let templateEl: HTMLElement = undefined as any;
 		if (!(
-			this.options.insertMode === insertMode.none ||
-			(this.options.insertMode === insertMode.asDefault && el.childNodes.length > 0)
+			this.options.insertMode === 'none' ||
+			(this.options.insertMode === 'asDefault' && el.childNodes.length > 0)
 		)) templateEl = toDom(this.#comp, template);
 
 		//do actions
@@ -74,19 +66,19 @@ export class View <Refs extends Record<string, HTMLElement>> {
 
 		//insert into dom
 		const tempInsert = this.options.insertMode;
-		if  	(tempInsert === insertMode.replace) 
+		if  	(tempInsert === 'replace') 
 			el.replaceChildren(...templateEl.childNodes);
 
-		else if (tempInsert === insertMode.asDefault && el.childNodes.length === 0)
+		else if (tempInsert === 'asDefault' && el.childNodes.length === 0)
 			el.append(...templateEl.childNodes);
 
-		else if (tempInsert === insertMode.atTop)
+		else if (tempInsert === 'atTop')
 			el.prepend(...templateEl.childNodes);
 
-		else if (tempInsert === insertMode.atBottom)
+		else if (tempInsert === 'atBottom')
 			el.append(...templateEl.childNodes);
 
-		else if (tempInsert === insertMode.into) {
+		else if (tempInsert === 'into') {
 			if (this.options.into === undefined) return throw_not_into_query(this.#comp);
 			const into = query(this.options.into, this.el);
 			if (into.length === 0) throw_into_query_no_match(this.#comp, this.options.into);
