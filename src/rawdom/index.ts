@@ -2,7 +2,9 @@
 
 import type { AttrsMap as AttrMap, EventMap, TypeMap } from './typebase.ts';
 
-export function from (a: string | Element | Element[] | ArrayLike<Element>, Throw = false): Element[] {
+export function from (
+	a: string | HTMLElement | HTMLElement[] | ArrayLike<HTMLElement>, Throw = false
+): HTMLElement[] {
 	if (typeof(a) === 'string') {
 		//construct if = '<el>text</el>'
 		if (a[0] === '<') return construct(a);
@@ -21,7 +23,7 @@ export function from (a: string | Element | Element[] | ArrayLike<Element>, Thro
 }
 
 export function query (selector: string, root: Element | Document = document) {
-	return Array.from(root.querySelectorAll(selector))
+	return Array.from(root.querySelectorAll(selector)) as HTMLElement[]
 }
 
 export type CreateParam<E extends keyof TypeMap> = 
@@ -71,7 +73,7 @@ export function apply <E extends keyof TypeMap> (el: TypeMap[E], param: CreatePa
 	}
 }
 
-export function construct (template: string): Element[];
+export function construct (template: string): HTMLElement[];
 export function construct (template: string, withText: true): ChildNode[];
 export function construct (template: string, withText: boolean = false) {
 	const temp = document.createElement('div');
@@ -86,5 +88,5 @@ export function constructOne (template: string) {
 	temp.innerHTML = template;
 	const el = temp.children[0];
 	temp.replaceChildren() //release temp;
-	return el
+	return el as HTMLElement
 }
