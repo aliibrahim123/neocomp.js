@@ -214,13 +214,16 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 		if (!this.#propsBySymbol.has(name)) throw_undefined_prop('using', name, ' by symbol');
 		return name
 	}
-	createSignal <P extends keyof Props & string> (name: P | symbol, value?: Props[P]) {
+	createSignal <P extends keyof Props & string> (name: P | symbol, value?: Props[P])
+	  : Signal<Props[P]> {
 		return new Signal(this, this.initForUse(name, value))
 	}
-	createROSignal <P extends keyof Props & string> (name: P | symbol, value?: Props[P]) {
+	createROSignal <P extends keyof Props & string> (name: P | symbol, value?: Props[P]) 
+	: ReadOnlySignal<Props[P]> {
 		return new ReadOnlySignal(this, this.initForUse(name, value));
 	}
-	createWOSignal <P extends keyof Props & string> (name: P | symbol, value?: Props[P]) {
+	createWOSignal <P extends keyof Props & string> (name: P | symbol, value?: Props[P]) 
+	: WriteOnlySignal<Props[P]> {
 		return new WriteOnlySignal(this, this.initForUse(name, value));
 	}
 
