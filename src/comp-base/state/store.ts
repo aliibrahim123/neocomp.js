@@ -208,7 +208,7 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 	}
 
 	initForUse <P extends keyof Props & string> (name: P | symbol, value?: Props[P]): symbol {
-		if (value) return this.set(name, value).symbol;
+		if (value !== undefined) return this.set(name, value).symbol;
 		//possibly request to be added
 		if (typeof(name) === 'string') return this.getSymbolFor(name);
 		if (!this.#propsBySymbol.has(name)) throw_undefined_prop('using', name, ' by symbol');
