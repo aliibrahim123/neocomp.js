@@ -8,7 +8,7 @@ export interface Template {
 }
 
 const templateRegistry = new Map<string, Template>;
-templateRegistry.set('empty', { node: new LiteNode('div'), actions: [] });
+templateRegistry.set('empty', { node: new LiteNode('div', {}, [], { 'neocomp:id': 0 }), actions: [] });
 
 export function add (name: string, template: Template) {
 	if (templateRegistry.has(name)) throw_adding_existing_template(name);

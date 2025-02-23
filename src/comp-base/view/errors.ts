@@ -42,7 +42,7 @@ export function throw_tattr_unexpected_token (token: string, ind: number, attr: 
 	throw new CompError(`TAttr: unexpected token (${token}) at (${ind}) of attribute (${attr})`);
 }
 export function throw_tattr_uneded_exp (type: string, ind: number, attr: string) {
-	throw new CompError(`TAttr: unexpected unended ${type} expression at (${ind}) of attribute (${attr})`);
+	throw new CompError(`TAttr: unexpected unended ${type ? type + ' ' : ''}expression at (${ind}) of attribute (${attr})`);
 }
 export function throw_tattr_unended_prop_args (ind: number, attr: string) {
 	throw new CompError(`TAttr: unexpected unended property arguments at (${ind}) of attribute (${attr})`);

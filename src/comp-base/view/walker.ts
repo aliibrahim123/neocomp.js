@@ -1,6 +1,7 @@
 //walk the dom and gather actions
 //works on lite and native
 
+import type { fn } from "../../common/types.ts";
 import type { Action } from "../action/actions.ts";
 import type { AttrAction } from "../action/attr.ts";
 import type { CompThisAction } from "../action/comp.ts";
@@ -39,9 +40,10 @@ function handleTAttr (
 
 		//get props
 		const props = decodeAttrArg(attr.slice(paranInd +1, paranEnd), options).split(',');
-		for (const prop of props) 
+		for (const prop of props) if (prop !== '') {
 			if (prop[0] === '$') staticProps.push(prop.slice(1));
 			else dynamicProps.push(prop);
+		}
 	}
 
 	//case text
@@ -52,20 +54,26 @@ function handleTAttr (
 	}
 
 	//parse attr
-	const parts = parseTAttr(value, attr, options, ['comp', 'el'].concat(staticProps, dynamicProps));
+	const template = parseTAttr(value, attr, options, ['comp', 'el'].concat(staticProps, dynamicProps));
 
 	//case const and doesnt need runtime handling, set it directly
-	if (
-		!(name === 'text' || name.startsWith('style:') || name.startsWith('prop:'))
-		&& parts.every(part => typeof(part) === 'string')
-	) setAttr(node, name, parts.join(''));
+	const maybeConst = !(
+	  name.startsWith('style:') || name.startsWith('prop:') || 
+	  name.startsWith('class:') || name.startsWith('arg:')
+	);
+	//case parted template
+	if (maybeConst && Array.isArray(template) && template.every(part => typeof(part) === 'string'))
+		setAttr(node, name, template.join(''));
+	//case exp template
+	else if (maybeConst && !Array.isArray(template) && staticProps.length + dynamicProps.length === 0) 
+		setAttr(node, name, (template as fn)());
 
 	//else add action
 	else actions.push({
 		type: 'attr',
 		target: getTarget(node),
 		attr: name,
-		parts, staticProps, dynamicProps
+		template, staticProps, dynamicProps
 	} satisfies AttrAction);
 	
 	removeAttr(node, attr);

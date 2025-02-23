@@ -24,6 +24,7 @@ export function getAttr (node: Node, attr: string) {
 		node.attributes.getNamedItem(attr)?.value;
 }
 export function setAttr (node: Node, attr: string, value: string) {
+	if (attr === 'text') return setText(node, value);
 	if (node instanceof LiteNode) node.attrs.set(attr, value);
 	else (node.attributes.getNamedItem(attr) as Attr).value = value;
 }
@@ -46,6 +47,10 @@ export function getText (node: Node) {
 		else return node.children[0] as string
 	}
 	return node.childElementCount === 0 ? node.innerText : undefined
+}
+export function setText (node: Node, text: string) {
+	if (node instanceof LiteNode) node.children = [text];
+	else node.innerText = text
 }
 
 export type Fn = ((...args: any[]) => any) | SerializedFn;

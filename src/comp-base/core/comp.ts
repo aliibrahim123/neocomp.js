@@ -2,6 +2,7 @@
 
 import { Event, OTIEvent } from "../../common/event.ts";
 import type { fn } from "../../common/types.ts";
+import { passedArgs } from "../action/attr.ts";
 import { Store } from "../state/store.ts";
 import type { StoreOptions } from "../state/store.ts";
 import { View } from "../view/view.ts";
@@ -29,7 +30,6 @@ export type CompOptions = {
 }
 
 export const attachedComp = Symbol('neocomp:attached-comp');
-
 export class Component <TMap extends BaseMap> implements Linkable {
 	typemap = undefined as any as TMap;
 
@@ -101,8 +101,8 @@ export class Component <TMap extends BaseMap> implements Linkable {
 	set <P extends keyof TMap['props'] & string> (name: P | symbol, value: TMap['props'][P]) {
 		this.store.set(name, value)
 	}
-	signal <P extends keyof TMap['props'] & string> (name: P | symbol, value?: TMap['props'][P]) {
-		return this.store.createSignal(name, value);
+	signal <P extends keyof TMap['props'] & string> (name: P | symbol, Default?: TMap['props'][P]) {
+		return this.store.createSignal(name, Default);
 	}
 	effect (
 		effectedBy: ((keyof TMap['props'] & string) | symbol)[], handler: () => void,
@@ -113,6 +113,12 @@ export class Component <TMap extends BaseMap> implements Linkable {
 	el: HTMLElement;
 	refs: { [K in keyof TMap['refs']]: TMap['refs'][K][] } = undefined as any;
 	query (selector: string) { return this.view.query(selector) }
+	args <T extends Record<string, any>> (defaults: T): T {
+		const args = (this.el as any)?.[passedArgs];
+		if (!args) return defaults;
+		delete (this.el as any)[passedArgs];
+		return { ...defaults, ...args }
+	}
 
 	onLink = new Event<(comp: this, linked: Linkable) => void>();
 	onUnlink = new Event<(comp: this, unlinked: Linkable) => void>();

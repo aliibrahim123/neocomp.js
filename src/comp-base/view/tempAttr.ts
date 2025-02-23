@@ -1,5 +1,6 @@
 //templated attribute
 //features:
+//	- {mono exp}
 //	- \... escapes
 //	- #{const exp}
 //	- ${static prop}
@@ -12,8 +13,10 @@ import {
 	throw_tattr_unended_prop_args, throw_tattr_unexpected_token
 } from "./errors.ts";
 import type { WalkOptions } from "./walker.ts";
+import type { AnyComp } from '../core/comp.ts';
 import { toFun } from "./walkInterface.ts";
 import type { Fn } from "./walkInterface.ts";
+import type { fn } from "../../common/types.ts";
 
 const nextTokenExp = /[\\@#$]/;
 
@@ -28,11 +31,24 @@ export interface TAttrProp {
 	prop: string,
 	static: boolean
 }
-export type TAttrParts = (string | TAttrProp | TAttrExp)[];
+export type TAttrPart = string | TAttrProp | TAttrExp;
+export type TAttr = Fn | TAttrPart[];
 
-export function parseTAttr (source: string, attr: string, options: WalkOptions, globalArgs: string[]) {
+export function parseTAttr (source: string, attr: string, options: WalkOptions, globalArgs: string[]): TAttr {
+	//case mono exp
+	if (source[0] === '{') {
+		if (source.at(-1) !== '}') throw_tattr_uneded_exp('', 0, attr);
+
+		let exp = source.slice(1, -1);
+		exp = exp.includes(';') ? exp : 'return ' + exp;
+
+		//if const exp, return as fn
+		if (globalArgs.length === 2) return new Function(exp) as fn;
+		return toFun(options, globalArgs, exp)
+	}
+
 	let ind = 0;
-	let curText: string[] = [], parts: TAttrParts = [];
+	let curText: string[] = [], parts: TAttrPart[] = [];
 	while (ind < source.length) {
 		//locate next token
 		const nextTokenInd = source.slice(ind).match(nextTokenExp)?.index;
@@ -212,4 +228,19 @@ export function parseTAttr (source: string, attr: string, options: WalkOptions, 
 		parts.push({ isExp: true, fn, dynamics: dynamicProps, statics: staticProps });
 		ind = expEnd + (isDoubleBracket ? 2 : 1);
 	}
+}
+
+export function evalTAttr (attr: TAttr, comp: AnyComp, el: HTMLElement, props: any[]) {
+	if (Array.isArray(attr)) return attr.map(part => {
+		//string
+		if (typeof(part) === 'string') return part;
+		//prop
+		if (!part.isExp) return comp.store.get(part.prop);
+		//exp
+		return (part.fn as fn)(comp, el, 
+		  ...props.concat(part.statics.concat(part.dynamics).map(prop => comp.store.get(prop)))
+		);
+	}).join('');
+
+	else return (attr as fn)(comp, el, ...props);
 }
