@@ -47,7 +47,7 @@ export class LiteNode {
 			if (child instanceof LiteNode) child.parent = this;
 		return this;
 	}
-	prepent (...children: (LiteNode | string)[]): this {
+	prepend (...children: (LiteNode | string)[]): this {
 		this.children.unshift(...children);
 		for (const child of children) 
 			if (child instanceof LiteNode) child.parent = this;

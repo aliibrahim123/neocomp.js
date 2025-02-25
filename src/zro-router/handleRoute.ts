@@ -62,18 +62,19 @@ function handleUpdate (router: ZRORouter, options: Options, url: URL, page: Docu
 
 	//replace body
 	document.body.replaceChildren(...page.body.childNodes);
-
-	router.onAftrerUpdate.trigger(router, url);
-
+	
 	//scroll to hash
 	if (url.hash) { if (options.scrollToHash) 
 		defer(() => query(url.hash)[0]?.scrollIntoView?.(options.scrollToHash))
 	}
 	//else scroll to top
 	else defer(() => scroll(0, 0))
-
+	
 	//attach to dom
 	router.attachToDom();
+
+	//trigger after update event
+	router.onAfterUpdate.trigger(router, url);
 }
 
 function onError (router: ZRORouter, options: Options, url: URL, error: Response | Error) {

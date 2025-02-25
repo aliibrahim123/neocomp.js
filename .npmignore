@@ -2,3 +2,5 @@ node_modules/
 site/
 test/
 scripts/
+docs/
+readme.md

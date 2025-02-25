@@ -30,7 +30,7 @@ export class ZRORouter {
 	onBeforeFetch = new Event<(router: this, url: URL, set: (url: URL) => void) => void>();
 	onAfterFetch = new Event<(router: this, url: URL, respone: Response) => void>();
 	onBeforeUpdate = new Event<(router: this, url: URL, page: Document) => void>();
-	onAftrerUpdate = new Event<(router: this, url: URL) => void>();
+	onAfterUpdate = new Event<(router: this, url: URL) => void>();
 	onError = new Event<(router: this, url: URL, error: Error | Response) => void>();
 
 	lastURL= new URL(location.href);
@@ -70,7 +70,9 @@ export class ZRORouter {
 
 		//handle intercepting route
 		var interceptResult: URL | false | undefined;
-		this.onRoute.trigger(this, fullURL, (result) => interceptResult = result);
+		this.onRoute.trigger(this, fullURL, 
+		  (result) => interceptResult = interceptResult === false ? false : result
+		);
 		if (interceptResult === false) return;
 		if (interceptResult instanceof URL) fullURL = interceptResult as URL;
 

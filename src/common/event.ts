@@ -30,7 +30,7 @@ export class Event <Listener extends fn> {
 	
 	async awaitForIt (): Promise<Parameters<Listener>> {
 		return new Promise(res => 
-			this.on(((...args: any[]) => res(args as any)) as Listener)
+			this.once(((...args: any[]) => res(args as any)) as Listener)
 		)
 	}
 }
@@ -55,15 +55,12 @@ export class OTIEvent <Listener extends fn> {
 		for (const listener of this.#listeners) listener(...args);
 		this.#inited = true;
 		this.#args = args;
+		this.#listeners = [];
 		return this
 	}
 
 	once (listener: Listener) {
-		const fn = (...args: any[]) => {
-			listener(...args);
-			this.off(fn as Listener);
-		}
-		this.on(fn as Listener);
+		this.on(listener);
 		return this;
 	}
 
