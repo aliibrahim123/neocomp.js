@@ -18,7 +18,7 @@ import type { Linkable } from "./linkable.ts";
 import { addToIdMap, registry, removeFromIdMap, removeRoot } from "./registry.ts";
 import type { BaseMap } from "./typemap.ts";
 
-export type Status = 'preInit' | 'coreInit' | 'initDom' | 'inited' | 'removing' | 'removed';
+export type Status = 'preInit' | 'coreInit' | 'domInit' | 'inited' | 'removing' | 'removed';
 
 export type CompOptions = {
 	initMode: 'minimal' | 'standared' | 'fullControl';
@@ -33,8 +33,10 @@ export const attachedComp = Symbol('neocomp:attached-comp');
 export class Component <TMap extends BaseMap> implements Linkable {
 	typemap = undefined as any as TMap;
 
-	constructor (el?: HTMLElement) {
+	#passedArgs: Partial<TMap['args']>;
+	constructor (el?: HTMLElement, args: Partial<TMap['args']> = {}) {
 		this.options = (this.constructor as typeof Component).defaults;
+		this.#passedArgs = args;
 		this.el = el as HTMLElement;
 		this.id = el?.id || this.options.defaultId();
 
@@ -69,14 +71,14 @@ export class Component <TMap extends BaseMap> implements Linkable {
 	}
 	initDom () {
 		if (this.status !== 'coreInit') 
-			throw_incorrect_init_sequence(this, 'initDom', this.status);
-		this.status = 'initDom';
+			throw_incorrect_init_sequence(this, 'domInit', this.status);
+		this.status = 'domInit';
 
 		this.view.initDom();
 		this.onDomInit.trigger(this);
 	}
 	fireInit () {
-		if (this.status !== 'initDom') 
+		if (this.status !== 'domInit') 
 			throw_incorrect_init_sequence(this, 'inited', this.status);
 		this.status = 'inited';
 
@@ -84,7 +86,7 @@ export class Component <TMap extends BaseMap> implements Linkable {
 		this.onInit.trigger(this);
 		if (!this.options.anonymous) {
 			addToIdMap(this.id, this);
-			onNew.trigger(this);
+			onNew.trigger(this as any);
 		}
 	}
 	onDomInit = new OTIEvent<(comp: this) => void>();
@@ -92,6 +94,13 @@ export class Component <TMap extends BaseMap> implements Linkable {
 	onInit = new OTIEvent<(comp: this) => void>();
 	init () {
 		throw throw_no_initFn(this);
+	}
+	args (defaults: TMap['args']): TMap['args'] {
+		const argsEl = (this.el as any)?.[passedArgs] || {};
+		const argsConstructor = this.#passedArgs;
+		if (this.el) delete (this.el as any)[passedArgs];
+		this.#passedArgs = undefined as any;
+		return { ...defaults, ...argsConstructor, ...argsEl }
 	}
 
 	store: Store<TMap['props']> = undefined as any;
@@ -113,12 +122,6 @@ export class Component <TMap extends BaseMap> implements Linkable {
 	el: HTMLElement;
 	refs: { [K in keyof TMap['refs']]: TMap['refs'][K][] } = undefined as any;
 	query (selector: string) { return this.view.query(selector) }
-	args <T extends Record<string, any>> (defaults: T): T {
-		const args = (this.el as any)?.[passedArgs];
-		if (!args) return defaults;
-		delete (this.el as any)[passedArgs];
-		return { ...defaults, ...args }
-	}
 
 	onLink = new Event<(comp: this, linked: Linkable) => void>();
 	onUnlink = new Event<(comp: this, unlinked: Linkable) => void>();
@@ -143,12 +146,12 @@ export class Component <TMap extends BaseMap> implements Linkable {
 		return this.#links.has(other);
 	}
 
-	onChildAdded = new Event<(comp: this, child: AnyComp) => void>();
-	onAddedToParent = new Event<(comp: this, parent: AnyComp) => void>();
-	onUnlinkedFromParent = new Event<(comp: this, parent: AnyComp) => void>();
-	onChildUnlink = new Event<(comp: this, child: AnyComp) => void>();
-	parent?: AnyComp;
-	children: AnyComp[] = [];
+	onChildAdded = new Event<(comp: this, child: PureComp) => void>();
+	onAddedToParent = new Event<(comp: this, parent: PureComp) => void>();
+	onUnlinkedFromParent = new Event<(comp: this, parent: PureComp) => void>();
+	onChildUnlink = new Event<(comp: this, child: PureComp) => void>();
+	parent?: PureComp;
+	children: PureComp[] = [];
 	childmap: TMap['childmap'] = {};
 	addChild (child: AnyComp, ind = -1) {
 		//add
@@ -209,20 +212,20 @@ export class Component <TMap extends BaseMap> implements Linkable {
 		//globally
 		if (!this.options.anonymous) {
 			removeFromIdMap(this.id);
-			onRemove.trigger(this);
+			onRemove.trigger(this as AnyComp);
 		}
 
 		//root
-		if (registry.root === this) removeRoot();
+		if (registry.root === this as AnyComp) removeRoot();
 		
 		this.status = 'removed';
 	}
 }
 
-export type PureComp = Component<BaseMap>;
+export type PureComp = Pick<Component<BaseMap>, keyof Component<BaseMap>>;
 export type AnyComp = {
-	[k in keyof Component<any>]: 
-	  Component<any>[k] extends Event<fn> ? Event<fn> :
-	  Component<any>[k] extends OTIEvent<fn> ? OTIEvent<fn> :
-	  Component<any>[k]
+  [k in keyof Component<any>]: 
+	Component<any>[k] extends Event<fn> ? Event<fn> :
+	Component<any>[k] extends OTIEvent<fn> ? OTIEvent<fn> :
+	Component<any>[k]
 };

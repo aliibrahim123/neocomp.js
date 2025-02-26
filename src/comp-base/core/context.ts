@@ -6,8 +6,9 @@ import { unlink, type Linkable } from "./linkable.ts";
 
 export class Context <Props extends Record<string, any>> implements Linkable {
 	store: Store<Props>;
-	constructor (storeOptions: Partial<StoreOptions> = {}) {
+	constructor (props: Partial<Props> = {}, storeOptions: Partial<StoreOptions> = {}) {
 		this.store = new Store(this, storeOptions);
+		this.store.setMultiple(props);
 	}
 
 	get <P extends keyof Props & string> (name: P | symbol) {
@@ -24,8 +25,8 @@ export class Context <Props extends Record<string, any>> implements Linkable {
 	}
 	effect (
 		effectedBy: ((keyof Props & string) | symbol)[], handler: () => void,
-		effect: ((keyof Props & string) | symbol)[] = []
-	) { this.store.addEffect(effectedBy, handler, effect) }
+		effect: ((keyof Props & string) | symbol)[] = [], from?: Linkable
+	) { this.store.addEffect(effectedBy, handler, effect, from) }
 
 	onLink = new Event<(context: this, linked: Linkable) => void>();
 	onUnlink = new Event<(context: this, unlinked: Linkable) => void>();

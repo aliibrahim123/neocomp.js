@@ -30,7 +30,9 @@ function handleTAttr (
 	node: Node, attr: string, value: string, options: WalkOptions, actions: Action[]
 ) {
 	const paranInd = attr.indexOf('('), hasProps = paranInd !== -1;
-	const name = attr.slice(1, hasProps ? paranInd : attr.length);
+	let name = attr.slice(1, hasProps ? paranInd : attr.length);
+	if (name.startsWith('prop:') || name.startsWith('arg:')) 
+		name = decodeAttrArg(name, options);
 
 	const staticProps: string[] = [], dynamicProps: string[] = [];
 	if (hasProps) {

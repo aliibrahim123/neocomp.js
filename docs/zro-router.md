@@ -1,4 +1,4 @@
-# ZRO Router
+# `zro-router` module
 a lightweight router that implements zero refresh optimization.
 
 in simple terms, it intercepts the navigate events and updates the page without refreshing, it
@@ -12,6 +12,14 @@ while keeping the smaller initial load latency.
 
 # `ZRORouter` class
 the class of the router.
+
+### example
+```typescript
+import { ZRORouter } from '@neocomp/full/zro-router/index.ts';
+
+const router = new ZRORouter();
+router.attachToDom();
+```
 
 ## constructor and options
 ```typescript
@@ -49,9 +57,9 @@ all the anchor elements are intercepted.
 - `scrollToHash`: scroll to hash like what browsers do, can be `false` to disable it or 
 `ScrollIntoViewOptions` to control the scrolling.
 - `hashIsSeparateEntry`: when navigating to new url with the same path of the current page
-and having different hash, wether to add it as new entry to history.
+and having different hash, whether to add it as new entry to history.
 - `noHashScrollToTop`: when navigating to url with the same path of the current page and having
-no hash, wether to scroll to top or not.
+no hash, whether to scroll to top or not.
 
 ### handlers
 - `fetcher`: a function that fetch the requested url, can return any `Error`, if `undefined`, 
@@ -71,13 +79,13 @@ export class ZRORouter {
 	onRoute: Event<(router: ZRORouter, url: URL, set: (url: URL | false) => void) => void>;
 }
 ```
-`go` navigate to a given url.
+`go`: navigate to a given url.
 
-`back` and `forward` navigate to the respectfull entry in the history.
+`back`: and `forward` navigate to the respectfull entry in the history.
 
-`lastURL` stores the last url navigated to, updated only after complete update.
+`lastURL`: stores the last url navigated to, updated only after complete update.
 
-`onRoute` an event triggered when routing, pass a function called `set` that can be called to
+`onRoute`: an event triggered when routing, pass a function called `set` that can be called to
 change the url or to reject the request if called with `false`, `false` win then last one.
 
 ## attaching to DOM
@@ -87,7 +95,7 @@ export class ZRORouter {
 	onAttach: Event<(router: ZRORouter) => void>;
 }
 ```
-`attachToDom` attach the router to DOM. 
+`attachToDom`: attach the router to DOM. 
 
 by default it adds click handlers to anchor elements `<a>`, but user can add custom logic by
 listening to `onAttach` event.
@@ -102,14 +110,14 @@ export class ZRORouter {
 	onError: Event<(router: ZRORouter, url: URL, error: Error | Response) => void>;
 }
 ```
-`onBeforeFetch` is an event triggered before fetching the new page, pass a function called `set`
-that can be called to change the url of the request.
+`onBeforeFetch`: is an event triggered before fetching the new page, pass a function called 
+`set` that can be called to change the url of the request.
 
-`onAfterFetch` is an event triggered after fetching the new page, passed with the response.
+`onAfterFetch`: is an event triggered after fetching the new page, passed with the response.
 
-`onBeforeUpdate` is event triggered before updating the page, passed with the fetched page 
+`onBeforeUpdate`: is event triggered before updating the page, passed with the fetched page 
 document.
 
-`onAfterUpdate` is event triggered after updating the page.
+`onAfterUpdate`: is event triggered after updating the page.
 
-`onError` is event triggered when encountering an error during update.
+`onError`: is event triggered when encountering an error during update.

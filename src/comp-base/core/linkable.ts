@@ -46,6 +46,3 @@ export class Resource<T> implements Linkable {
 		for (const link of this.#links) unlink(this, link);
 	}
 }
-export function $resource <T> (value: T): Resource<T> {
-	return new Resource(value)
-}

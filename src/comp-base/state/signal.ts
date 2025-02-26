@@ -17,8 +17,8 @@ export class Signal <T> {
 	}
 	get prop () { return this.#prop }
 	get store () { return this.#store }
-	get asReadOnly () { return new ReadOnlySignal(this.#store, this.#prop) }
-	get asWriteOnly () { return new WriteOnlySignal(this.#store, this.#prop) }
+	get asReadOnly () { return new ReadOnlySignal<T>(this.#store, this.#prop) }
+	get asWriteOnly () { return new WriteOnlySignal<T>(this.#store, this.#prop) }
 }
 
 export class ReadOnlySignal <T> {

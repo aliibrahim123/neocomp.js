@@ -27,7 +27,7 @@ export class LiteNode {
 	meta: Map<string, any>;
 }
 ```
-`meta` is a `Map` of user defined meta data.
+`meta`: is a `Map` of user defined meta data.
 
 ### child and sibling related properties
 ```typescript
@@ -37,9 +37,9 @@ export class LiteNode {
 	get prevSibling (): LiteNode | string | undefined;
 }
 ```
-`childIndex` returns the index of the node in its parent.
+`childIndex`: returns the index of the node in its parent.
 
-`nextSibling` and `prevSibling` returns the respectful sibling of the node.
+`nextSibling` and `prevSibling`: returns the respectful sibling of the node.
 
 ### child insertion methods
 ```typescript
@@ -49,11 +49,11 @@ export class LiteNode {
 	insertAt (ind: number, ...children: (LiteNode | string)[]): LiteNode;
 }
 ```
-`append` insert the passed children at the bottom.
+`append`: insert the passed children at the bottom.
 
-`prepend` insert the passed children at the top.
+`prepend`: insert the passed children at the top.
 
-`insertAt` insert the passend children at the specified index, index can be negative relative 
+`insertAt`: insert the passend children at the specified index, index can be negative relative 
 to the last child.
 
 ### siblings insertion methods
@@ -63,9 +63,9 @@ export class LiteNode {
 	after (...newSiblings: (LiteNode | string)[]): LiteNode;
 }
 ```
-`before` insert the given siblings before the node.
+`before`: insert the given siblings before the node.
 
-`after` insert the given siblings after the node.
+`after`: insert the given siblings after the node.
 
 **note:** this functions fail silently if there is no parent.
 
@@ -76,9 +76,9 @@ export class LiteNode {
 	replaceWith (node: LiteNode | string): LiteNode;
 }
 ```
-`remove` remove the node from parent.
+`remove`: remove the node from parent.
 
-`replaceWith` replace the node in parent with the given node.
+`replaceWith`: replace the node in parent with the given node.
 
 **note:** this functions fail silently if there is no parent.
 
@@ -90,13 +90,13 @@ export class LiteNode {
 	removeChildren (): LiteNode
 }
 ```
-`removeChild` remove the child at the given index.
+`removeChild`: remove the child at the given index.
 
-`replaceChild` replace the child at the given index with the given child.
+`replaceChild`: replace the child at the given index with the given child.
 
 **note:** this functions fail silently if there is no child at index.
 
-`removeChildren` remove all childrens from the node.
+`removeChildren`: remove all childrens from the node.
 
 ## nodes convertion functions
 ```typescript
@@ -105,6 +105,6 @@ export function nativeToLite (native: HTMLElement): LiteNode;
 ```
 this functions convert between `HTMLElement` and `LiteNode`.
 
-`liteToNative` convert a `LiteNode` to `HTMLElement`.
+`liteToNative`: convert a `LiteNode` to `HTMLElement`.
 
-`nativeToLite` convert a `HTMLElement` to `LiteNode`.
+`nativeToLite`: convert a `HTMLElement` to `LiteNode`.

@@ -27,7 +27,7 @@ export class UpdateDispatcher {
 		};
 
 		this.#base = store.base;
-		store.onChange.on((store, props) => this.update(props));
+		store.onChange.on((store, props) => this.update(props.map(prop => prop.symbol)));
 		this.#base.onUnlink.on((_, linked) => this.remove(unit => unit.from === linked));
 	}
 	options: UDispatcherOptions;
@@ -45,18 +45,18 @@ export class UpdateDispatcher {
 			else this.#records.set(prop, [unit]);
 	}
 
-	update (props: Prop<any>[]) {
+	update (props: symbol[]) {
 		if (!this.options.balance) {
 			for (const prop of props) {
-				const units = this.#records.get(prop.symbol);
+				const units = this.#records.get(prop);
 				if (units) for (const unit of units) unit.handler();
 			}
 			return;
 		}
 		//add props to queue
 		for (const prop of props) {
-			if (!this.#records.has(prop.symbol)) continue;
-			this.#addProp(prop.symbol, true);
+			if (!this.#records.has(prop)) continue;
+			this.#addProp(prop, true);
 		}
 
 		//if not dispatching, start it

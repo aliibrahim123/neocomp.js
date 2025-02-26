@@ -14,7 +14,7 @@ import { UpdateDispatcher, type EffectUnit, type UDispatcherOptions } from "./up
 export interface StoreOptions {
 	static: boolean;
 	addUndefined: boolean;
-	basePropObject: Prop<any>;
+	baseProp: Prop<any>;
 	updateOnDefine: boolean;
 	updateOnSet: boolean;
 	updateDispatcher: Partial<UDispatcherOptions>
@@ -51,7 +51,7 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 		updateOnDefine: true,
 		updateOnSet: true,
 		updateDispatcher: {},
-		basePropObject: {
+		baseProp: {
 			name: '',
 			symbol: Symbol('neocomp:prop(UNDEFINED)'),
 			value: undefined,
@@ -81,7 +81,7 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 
 		//define prop
 		const prop: Prop<Props[P]> = {
-			...this.options.basePropObject,
+			...this.options.baseProp,
 			name, symbol, isStatic: this.options.static,
 			...propObj,
 		}
@@ -252,5 +252,5 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 	*[Symbol.iterator] () {
 		for (const [_, prop] of this.#propsBySymbol) yield prop;
 	}
-	get propsToBeAdded () { return this.#propsToBeAdded }
+	get propsToBeAdded () { return Array.from(this.#propsToBeAdded.keys()) }
 }
