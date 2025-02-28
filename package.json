@@ -1,6 +1,6 @@
 {
 	"name": "@neocomp/full",
-	"version": "0.2.5",
+	"version": "0.2.6",
 	"description": "new generation of reactivity and speed",
 	"author": "aliibrahim123",
 	"scripts": {
@@ -14,13 +14,13 @@
 		"./dist/": "./dist/",
 		"./": "./src/"
 	},
-	"homepage": "https://aliibrahim123.github.io/neoproto.js/",
+	"homepage": "https://aliibrahim123.github.io/neocomp.js/",
 	"bugs": {
-		"url": "https://github.com/aliibrahim123/neoproto.js/issues"
+		"url": "https://github.com/aliibrahim123/neocomp.js/issues"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/aliibrahim123/neoproto.js.git"
+		"url": "https://github.com/aliibrahim123/neocomp.js.git"
 	},
 	"license": "MIT",
 	"devDependencies": {
