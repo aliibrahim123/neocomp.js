@@ -56,8 +56,7 @@ export function generateFromLite (
 }
 export function generateFromString (
 	source: string, plugins: Plugin[] = [], walkOptions: Partial<WalkOptions> = {}
-)
-  : Record<string, FileContent> {
+): Record<string, FileContent> {
 	//get parse options
 	const parseOptions = { ...defaultParseOptions };
 	for (const plugin of plugins) if (plugin.onSource) plugin.onSource(source, parseOptions);
@@ -93,12 +92,14 @@ export function generateFromString (
 
 	return content
 }
-export function generateFromDom (root: HTMLElement, plugins: Plugin[] = []): Template {
+export function generateFromDom (
+  root: HTMLElement, plugins: Plugin[] = [], walkOptions: Partial<WalkOptions> = {}
+): Template {
 	//trigger onDom
 	for (const plugin of plugins) if (plugin.onDom) plugin.onDom(root);
 	
 	//convert to lite
 	const liteRoot = nativeToLite(root);
 	
-	return generateFromLite(liteRoot, plugins);
+	return generateFromLite(liteRoot, plugins, walkOptions);
 }

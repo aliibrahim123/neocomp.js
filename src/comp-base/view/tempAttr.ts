@@ -188,7 +188,7 @@ export function parseTAttr (source: string, attr: string, options: WalkOptions, 
 		if (nextBracket === -1) throw_tattr_unended_prop_args(startInd, attr);
 		const props = source.slice(startInd + 2, nextBracket).split(',').map(prop => prop.trim());
 
-		//locate exp bourders
+		//locate exp borders
 		ind = nextBracket + 1;
 		if (source[ind] !== '{') throw_tattr_unexpected_token(source[ind], ind, attr);
 		const isDoubleBracket = source[ind + 1] === '{';
@@ -212,7 +212,7 @@ export function parseTAttr (source: string, attr: string, options: WalkOptions, 
 			if (prop[0] === '$') staticProps.push(prop.slice(1));
 			else dynamicProps.push(prop);
 
-		//locate exp bourders
+		//locate exp borders
 		ind = nextBracket + 1;
 		if (source[ind] !== '{') throw_tattr_unexpected_token(source[ind], ind, attr);
 		const isDoubleBracket = source[ind + 1] === '{';

@@ -12,7 +12,7 @@ import { addRefAttr } from "./ref.ts";
 
 type Handler = (
 	node: Node, attr: string, value: string, actions: Action[], options: WalkOptions
-) => any;
+) => void;
 const registry = new Map<string, Handler>();
 
 export function addActionAttr (name: string, handler: Handler) {

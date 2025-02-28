@@ -209,6 +209,9 @@ export class Component <TMap extends BaseMap> implements Linkable {
 		}
 		this.children = [];
 
+		//dom
+		delete (this.el as any)[attachedComp];
+
 		//globally
 		if (!this.options.anonymous) {
 			removeFromIdMap(this.id);

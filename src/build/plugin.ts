@@ -61,7 +61,7 @@ export function neoTempPlugin (options: Partial<Options> = {}): VitePlugin {
 			server.ws.send({
 				type: 'full-reload',
 				path: id
-			  });
+			});
 		},
 	}
 }

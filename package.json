@@ -1,6 +1,6 @@
 {
 	"name": "@neocomp/full",
-	"version": "0.2.3",
+	"version": "0.2.4",
 	"description": "new generation of reactivity and speed",
 	"author": "aliibrahim123",
 	"scripts": {

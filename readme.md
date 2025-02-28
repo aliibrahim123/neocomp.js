@@ -28,6 +28,10 @@ this is the index of the documentation.
     - [bindings](./docs/comp-base.state/binding.md)
     - [`Store`](./docs/comp-base.state/store.md)
   - **view:**
+    - [`View`](./docs/comp-base.view/view.md)
+    - [template api](./docs/comp-base.view/template-api.md)
+    - [template reference](./docs/comp-base.view/template.md)
+- [vite plugin](./docs/plugin.md)
 
 ---- 
 thanks for selecting neocomp as your base framework, if you noticed issues or have ideas dont be

@@ -267,10 +267,12 @@ every `Component` has a `View` responsible for managing the DOM.
 can be the element passed to the component on creation, else an element created by 
 `view.options.defaultEl`
 
-`refs`: the references to elements created by [`@ref`](../comp-base.view/template.md#ref-action)
+`refs`: the references to elements created by [`@ref`](../comp-base.view/template.md#ref)
 action attribute.
 
-`query`: return all elements in top elements that match the given selector.
+`query`: return all elements in the top element that match the given selector.
+
+`attachedComp`: a symbol added to top element where its value refers to the attached component.
 
 ## linking
 ```typescript

@@ -11,4 +11,4 @@ export const onRootAdd = new Event<(comp: PureComp) => void>();
 export const onRootRemove = new Event<(comp: PureComp) => void>();
 
 export const onConvertTemplate = new Event<(comp: PureComp, template: Template, el: HTMLElement) => void>();
-export const onAddTemplate = new Event<(template: Template) => void>();
+export const onAddTemplate = new Event<(name: string, template: Template) => void>();

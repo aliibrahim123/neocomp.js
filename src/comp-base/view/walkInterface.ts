@@ -2,7 +2,6 @@
 import { LiteNode } from "../../litedom/node.ts";
 import type { WalkOptions } from "./walker.ts";
 
-
 export type Node = HTMLElement | LiteNode;
 
 export function getTarget (node: Node) {

@@ -1,5 +1,6 @@
 import { LiteNode } from "../../litedom/core.ts";
 import type { Action } from "../action/actions.ts";
+import { onAddTemplate } from "../core/globalEvents.ts";
 import { throw_adding_existing_template, throw_getting_undefined_template } from "./errors.ts";
 
 export interface Template {
@@ -12,6 +13,7 @@ templateRegistry.set('empty', { node: new LiteNode('div', {}, [], { 'neocomp:id'
 
 export function add (name: string, template: Template) {
 	if (templateRegistry.has(name)) throw_adding_existing_template(name);
+	onAddTemplate.trigger(name, template);
 	templateRegistry.set(name, template);
 }
 export function get (name: string) {
