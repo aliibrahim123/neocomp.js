@@ -22,8 +22,9 @@ export function from (
 	return [];
 }
 
-export function query (selector: string, root: Element | Document = document) {
-	return Array.from(root.querySelectorAll(selector)) as HTMLElement[]
+export function query <T extends HTMLElement = HTMLElement> 
+  (selector: string, root: Element | Document = document) {
+	return Array.from(root.querySelectorAll(selector)) as T[]
 }
 
 export type CreateParam<E extends keyof TypeMap> = 

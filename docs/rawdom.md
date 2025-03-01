@@ -20,9 +20,11 @@ normalize input into `HTMLElement[]`, optionaly throws.
 
 ### query()
 ```typescript
-export function query (selector: string, root: Element | Document = document): HTMLElement[];
+export function query <T extends HTMLElement = HTMLElement> 
+  (selector: string, root: Element | Document = document): T[];
 ```
-return all the elements in root that matches the specified css selector.
+return all the elements in root that matches the specified css selector.   
+can take an optional type parameter `T` that is the returned `HTMLElement` type.
 
 ### construct() and constructOne()
 ```typescript
