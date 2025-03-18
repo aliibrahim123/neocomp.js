@@ -57,18 +57,16 @@ function handleTAttr (
 
 	//parse attr
 	const template = parseTAttr(value, attr, options, ['comp', 'el'].concat(staticProps, dynamicProps));
-
+	
 	//case const and doesnt need runtime handling, set it directly
 	const maybeConst = !(
-	  name.startsWith('style:') || name.startsWith('prop:') || 
-	  name.startsWith('class:') || name.startsWith('arg:')
+		name.startsWith('style:') || name.startsWith('prop:') || 
+		name.startsWith('class:') || name.startsWith('arg:')
 	);
+
 	//case parted template
 	if (maybeConst && Array.isArray(template) && template.every(part => typeof(part) === 'string'))
 		setAttr(node, name, template.join(''));
-	//case exp template
-	else if (maybeConst && !Array.isArray(template) && staticProps.length + dynamicProps.length === 0) 
-		setAttr(node, name, (template as fn)());
 
 	//else add action
 	else actions.push({

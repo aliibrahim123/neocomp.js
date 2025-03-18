@@ -42,8 +42,6 @@ export function parseTAttr (source: string, attr: string, options: WalkOptions, 
 		let exp = source.slice(1, -1);
 		exp = exp.includes(';') ? exp : 'return ' + exp;
 
-		//if const exp, return as fn
-		if (globalArgs.length === 2) return new Function(exp) as fn;
 		return toFun(options, globalArgs, exp)
 	}
 
