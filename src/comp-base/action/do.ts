@@ -8,8 +8,8 @@ export interface DoAction extends Action {
 }
 
 export function addDoAction () {
-	addAction('do', (comp, el, _action) => {
+	addAction('do', (comp, el, _action, context) => {
 		const action = _action as DoAction;
-		(action.fn as fn)(comp, el);
+		(action.fn as fn)(comp, el, context);
 	})
 }

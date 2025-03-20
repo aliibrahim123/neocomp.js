@@ -9,9 +9,9 @@ export interface OnAction extends Action {
 }
 
 export function addOnAction () {
-	addAction('on', (comp, el, _action) => {
+	addAction('on', (comp, el, _action, context) => {
 		const action = _action as OnAction;
 		for (const event of action.events) 
-			el.addEventListener(event, (evt) => (action.fn as fn)(comp, el, evt));
+			el.addEventListener(event, (evt) => (action.fn as fn)(comp, el, context, evt));
 	})
 }

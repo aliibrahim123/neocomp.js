@@ -15,13 +15,10 @@ export function addInOutActions () {
 	) {
 	  addAction(name, (comp, el, _action) => {
 		const action = _action as InOutAction;
-		//defer
-		setTimeout(() => {
-			const child = (el as any)[attachedComp] as PureComp;
-			if (!child) throw_no_attached_comp(comp, name);
-			//wait to init
-			child.onInit.on((child) => fn(action, comp, child)); 
-		}, 0);
+		const child = (el as any)[attachedComp] as PureComp;
+		if (!child) throw_no_attached_comp(comp, name);
+		//wait to init
+		child.onInit.on((child) => fn(action, comp, child)); 
 	  });
 	}
 

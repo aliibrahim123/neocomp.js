@@ -108,9 +108,9 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 		return prop.getter ? prop.getter.call(prop) : prop.value
 	}
 	getProp <P extends keyof Props & string> (name: P | symbol): Prop<Props[P]> {
-		return typeof(name) === 'string' ? 
+		return (typeof(name) === 'string' ? 
 			this.#propsByName.get(name) : 
-			this.#propsBySymbol.get(name) as any;
+			this.#propsBySymbol.get(name)) as Prop<Props[P]>;
 	}
 	getSymbolFor (name: keyof Props & string): symbol {
 		//case added before

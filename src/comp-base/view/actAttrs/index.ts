@@ -4,6 +4,7 @@ import type { Action } from "../../action/actions.ts";
 import { throw_adding_existing_act_attr, throw_getting_undefined_act_attr } from "../errors.ts";
 import type { WalkOptions } from "../walker.ts";
 import type { Node } from "../walkInterface.ts";
+import { addChunkAttr } from "./chunk.ts";
 import { addDoAttr } from "./do.ts";
 import { addEffectAttr } from "./effect.ts";
 import { addInOutAttrs } from "./inout.ts";
@@ -11,7 +12,8 @@ import { addOnAttr } from "./on.ts";
 import { addRefAttr } from "./ref.ts";
 
 type Handler = (
-	node: Node, attr: string, value: string, actions: Action[], options: WalkOptions
+	node: Node, attr: string, value: string, 
+	addAction: (act: Action, defer?: boolean) => void, options: WalkOptions
 ) => void;
 const registry = new Map<string, Handler>();
 
@@ -30,3 +32,4 @@ addDoAttr();
 addEffectAttr();
 addOnAttr();
 addInOutAttrs();
+addChunkAttr();

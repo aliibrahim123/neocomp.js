@@ -3,6 +3,7 @@
 import { LiteNode } from "../../litedom/node.ts";
 import type { AnyComp, PureComp } from "../core/comp.ts";
 import { addAttrAction } from "./attr.ts";
+import { addChunkAction } from "./chunk.ts";
 import { addCompAction } from "./comp.ts";
 import { addDoAction } from "./do.ts";
 import { addEffectAction } from "./effect.ts";
@@ -17,7 +18,9 @@ export interface Action {
 	[unkown: string]: any
 }
 
-type Handler = (comp: PureComp, el: HTMLElement, action: Action) => void;
+type Handler = (
+  comp: PureComp, el: HTMLElement, action: Action, context: Record<string, any>
+) => void;
 const registry = new Map<string, Handler>();
 
 export function addAction (name: string, handler: Handler) {
@@ -32,25 +35,26 @@ addDoAction();
 addEffectAction();
 addOnAction();
 addInOutActions();
+addChunkAction();
 
-function doAction (comp: AnyComp, el: HTMLElement, action: Action) {
+function doAction (comp: AnyComp, el: HTMLElement, action: Action, context: Record<string, any>) {
 	const handler = registry.get(action.type);
 	if (!handler) return throw_undefined_action(action.type);
-	handler(comp as PureComp, el, action);
+	handler(comp as PureComp, el, action, context);
 }
-export function doActions (comp: AnyComp, actions: Action[]) {
-	for (const action of actions) doAction(comp, action.target as HTMLElement, action);
+export function doActions (comp: AnyComp, actions: Action[], context: Record<string, any>) {
+	for (const action of actions) doAction(comp, action.target as HTMLElement, action, context);
 }
 //works since actions are grouped in parent->child order
 export function doActionsOfTemplate (
-	comp: AnyComp, top: HTMLElement, liteTop: LiteNode, actions: Action[]
+	comp: AnyComp, top: HTMLElement, liteTop: LiteNode, actions: Action[], context: Record<string, any> = {}
 ) {
 	let ind = 0;
 
 	function walk (native: HTMLElement, lite: LiteNode) {
 		const curId = lite.meta.get('neocomp:id') as number;
 		while (actions[ind]?.target === curId) {
-			doAction(comp, native, actions[ind]);
+			doAction(comp, native, actions[ind], context);
 			ind++;
 		}
 		if (actions[ind] === undefined) return;

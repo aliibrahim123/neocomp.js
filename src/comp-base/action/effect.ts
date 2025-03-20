@@ -9,11 +9,11 @@ export interface EffectAction extends Action {
 }
 
 export function addEffectAction () {
-	addAction('effect', (comp, el, _action) => {
+	addAction('effect', (comp, el, _action, context) => {
 		const action = _action as EffectAction;
 		(action.fn as fn)(comp, el, ...action.props.map(prop => comp.store.get(prop)));
 		comp.store.addEffect(action.props, 
-			() => (action.fn as fn)(comp, el, ...action.props.map(prop => comp.store.get(prop))),
+			() => (action.fn as fn)(comp, el, context, ...action.props.map(prop => comp.store.get(prop))),
 		[], undefined, { el });
 	})
 }

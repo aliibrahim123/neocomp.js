@@ -67,6 +67,9 @@ export function throw_comp_this_multiple () {
 export function throw_on_attr_no_args () {
 	throw new CompError(`@on attr: no event arguments`);
 }
+export function throw_chunk_attr_no_name () {
+	throw new CompError(`@chunk attr: no chunk name`);
+}
 export function throw_attr_no_props (attr: string) {
 	throw new CompError(`@${attr} attr: no property arguments`);
 }

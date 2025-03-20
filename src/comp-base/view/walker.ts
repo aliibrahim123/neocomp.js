@@ -6,11 +6,11 @@ import type { Action } from "../action/actions.ts";
 import type { AttrAction } from "../action/attr.ts";
 import type { CompThisAction } from "../action/comp.ts";
 import { getActionAttr } from "./actAttrs/index.ts";
+import { parseTName } from "./actAttrs/utils.ts";
 import { throw_comp_this_multiple, throw_tattr_no_text, throw_tattr_unended_prop_args_in_name } from "./errors.ts";
 import { parseTAttr } from "./tempAttr.ts";
 import { 
-	hasAttr, attrsOf, decodeAttrArg, setAttr, removeAttr, getTarget, childrenOf,
-	getText
+	hasAttr, attrsOf, decodeAttrArg, setAttr, removeAttr, getTarget, childrenOf, getText,
 } from "./walkInterface.ts";
 import type { Node } from "./walkInterface.ts";
 
@@ -56,12 +56,13 @@ function handleTAttr (
 	}
 
 	//parse attr
-	const template = parseTAttr(value, attr, options, ['comp', 'el'].concat(staticProps, dynamicProps));
+	const template = 
+	  parseTAttr(value, attr, options, ['comp', 'el', 'context'].concat(staticProps, dynamicProps));
 	
 	//case const and doesnt need runtime handling, set it directly
 	const maybeConst = !(
-		name.startsWith('style:') || name.startsWith('prop:') || 
-		name.startsWith('class:') || name.startsWith('arg:')
+		name === 'html' || name === 'content' || name.startsWith('style:') || 
+		name.startsWith('prop:') || name.startsWith('class:') || name.startsWith('arg:')
 	);
 
 	//case parted template
@@ -84,8 +85,10 @@ function Walk (node: Node, actions: Action[], options: WalkOptions): Action[] {
 	if (hasAttr(node, 'is:static')) return actions;
 	//for debugging
 	(walk as any).lastVisited = node;
-	//defer it if found
+
+	//defer actions that relay on comp:this action
 	let compThisAct: undefined | CompThisAction;
+	const deferedActions: Action[] = [];
 
 	for (const [attr, value] of Array.from(attrsOf(node))) {
 		//case templated attr
@@ -93,20 +96,25 @@ function Walk (node: Node, actions: Action[], options: WalkOptions): Action[] {
 		//case @comp:this
 		else if (attr === '@comp:this') {
 			if (compThisAct) throw_comp_this_multiple();
-			compThisAct = { type: 'comp:this', target: getTarget(node), comp: value };
+			compThisAct = { type: 'comp:this', target: getTarget(node), comp: parseTName(value, options) };
 			removeAttr(node, attr);
 		}
 		//case act attr
 		else if (attr[0] === '@') {
 			const name = attr.split(/[:(\[]/, 1)[0].slice(1);
-			getActionAttr(name)(node, attr, value, actions, options);
+			getActionAttr(name)(node, attr, value, (action, defer = false) => {
+				if (defer) deferedActions.push(action);
+				else actions.push(action);
+			}, options);
 		}
 	}
 
+	//push comp:this if found then add defered actions
 	if (compThisAct) {
-		actions.push(compThisAct);
+		actions.push(compThisAct, ...deferedActions);
 		return actions;
 	}
+	actions.push(...deferedActions);
 
 	//walk children
 	for (const child of childrenOf(node)) Walk(child, actions, options);

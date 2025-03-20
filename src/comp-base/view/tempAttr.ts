@@ -228,17 +228,19 @@ export function parseTAttr (source: string, attr: string, options: WalkOptions, 
 	}
 }
 
-export function evalTAttr (attr: TAttr, comp: AnyComp, el: HTMLElement, props: any[]) {
+export function evalTAttr (
+  attr: TAttr, comp: AnyComp, el: HTMLElement, context: Record<string, any>, props: any[]
+) {
 	if (Array.isArray(attr)) return attr.map(part => {
 		//string
 		if (typeof(part) === 'string') return part;
 		//prop
 		if (!part.isExp) return comp.store.get(part.prop);
 		//exp
-		return (part.fn as fn)(comp, el, 
+		return (part.fn as fn)(comp, el, context, 
 		  ...props.concat(part.statics.concat(part.dynamics).map(prop => comp.store.get(prop)))
 		);
 	}).join('');
 
-	else return (attr as fn)(comp, el, ...props);
+	else return (attr as fn)(comp, el, context, ...props);
 }

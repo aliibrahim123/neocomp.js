@@ -23,7 +23,7 @@ export type Status = 'preInit' | 'coreInit' | 'domInit' | 'inited' | 'removing' 
 export type CompOptions = {
 	initMode: 'minimal' | 'standared' | 'fullControl';
 	anonymous: boolean;
-	defaultId: () => string;
+	defaultId: (comp: PureComp) => string;
 	removeChildren: boolean;
 	store: Partial<StoreOptions>;
 	view: Partial<ViewOptions>;
@@ -38,7 +38,8 @@ export class Component <TMap extends BaseMap> implements Linkable {
 		this.options = (this.constructor as typeof Component).defaults;
 		this.#passedArgs = args;
 		this.el = el as HTMLElement;
-		this.id = el?.id || this.options.defaultId();
+		this.name = el?.getAttribute('neo:name') || '';
+		this.id = el?.id || this.options.defaultId(this as AnyComp);
 
 		if (this.options.initMode !== 'fullControl') this.initCore();
 		if (this.options.initMode === 'minimal') {
@@ -50,11 +51,14 @@ export class Component <TMap extends BaseMap> implements Linkable {
 	}
 	
 	id: string = '';
+	name: string = '';
 	status: Status = 'preInit';
 	options: CompOptions;
 	static defaults: CompOptions = {
 		anonymous: false,
-		defaultId: () => '',
+		defaultId: (comp) => comp.name ? 
+			`${comp.name}-${Math.round(Math.random() * 1000)}` 
+			: String(Math.round(Math.random() * 1000000)),
 		removeChildren: true,
 		initMode: 'standared',
 		store: {},
@@ -118,7 +122,7 @@ export class Component <TMap extends BaseMap> implements Linkable {
 		effect: ((keyof TMap['props'] & string) | symbol)[] = []
 	) { this.store.addEffect(effectedBy, handler, effect) }
 
-	view: View<TMap['refs']> = undefined as any;
+	view: View<TMap['refs'], TMap['chunks']> = undefined as any;
 	el: HTMLElement;
 	refs: { [K in keyof TMap['refs']]: TMap['refs'][K][] } = undefined as any;
 	query (selector: string) { return this.view.query(selector) }
@@ -157,7 +161,7 @@ export class Component <TMap extends BaseMap> implements Linkable {
 		//add
 		if (ind === -1) this.children.push(child);
 		else this.children.splice(ind, 0, child);
-		(this.childmap[child.id] as any) = child;
+		if (child.name) (this.childmap[child.name] as any) = child;
 
 		//trigger events
 		this.onChildAdded.trigger(this, child);
@@ -177,7 +181,7 @@ export class Component <TMap extends BaseMap> implements Linkable {
 	unlinkChild (child: AnyComp) {
 		let childCount = this.children.length;
 		this.children = this.children.filter(_child => _child !== child);
-		(this.childmap[child.id] as any) = undefined;
+		if (child.name) (this.childmap[child.name] as any) = undefined;
 		if (childCount === this.children.length) throw_unlink_unowned_child(this, child);
 		this.onChildUnlink.trigger(this, child);
 	}

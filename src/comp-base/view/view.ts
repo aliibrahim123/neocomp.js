@@ -18,15 +18,20 @@ export interface ViewOptions {
 	insertMode: InsertMode;
 	into: string | undefined;
 	walkInPreContent: boolean;
+	chunks: Record<string, Template>,
 	removeEl: boolean;
 }
 
 export type InsertMode = 'asDefault' | 'replace' | 'atTop' | 'into' | 'atBottom' | 'none';
 
-export class View <Refs extends Record<string, HTMLElement> = Record<string, HTMLElement>> {
+export class View <
+  Refs extends Record<string, HTMLElement> = Record<string, HTMLElement>, 
+  Chunks extends string = string
+> {
 	comp: PureComp;
 	el: HTMLElement;
 	refs: { [K in keyof Refs]: Refs[K][] } = {} as any;
+	#chunks: Record<Chunks, Template> = {} as any;
 
 	constructor (comp: AnyComp, el?: HTMLElement, options: Partial<ViewOptions> = {}) {
 		this.comp = comp;
@@ -36,6 +41,7 @@ export class View <Refs extends Record<string, HTMLElement> = Record<string, HTM
 		this.comp.el = this.el;
 		(this.el as any)[attachedComp] = comp;
 		this.comp.refs = this.refs;
+		this.#chunks = this.options.chunks;
 
 		if (this.options.removeEl) comp.onRemove.on(() => this.el.remove());
 	}
@@ -46,6 +52,7 @@ export class View <Refs extends Record<string, HTMLElement> = Record<string, HTM
 		insertMode: 'asDefault',
 		into: undefined,
 		walkInPreContent: false,
+		chunks: {},
 		removeEl: true
 	}
 
@@ -62,7 +69,7 @@ export class View <Refs extends Record<string, HTMLElement> = Record<string, HTM
 		)) templateEl = toDom(this.comp, template);
 
 		//do actions
-		if (templateEl) this.doActions(template.actions, templateEl, template.node);
+		if (templateEl) this.doActions(template.actions, templateEl, {}, template.node);
 
 		//insert into dom
 		const tempInsert = this.options.insertMode;
@@ -90,17 +97,29 @@ export class View <Refs extends Record<string, HTMLElement> = Record<string, HTM
 		return query(selector, this.el);
 	}
 
+	constructChunk (name: Chunks | Template, context: Record<string, any> = {}) {
+		const template = typeof name === 'string' ? this.#chunks[name] : name;
+		const root = toDom(this.comp, template);
+		this.doActions(template.actions, root, context, template.node);
+		return root;
+	}
+
 	onWalk = new Event<(view: this, el: HTMLElement, options: Partial<WalkOptions>) => void>();
-	onAction = new Event<(view: this, top: HTMLElement, action: Action[]) => void>();
+	onAction = new Event<
+	  (view: this, top: HTMLElement, action: Action[], context: Record<string, any>) => void
+	>();
 	walk (top: HTMLElement, options: Partial<WalkOptions> = {}) {
 		options = { inDom: true, ...options }
 		this.onWalk.trigger(this, top, options);
 		this.doActions(walk(this.el, options));
 	}
-	doActions (actions: Action[], top: HTMLElement = this.el, lite?: LiteNode) {
-		this.onAction.trigger(this, top, actions);
-		if (lite) doActionsOfTemplate(this.comp, top, lite, actions);
-		else doActions(this.comp, actions);
+	doActions (
+	  actions: Action[], top: HTMLElement = this.el, 
+	  context: Record<string, any> = {}, lite?: LiteNode
+	) {
+		this.onAction.trigger(this, top, actions, context);
+		if (lite) doActionsOfTemplate(this.comp, top, lite, actions, context);
+		else doActions(this.comp, actions, context);
 	}
 
 	addRef <R extends keyof Refs> (name: R, el: Refs[R]) {
