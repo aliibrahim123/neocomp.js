@@ -11,7 +11,7 @@ export interface Options {
 this module exports the `neoTempPlugin`, a vite plugin that add support for template files
 with hot reloading support.
 
-template files are files that ends with `neo.html` that contains template definition.   
+template files are files that ends with `.neo.html` that contains template definition.   
 they are imported like normal javascript modules and export their content as `Record` of items 
 as `default`.    
 [more info](./comp-base.view/template-api.md#template-file).
@@ -56,5 +56,5 @@ there are built in `Serializer`s for `string`, `number`, `boolean`, `undefined`,
 `object`, `Array`, `SerializedFn` and `LiteNode`.
 
 ## `build/module.d.ts`
-this modules add support for `.neo.html` files for typescript, must be imported once to be 
+this modules add type support for `.neo.html` files for typescript, must be imported once to be 
 able to import these file.

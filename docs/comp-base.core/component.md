@@ -14,7 +14,8 @@ export interface BaseMap {
 	props: Record<string, any>,
 	refs: Record<string, HTMLElement>,
 	childmap: Record<string, AnyComp>,
-	args: Record<keyof any, any>
+	args: Record<keyof any, any>,
+	chunks: string
 }
 
 export type getTypeMap <Comp extends AnyComp> = BaseMap;
@@ -22,6 +23,7 @@ export type getProps <Comp extends AnyComp> = BaseMap['props'];
 export type getRefs <Comp extends AnyComp> = BaseMap['refs'];
 export type getChildMap <Comp extends AnyComp> = BaseMap['childmap'];
 export type getArgs <Comp extends AnyComp> = BaseMap['args'];
+export type getChunks <Comp extends AnyComp> = BaseMap['chunks'];
 ```
 `TypeMap`: is an abstracted type that groups the types passed to `Component`.
 
@@ -35,8 +37,8 @@ it must extends from `BaseMap`, the base of all `TypeMap`, and it can contains a
 
 `getTypeMap`: extract the `TypeMap` of a given `Component`.
 
-`getProps`, `getRefs`, `getChildMap`, and `getArgs`: extracts the respectfull type from a
-given `Component`.
+`getProps`, `getRefs`, `getChildMap`, `getArgs` and `getChunks`: extracts the respectfull type from
+a given `Component`.
 
 ## constructor and options
 ```typescript
@@ -46,11 +48,12 @@ export class Component <TypeMap extends BaseMap> implements Linkable {
 	static defaults: CompOptions;
 
 	id: string;
+	name: string;
 }
 
 export type CompOptions = {
 	initMode: 'minimal' | 'standared' | 'fullControl' = 'standared';
-	defaultId: () => string = () => '';
+	defaultId: (comp: PureComp) => string = () => '';
 	anonymous: boolean = false;
 	removeChildren: boolean = true;
 	store: Partial<StoreOptions>;
@@ -66,6 +69,8 @@ export type CompOptions = {
 `id`: is the id of the component.    
 if constructed with element that has an id, `id` is the element id, else it is the result 
 of `options.defaultId`. 
+
+`name`: is the name of the component passed to it through the `neo:name` attribute.
 
 ### `CompOptions`
 - `initMode`: controls how the component is inited, more info in [initiation](#optionsinitmode)
@@ -183,7 +188,7 @@ export class Component {
 ```
 components has a parent children hierarchy.
 
-`childmap`: a `Record` that maps children by their id.
+`childmap`: a `Record` that maps children by their names.
 
 ### linking
 ```typescript
@@ -252,7 +257,7 @@ every `Component` has a `Store` that contains the state.
 ## view
 ```typescript
 export class Component {
-	view: View<TypeMap['refs']>;
+	view: View<TypeMap['refs'], TypeMap['chunks']>;
 	el: HTMLElement;
 	refs: Record<keyof TypeMap['refs'], HTMLElement[]>;
 	query (selector: string): HTMLElement[];

@@ -117,13 +117,14 @@ export interface Action {
 	[unkown: string]: any
 }
 
-type Handler = (comp: PureComp, el: HTMLElement, action: Action) => void;
+type Handler = (comp: PureComp, el: HTMLElement, action: Action, context: Record<string, any>) => void;
 export function addAction (name: string, handler: Handler): void;
 
-export function doActions (comp: AnyComp, actions: Action[]): void;
+export function doActions (comp: AnyComp, actions: Action[], context: Record<string, any> = {}): void;
 
 export function doActionsOfTemplate (
-  comp: AnyComp, top: HTMLElement, liteTop: LiteNode, actions: Action[]
+  comp: AnyComp, top: HTMLElement, liteTop: LiteNode, 
+  actions: Action[], context: Record<string, any> = {}
 ): void;
 ```
 `Action`: is a lightweight storage unit that represent a custom logic for an element.
@@ -132,13 +133,13 @@ actions are gathered from the template source and stored for later execution whe
 the templates.
 
 they allow the definition of logic once on template generation and executing it effecintly on 
-convertion later, also they allow serialization.
+construction later, also they allow serialization.
 
 every `Action` contains a `type` and a `target` where it can be the live `HTMLElement` or the 
 id of its `LiteNode` representation.
 
 `addAction`: add a handler for a given action type, the handler is called with the `Component`, 
-`HTMLElement` and the `Action`.
+`HTMLElement`, `Action` and the passed `context` (an object containing any passed value).
 
 `doActions`: do the given `Action`s.
 
@@ -153,7 +154,8 @@ export interface WalkOptions {
 }
 
 type Handler = (
-  node: WalkNode, attr: string, value: string, actions: Action[], options: WalkOptions
+  node: WalkNode, attr: string, value: string, 
+  addAction: (act: Action, defer?: boolean) => void, options: WalkOptions
 ) => void;
 export function addActionAttr (name: string, handler: Handler): void;
 ```
@@ -168,7 +170,9 @@ which consists of:
 `false`.
 
 `addActionAttr`: add a handler for a given action attribute type, the handler is passed with the
-`WalkNode`, attribute name and value, `Action`s and `WalkOptions`.
+`WalkNode`, attribute name and value, `addAction` and `WalkOptions`.    
+`addAction` is a function that add an `Action`, added after `comp:this` action if `defer` is 
+`true` (for actions that work with a child component)
 
 ### walking api
 ```typescript
@@ -261,13 +265,17 @@ export function parseTAttr (
   source: string, attr: string, options: WalkOptions, globalArgs: string[]
 ): TAttr;
 
-export function evalTAttr (attr: TAttr, comp: AnyComp, el: HTMLElement, globalProps: any[]): any;
+export function evalTAttr (
+	attr: TAttr, comp: AnyComp, el: HTMLElement, context: Record<string, any>, props: any[]
+): any;
 ```
 `parseTAttr`: parses a templated attribute, `attr` is the attribute name and `globalArgs` are 
 arguments added to all functions.
 
-`evalTAttr`: evalute a templated attribute and returns its value, `globalProps` are the global 
-properties values.
+`evalTAttr`: evalute a templated attribute and returns its value, take the passed `context` and 
+`props`.   
+this assume that the `globalArgs` is of type 
+`(comp: PureComp, el: HTMLElement, context: Record<string, any>, ...props: any[])`.
 
 `TAttr`: represent a templated attribute, it can be:
 - `WalkFn`: in case of mono expression.

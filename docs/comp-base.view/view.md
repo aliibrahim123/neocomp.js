@@ -6,7 +6,7 @@ for working with DOM.
 
 ## constructor and options
 ```typescript
-export class View <Refs extends Record<string, HTMLElement>> {
+export class View <Refs extends Record<string, HTMLElement>, Chunks extends string> {
 	constructor (comp: AnyComp, el?: HTMLElement, options?: Partial<ViewOptions>);
 	comp: PureComp;
 	el: HTMLElement;
@@ -20,6 +20,7 @@ export interface ViewOptions {
 	insertMode: InsertMode = 'asDefault';
 	into: string | undefined = undefined;
 	walkInPreContent: boolean = false;
+	chunks: Record<string, Template> = {},
 	removeEl: boolean = true;
 }
 
@@ -33,7 +34,7 @@ export type InsertMode = 'asDefault' | 'replace' | 'atTop' | 'into' | 'atBottom'
 
 `defaults`: is the default `ViewOptions` defined for all instances of the `View`.
 
-### `ViewOptions`
+### `ViewOptions` 
 - `defaultEl`: a function that returns a `HTMLElement` used as top element if no element was 
 passed during construction, defualt `<div>`.
 - `template`: the `Template` used in initial render, default `<div>`.
@@ -47,6 +48,7 @@ passed during construction, defualt `<div>`.
 - `into`: if `insertMode` is `into`, a selector to the element to insert the `Template` in.
 - `walkInPreContent`: whether to walk in the passed top element contents, if any, to gather 
 `Action`s, this enable the features of the template in that element, default `false`.
+- `chunks`: the chunks templates.
 - `removeEl`: remove the top element when the component is removed, default `true`.
 
 ## utilities
@@ -65,21 +67,39 @@ action attribute.
 
 `addRef`: add the given element as a reference.
 
+## chunks
+```typescript
+export class View {
+	constructChunk (name: Chunks | Template, context: Record<string, any> = {}): HTMLElement;
+}
+```
+chunks are `Templates` that represent a chunk of DOM and are used for general use, other that 
+initial render.   
+
+`constructChunk`: construct a given chunk, it can be a defined chunk or a `Template`, optional 
+passed with `context`.
+
 ## walking and actions
 ```typescript
 export class View {
 	walk (top: HTMLElement, options: Partial<WalkOptions> = {}): void;
 	onWalk: Event<(view: this, el: HTMLElement, options: Partial<WalkOptions>) => void>;
 
-	doActions (actions: Action[], top: HTMLElement? = this.el, lite?: LiteNode): void;
-	onAction: Event<(view: this, top: HTMLElement, action: Action[]) => void>;
+	doActions (
+		actions: Action[], top: HTMLElement? = this.el, 
+		context: Record<string, any> = {}, lite?: LiteNode
+	): void;
+	onAction: Event<
+		(view: this, top: HTMLElement, action: Action[], , context: Record<string, any>) => void
+	>;
 }
 ```
 `walk`: walk the given element to gather `Action`s, can be passed with `WalkOptions`.
 
 `onWalk`: an event triggered when walking an element.
 
-`doActions`: do the passed `Action`s, can be passed with an optional `top` element.
+`doActions`: do the passed `Action`s, can be passed with an optional `top` element and `context` 
+(a collection of values to be passed to the actions).
 
 if the actions are from a `Template`, must pass the `LiteNode` representing the `top` element.
 
