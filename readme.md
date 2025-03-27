@@ -7,9 +7,6 @@ web develepment without sacrificing maintainability or language identity.
 it achieves this goal by being close to the root, it is simple javascript with normal html as 
 templating, and doesnt have fancy features that requires transpiling or learning new paradigm.
 
-want to learn more?   
-read the [Why? section](./docs/why.md) to learn more about neocomp unique features.
-
 # docs
 this is the index of the documentation.
 - [rawdom](./docs/rawdom.md)
