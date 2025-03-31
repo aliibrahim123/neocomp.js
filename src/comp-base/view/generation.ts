@@ -15,7 +15,6 @@ export function toDom (
 		svg (lite) { 
 			const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 			for (const [name, value] of lite.attrs) svg.setAttribute(name, String(value));
-			if (lite.classList.size) svg.classList.add(...lite.classList);
 			svg.innerHTML = lite.children.join('');
 			return svg
 		},

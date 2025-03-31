@@ -38,8 +38,7 @@ serializers.set(String, (value: string) =>
 	'`' + value.replaceAll('$', '\\$') + '`'
 );
 serializers.set(LiteNode, (value: LiteNode, data, options) => {
-	const attrsObj = mapToObject(value.attrs); 
-	if (value.classList.size) attrsObj['class'] = Array.from(value.classList);
+	const attrsObj = mapToObject(value.attrs);
 	const attrs = serialize(attrsObj, data, options);
 	const children = serialize(value.children, data, options);
 	const meta = serialize(mapToObject(value.meta), data, options);
