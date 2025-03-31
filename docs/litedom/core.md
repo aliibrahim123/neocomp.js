@@ -9,7 +9,7 @@ a class representing `HTMLElement` in a lightweight manner.
 ```typescript
 export class LiteNode {
 	constructor (
-  	  tag: string, attrs: Record<string, string | number | boolean | string[]> = {},
+  	  tag: string, attrs: Record<string, string | number | boolean> = {},
 	  children: (string | LiteNode)[] = [], meta: Record<string, any> = {}
 	);
 }
@@ -21,7 +21,6 @@ construct a new `LiteNode` of specified tag, optionally take attributes, childre
 export class LiteNode {
 	tag: string;
 	attrs: Map<string, string | number | boolean>;
-	classList: Set<string>;
 	children: (string | LiteNode)[];
 	parent: LiteNode | undefined;
 	meta: Map<string, any>;

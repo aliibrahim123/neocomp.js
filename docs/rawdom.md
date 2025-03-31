@@ -42,7 +42,8 @@ export function create (tag: string, ...params: CreateParam[]): HTMLElement;
 export function apply (el: HTMLElement, param: CreateParam): void;
 
 export type CreateParam = 
-  string | Node | ((el: HTMLElement) => CreateParam) | CreateObject | CreateParam[];
+	string | Node | undefined | null | false | 
+	((el: HTMLElement) => CreateParam<E>) | CreateObject<E> | CreateParam<E>[];
 
 type CreateObject = {
 	classList?: string[],
@@ -62,6 +63,7 @@ type CreateObject = {
 	- a class (starts with `.`) add it to the element.
 	- else it is a normal text, append it.
 - `Node`, append it.
+- a fulsy value, ignore it.
 - `(el: HTMLElement) => CreateParam`, a function that take the element and return a `CreateParam`.
 - `CreateParam[]`.
 - `CreateObject` that consists of:

@@ -28,7 +28,8 @@ export function query <T extends HTMLElement = HTMLElement>
 }
 
 export type CreateParam<E extends keyof TypeMap> = 
-	string | Node | ((el: HTMLElement) => CreateParam<E>) | CreateObject<E> | CreateParam<E>[];
+	string | Node | undefined | null | false | 
+	((el: HTMLElement) => CreateParam<E>) | CreateObject<E> | CreateParam<E>[];
 
 type CreateObject<E extends keyof TypeMap> = {
 	classList?: string[],
@@ -51,7 +52,8 @@ export function create <E extends keyof TypeMap> (tag: E, ...params: CreateParam
 export function apply <E extends keyof TypeMap> (el: TypeMap[E], param: CreateParam<E>): void;
 export function apply (el: HTMLElement, param: CreateParam<keyof TypeMap>): void;
 export function apply <E extends keyof TypeMap> (el: TypeMap[E], param: CreateParam<E>) {
-	if (typeof(param) === 'string') {
+	if (!param) {}
+	else if (typeof(param) === 'string') {
 		//id
 		if      (param[0] === '#') el.id = param.slice(1);
 		//class

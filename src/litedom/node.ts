@@ -1,21 +1,16 @@
 export class LiteNode {
 	tag: string;
 	attrs = new Map<string, string | number | boolean>();
-	classList: Set<string>;
 	children: (string | LiteNode)[];
 	parent: LiteNode | undefined;
 	meta = new Map<string, any>();
 
 	constructor (
-		//attrs.T contains string[] since of class attr, it doesnt reflect true string[] attr support
-		tag: string, attrs: Record<string, string | number | boolean | string[]> = {},
+		tag: string, attrs: Record<string, string | number | boolean> = {},
 		children: (string | LiteNode)[] = [], meta: Record<string, any> = {}
 	) {
 		this.tag = tag;
-		//handle special attrs
-		this.classList = new Set(attrs['class'] as string[]);
-		if ('class' in attrs) attrs['class'] = undefined as any;
-
+		
 		for (const attr in attrs) 
 			if (attrs[attr] !== undefined) this.attrs.set(attr, attrs[attr] as any);
 		

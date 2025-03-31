@@ -184,12 +184,6 @@ export function parse (source: string, opts: Partial<Options>): LiteNode {
 			node.attrs.set(lowerAttr ? attr.toLowerCase() : attr, value);
 		}
 
-		//handle classList
-		if (node.attrs.has('class')) {
-			node.classList = new Set((node.attrs.get('class') as string).split(' '));
-			node.attrs.delete('class');
-		}
-
 		//case void
 		if (source[ind] === '/') stack.pop();
 		else if (options.voidTags.has(tag)) stack.pop();
