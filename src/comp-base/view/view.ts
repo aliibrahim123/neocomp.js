@@ -17,6 +17,8 @@ export interface ViewOptions {
 	template: Template;
 	insertMode: InsertMode;
 	into: string | undefined;
+	effectHost: boolean;
+	liteConverters: Record<string, (lite: LiteNode) => Node>;
 	walkInPreContent: boolean;
 	chunks: Record<string, Template>,
 	removeEl: boolean;
@@ -51,28 +53,34 @@ export class View <
 		template: get('empty'),
 		insertMode: 'asDefault',
 		into: undefined,
+		effectHost: true,
+		liteConverters: {},
 		walkInPreContent: false,
 		chunks: {},
 		removeEl: true
 	}
 
 	initDom () {
-		const el = this.el, template = this.options.template;
+		const el = this.el, options = this.options, template = options.template;
 		//walk pre content
-		if (this.options.walkInPreContent) this.walk(el);
+		if (options.walkInPreContent) this.walk(el);
 
 		//generate from template
 		let templateEl: HTMLElement = undefined as any;
 		if (!(
-			this.options.insertMode === 'none' ||
-			(this.options.insertMode === 'asDefault' && el.childNodes.length > 0)
-		)) templateEl = toDom(this.comp, template);
+			options.insertMode === 'none' ||
+			(options.insertMode === 'asDefault' && el.childNodes.length > 0)
+		)) templateEl = toDom(this.comp, template, options.liteConverters);
+
+		//transfer attributes from template root to host element
+		if (options.effectHost) for (const [attr, value] of template.node.attrs)
+			if (attr !== 'id') el.setAttribute(attr, String(value));
 
 		//do actions
 		if (templateEl) this.doActions(template.actions, templateEl, {}, template.node);
 
 		//insert into dom
-		const tempInsert = this.options.insertMode;
+		const tempInsert = options.insertMode;
 		if  	(tempInsert === 'replace') 
 			el.replaceChildren(...templateEl.childNodes);
 
@@ -86,9 +94,9 @@ export class View <
 			el.append(...templateEl.childNodes);
 
 		else if (tempInsert === 'into') {
-			if (this.options.into === undefined) return throw_not_into_query(this.comp);
-			const into = query(this.options.into, this.el);
-			if (into.length === 0) throw_into_query_no_match(this.comp, this.options.into);
+			if (options.into === undefined) return throw_not_into_query(this.comp);
+			const into = query(options.into, this.el);
+			if (into.length === 0) throw_into_query_no_match(this.comp, options.into);
 			into[0].replaceChildren(...templateEl.childNodes);
 		}
 	}
@@ -99,9 +107,12 @@ export class View <
 
 	constructChunk (name: Chunks | Template, context: Record<string, any> = {}) {
 		const template = typeof name === 'string' ? this.#chunks[name] : name;
-		const root = toDom(this.comp, template);
+		const root = toDom(this.comp, template, this.options.liteConverters);
 		this.doActions(template.actions, root, context, template.node);
 		return root;
+	}
+	getChunk (name: Chunks) {
+		return this.#chunks[name];
 	}
 
 	onWalk = new Event<(view: this, el: HTMLElement, options: Partial<WalkOptions>) => void>();

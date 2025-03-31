@@ -19,6 +19,8 @@ export interface ViewOptions {
 	template: Template;
 	insertMode: InsertMode = 'asDefault';
 	into: string | undefined = undefined;
+	effectHost: boolean = true;
+	liteConverters: Record<string, (lite: LiteNode) => Node> = {};
 	walkInPreContent: boolean = false;
 	chunks: Record<string, Template> = {},
 	removeEl: boolean = true;
@@ -28,7 +30,7 @@ export type InsertMode = 'asDefault' | 'replace' | 'atTop' | 'into' | 'atBottom'
 ```
 `constructor`: take a `Component` and optional `HTMLElement` and `ViewOptions`.
 
-`el`: the top element, can be the passed element, else the result of `options.defaultEl`.
+`el`: the top element, can be the passed host element, else the result of `options.defaultEl`.
 
 `options`: is the `ViewOptions` defined for this view.
 
@@ -39,14 +41,18 @@ export type InsertMode = 'asDefault' | 'replace' | 'atTop' | 'into' | 'atBottom'
 passed during construction, defualt `<div>`.
 - `template`: the `Template` used in initial render, default `<div>`.
 - `insertMode`: how the `Template` is inserted to DOM, defualt `asDefault`, it can be:
-  - `asDefault`: insert the template when there was no top element passed.
+  - `asDefault`: insert the template when there was no host element passed.
   - `replace`: insert the template and replace the content before if any.
-  - `atTop`: insert the template at the top of the top element.
-  - `atBottom`: insert the template at the bottom of the top element.
-  - `into`: insert the template into the element matching `options.into` in the top element.
+  - `atTop`: insert the template at the top of the host element.
+  - `atBottom`: insert the template at the bottom of the host element.
+  - `into`: insert the template into the element matching `options.into` in the host element.
   - `none`: doesnt insert the template.
 - `into`: if `insertMode` is `into`, a selector to the element to insert the `Template` in.
-- `walkInPreContent`: whether to walk in the passed top element contents, if any, to gather 
+- `effectHost`: whether to effect the host element on initial render, like transferring attributes 
+from template root to it, default `true`.
+- `liteConverters`: a `Record` of functions used to convert `LiteNode`s of given tag name to
+`Node`s.
+- `walkInPreContent`: whether to walk in thehost element contents, if any, to gather 
 `Action`s, this enable the features of the template in that element, default `false`.
 - `chunks`: the chunks templates.
 - `removeEl`: remove the top element when the component is removed, default `true`.
@@ -71,13 +77,16 @@ action attribute.
 ```typescript
 export class View {
 	constructChunk (name: Chunks | Template, context: Record<string, any> = {}): HTMLElement;
+	getChunk (name: Chunks): HTMLElement;
 }
 ```
-chunks are `Templates` that represent a chunk of DOM and are used for general use, other that 
+chunks are `Template`s that represent a chunk of DOM and are used for general use, other that 
 initial render.   
 
 `constructChunk`: construct a given chunk, it can be a defined chunk or a `Template`, optional 
 passed with `context`.
+
+`getChunk`: get a chunk by name.
 
 ## walking and actions
 ```typescript

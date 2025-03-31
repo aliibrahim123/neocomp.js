@@ -39,7 +39,9 @@ it is the global registry of `Template`s.
 # template generation
 ```typescript
 export const tempGen = {
-	toDom (comp: AnyComp, template: Template): HTMLElement,
+	toDom (
+	  comp: AnyComp, template: Template, converters: Record<string, (lite: LiteNode) => Node> = {}
+	): HTMLElement,
 	generateFromDom (root: HTMLElement, plugins?: Plugin[], walkOptions?: Partial<WalkOptions>)
 	  : Template,
 	generateFromLite (root: LiteNode, plugins?: Plugin[], walkOptions?: Partial<WalkOptions>)
@@ -62,6 +64,7 @@ export interface Plugin {
 const defaultParseOptions: Partial<ParseOptions> = {
 	attrStart: /^[^'"=`<>\s]/,
 	attrRest: /^[^'"=`<>\s]+/,
+	rawTextTags: new Set(['script', 'style', 'svg']),
 	lowerAttr: false,
 	lowerTag: false
 }
@@ -71,7 +74,8 @@ export const onConvertTemplate: Event<(comp: PureComp, template: Template, el: H
 `tempGen`: provides various functions to generate and convert `Template`.
 
 ## construction
-`toDom`: construct a `HTMLElement` from a given `Template`, doesnt do actions.
+`toDom`: construct a `HTMLElement` from a given `Template`, doesnt do actions.    
+optionally take `converters` that convert `LiteNode`s of given tag name to `Node`s.
 
 `onConvertTemplate`: an event triggered when converting a `Template` into `HTMLElement`.
 

@@ -100,11 +100,14 @@ export class LiteNode {
 
 ## nodes convertion functions
 ```typescript
-export function liteToNative (lite: LiteNode): HTMLElement;
+export function liteToNative 
+  (lite: LiteNode, converters: Record<string, (lite: LiteNode) => Node> = {}): HTMLElement;
 export function nativeToLite (native: HTMLElement): LiteNode;
 ```
 this functions convert between `HTMLElement` and `LiteNode`.
 
-`liteToNative`: convert a `LiteNode` to `HTMLElement`.
+`liteToNative`: convert a `LiteNode` to `HTMLElement`.    
+optionally take `converters`, a `Record` of functions used to convert `LiteNode`s of a given tag
+name to `Node`s grouped by tag name.
 
 `nativeToLite`: convert a `HTMLElement` to `LiteNode`.

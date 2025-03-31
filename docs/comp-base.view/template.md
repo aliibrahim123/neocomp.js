@@ -103,10 +103,13 @@ evaluated with `comp: PureComp`, `el: HTMLElement`, `context: Record<string, any
 
 ### `@chunk`
 **syntax:** `@chunk:name='context'`   
-construct a chunk of `name` and insert its contents to the element.   
+construct a chunk defined as `name` and insert its contents to the element.   
 
 optional take an expression named `context` that evaluated into the context passed to the chunk.   
 evaluated with `comp: PureComp`, `el: HTMLElement` and `context: Record<string, any>`.
+
+by default, it transfer the attributes of the chunk root to the element, can be disabled by 
+`context.effectHost = false`.
 
 ### inout action attributes
 **syntax:** `@name(parentProp)='childProp'`   
