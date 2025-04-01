@@ -47,7 +47,10 @@ export class Component <TMap extends BaseMap> implements Linkable {
 			this.init();
 			this.fireInit();
 		}
-		else this.init();
+		else {
+			this.init();
+			if (this.options.initMode === 'standared') this.fireInit();
+		}
 	}
 	
 	id: string = '';

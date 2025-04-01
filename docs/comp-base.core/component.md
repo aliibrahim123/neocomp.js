@@ -132,7 +132,7 @@ if `options.initMode` is:
 - `'minimal'`: the component will init automatically.   
 `init` will be called after `initDom` and before `fireInit` and it is not responsible for any calling.    
 this is best for testing or learning or for components with no custom init logic.
-- `'standared'`: `init` is called after `initCore` and must call `initDom` and `fireInit`.   
+- `'standared'`: `init` is called after `initCore` and must call `initDom`.   
 this is the default, it is best when custom init logic is required.
 - `'fullControl'`: `init` is responsible for all init calls.    
 use this when it is really required to fully control the init logic.
