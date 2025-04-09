@@ -92,7 +92,9 @@ properties effecting the effect.
 
 ### `@ref`
 **syntax:** `@ref='name'`
-adds the element as reference of `name`, `name` is a `TName`.
+adds / sets the element as reference of `name`, `name` is a `TName`.    
+if `name` is of syntax `name[]` then the reference type is `HTMLElement[]`, else it is 
+`HTMLElement`.
 
 ### `@on`
 **syntax:** `@on(events)='exp'`   

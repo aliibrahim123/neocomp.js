@@ -27,12 +27,12 @@ export interface ViewOptions {
 export type InsertMode = 'asDefault' | 'replace' | 'atTop' | 'into' | 'atBottom' | 'none';
 
 export class View <
-  Refs extends Record<string, HTMLElement> = Record<string, HTMLElement>, 
+  Refs extends Record<string, HTMLElement | HTMLElement[]> = Record<string, HTMLElement>, 
   Chunks extends string = string
 > {
 	comp: PureComp;
 	el: HTMLElement;
-	refs: { [K in keyof Refs]: Refs[K][] } = {} as any;
+	refs: Refs = {} as any;
 	#chunks: Record<Chunks, Template> = {} as any;
 
 	constructor (comp: AnyComp, el?: HTMLElement, options: Partial<ViewOptions> = {}) {
@@ -134,8 +134,11 @@ export class View <
 	}
 
 	addRef <R extends keyof Refs> (name: R, el: Refs[R]) {
-		if (name in this.refs) this.refs[name].push(el);
-		else this.refs[name] = [el];
+		if (name in this.refs) {
+			if (Array.isArray(this.refs[name])) this.refs[name].push(...el as HTMLElement[]);
+			else this.refs[name] = el;
+		}
+		else this.refs[name] = el;
 	}
 
 	onCleanUp = new Event<(view: this) => void>();

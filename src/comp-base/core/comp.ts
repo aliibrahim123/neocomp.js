@@ -127,7 +127,7 @@ export class Component <TMap extends BaseMap> implements Linkable {
 
 	view: View<TMap['refs'], TMap['chunks']> = undefined as any;
 	el: HTMLElement;
-	refs: { [K in keyof TMap['refs']]: TMap['refs'][K][] } = undefined as any;
+	refs: TMap['refs'] = undefined as any;
 	query (selector: string) { return this.view.query(selector) }
 
 	onLink = new Event<(comp: this, linked: Linkable) => void>();

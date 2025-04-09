@@ -12,7 +12,7 @@ interface TypeMap extends BaseMap {}
 
 export interface BaseMap {
 	props: Record<string, any>,
-	refs: Record<string, HTMLElement>,
+	refs: Record<string, HTMLElement | HTMLElement[]>,
 	childmap: Record<string, AnyComp>,
 	args: Record<keyof any, any>,
 	chunks: string

@@ -4,7 +4,7 @@ import type { AnyComp } from "./comp.ts";
 
 export interface BaseMap {
 	props: Record<string, any>,
-	refs: Record<string, HTMLElement>,
+	refs: Record<string, HTMLElement | HTMLElement[]>,
 	childmap: Record<string, AnyComp>,
 	args: Record<keyof any, any>,
 	chunks: string,

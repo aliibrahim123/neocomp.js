@@ -6,7 +6,7 @@ for working with DOM.
 
 ## constructor and options
 ```typescript
-export class View <Refs extends Record<string, HTMLElement>, Chunks extends string> {
+export class View <Refs extends Record<string, HTMLElement | HTMLElement[]>, Chunks extends string> {
 	constructor (comp: AnyComp, el?: HTMLElement, options?: Partial<ViewOptions>);
 	comp: PureComp;
 	el: HTMLElement;
@@ -69,9 +69,11 @@ export class View {
 `query`: return all elements in the top element that match the given selector.
 
 `refs`: the references to elements created by [`@ref`](../comp-base.view/template.md#ref)
-action attribute.
+action attribute.   
+can be single `HTMLElement` or `HTMLElement[]` depending on the type defined in `Refs`.
 
-`addRef`: add the given element as a reference.
+`addRef`: add the given element / elements as a reference, `el` can be `HTMLElement` or 
+`HTMLElement[]` depending on the reference type.
 
 ## chunks
 ```typescript
