@@ -60,7 +60,7 @@ from template root to it, default `true`.
 ## utilities
 ```typescript
 export class View {
-	query (selector: string): HTMLElement[];
+	query <T extends HTMLElement = HTMLElement> (selector: string): T[];
 
 	refs: Record<keyof Refs, HTMLElement[]>;
 	addRef <R extends keyof Refs> (name: R, el: Refs[R]): void;

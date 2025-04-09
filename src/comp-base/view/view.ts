@@ -101,8 +101,8 @@ export class View <
 		}
 	}
 
-	query (selector: string) {
-		return query(selector, this.el);
+	query <T extends HTMLElement = HTMLElement> (selector: string) {
+		return query<T>(selector, this.el);
 	}
 
 	constructChunk (name: Chunks | Template, context: Record<string, any> = {}) {

@@ -260,7 +260,7 @@ export class Component {
 	view: View<TypeMap['refs'], TypeMap['chunks']>;
 	el: HTMLElement;
 	refs: Record<keyof TypeMap['refs'], HTMLElement[]>;
-	query (selector: string): HTMLElement[];
+	query <T extends HTMLElement = HTMLElement> (selector: string): T[];
 }
 
 export const attachedComp: symbol;
