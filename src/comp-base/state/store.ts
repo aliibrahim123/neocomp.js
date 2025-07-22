@@ -207,7 +207,7 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 		this.endBulkUpdate();
 	}
 
-	initForUse <P extends keyof Props & string> (name: P | symbol, Default?: Props[P]): symbol {
+	#initForUse <P extends keyof Props & string> (name: P | symbol, Default?: Props[P]): symbol {
 		if (this.has(name)) return this.getProp(name).symbol;
 		if (Default !== undefined) return this.set(name, Default).symbol;
 		//possibly request to be added
@@ -217,15 +217,15 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 	}
 	createSignal <P extends keyof Props & string> (name: P | symbol, Default?: Props[P])
 	  : Signal<Props[P]> {
-		return new Signal(this, this.initForUse(name, Default))
+		return new Signal(this, this.#initForUse(name, Default))
 	}
 	createROSignal <P extends keyof Props & string> (name: P | symbol, Default?: Props[P]) 
 	: ReadOnlySignal<Props[P]> {
-		return new ReadOnlySignal(this, this.initForUse(name, Default));
+		return new ReadOnlySignal(this, this.#initForUse(name, Default));
 	}
 	createWOSignal <P extends keyof Props & string> (name: P | symbol, Default?: Props[P]) 
 	: WriteOnlySignal<Props[P]> {
-		return new WriteOnlySignal(this, this.initForUse(name, Default));
+		return new WriteOnlySignal(this, this.#initForUse(name, Default));
 	}
 
 	addEffect (

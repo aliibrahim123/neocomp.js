@@ -6,6 +6,7 @@
 		"allowJs": true,
 		"resolveJsonModule": true,
 		"moduleDetection": "force",
+		"moduleResolution": "bundler",
 		"isolatedModules": true,
 		"verbatimModuleSyntax": true,	
 		"strict": true,
@@ -13,7 +14,7 @@
 		"noImplicitOverride": true,	
 		"module": "preserve",
 		"noEmit": true,
-		"lib": ["esnext", "dom", "dom.iterable", "decorators"],
+		"lib": ["esnext", "dom", "dom.iterable"],
 	},
-	"include": ["src/**/*", "scripts/**/*"],
+	"include": ["src/**/*"],
 }

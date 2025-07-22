@@ -29,7 +29,7 @@ export type { Template } from './view/templates.ts';
 export { templates } from './view/templates.ts';
 import * as tempGenMod from './view/generation.ts';
 export const tempGen = { ...tempGenMod };
-export type * as TempGen from './view/generation.ts';
+export type * from './view/generation.ts';
 export * from './view/walker.ts';
 export type * from './view/walker.ts';
 export * from './view/tempAttr.ts';

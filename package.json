@@ -7,12 +7,40 @@
 		"start": "vite .",
 		"build": "vite build",
 		"generate-js-source": "node scripts/generateJSSource.js",
-		"generate-test-html": "node scripts/generateTestHTML.js"
+		"generate-test-html": "node scripts/generateTestHTML.js",
+		"generate-types": "node scripts/generateTypes.js"
 	},
 	"type": "module",
+	"types": "./types.d.ts",
 	"exports": {
-		"./dist/": "./dist/",
-		"./": "./src/"
+		"./rawdom": {
+			"import": "./dist/rawdom/index.js",
+			"types": "./types.d.ts"
+		},
+		"./rawdom/elements": {
+			"import": "./dist/rawdom/elements.js",
+			"types": "./types.d.ts"
+		},
+		"./litedom": {
+			"import": "./dist/litedom/core.js",
+			"types": "./types.d.ts"
+		},
+		"./litedom/parse": {
+			"import": "./dist/litedom/parse.js",
+			"types": "./types.d.ts"
+		},
+		"./zro-router": {
+			"import": "./dist/zro-router/index.js",
+			"types": "./types.d.ts"
+		},
+		"./comp-base": {
+			"import": "./dist/comp-base/core.js",
+			"types": "./types.d.ts"
+		},
+		"./build": {
+			"import": "./dist/build/plugin.js",
+			"types": "./types.d.ts"
+		}
 	},
 	"homepage": "https://aliibrahim123.github.io/neocomp.js/",
 	"bugs": {
@@ -25,8 +53,8 @@
 	"license": "MIT",
 	"devDependencies": {
 		"@types/node": "^22.10.5",
+		"dts-buddy": "^0.6.2",
 		"vite": "^6.0.2",
-		"vite-plugin-directory-index": "^3.0.1",
-		"vite-bundle-visualizer": "^1.2.1"
+		"vite-plugin-directory-index": "^3.0.1"
 	}
 }

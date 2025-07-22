@@ -17,5 +17,4 @@ async function walk(path, srcDir, distDir) {
     writeFile(distDir + entryPath.slice(0, -2) + "js", code);
   }
 }
-walk("", "src/", "js-src/");
 walk("", "scripts/", "scripts/");

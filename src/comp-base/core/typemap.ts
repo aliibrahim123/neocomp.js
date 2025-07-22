@@ -7,7 +7,7 @@ export interface BaseMap {
 	refs: Record<string, HTMLElement | HTMLElement[]>,
 	childmap: Record<string, AnyComp>,
 	args: Record<keyof any, any>,
-	chunks: string,
+	chunks: string[],
 }
 
 export type getTypeMap <Comp extends AnyComp> = Comp['typemap'];

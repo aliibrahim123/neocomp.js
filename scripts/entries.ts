@@ -1,36 +1,45 @@
-type EntryMap = { [key: string]: EntryMap | '' | string[]};
+type EntryMap = { [key: string]: EntryMap | string | string[]};
 const entryMap: EntryMap = {
 	'rawdom': {
-		index: '',
+		index: 'rawdom',
 		elements: ''
 	},
 	'zro-router': {
-		index: ''
+		index: 'zro-router'
 	},
 	'litedom': {
-		core: '',
+		core: 'litedom',
 		parse: ''
 	},
 	'comp-base': {
-		core: '',
+		core: 'comp-base',
+	},
+	'build': {
+		'plugin': 'build'
 	}
 }
 
 //as straight path, without src/ or .ts
 export const entries: string[] = [];
+//as exported in package.json
+export const exportedEntries: string[] = [];
 
 function flatternEntry (entry: EntryMap, path: string = '') {
 	path = path === '' ? '' : path + '/';
 	for (const name in entry) {
 		const subEntry = entry[name];
-		if (subEntry === '') entries.push(path + name);
-		else if (Array.isArray(subEntry)) 
-			subEntry.forEach(postfix => entries.push(path + name + '.' + postfix));
+		if (typeof(subEntry) === 'string') {
+			entries.push(path + name);
+			exportedEntries.push(subEntry === '' ? path + name : subEntry);
+		} else if (Array.isArray(subEntry)) 
+			subEntry.forEach(postfix => {
+				entries.push(path + name + '.' + postfix);
+				exportedEntries.push(path + name + '.' + postfix);
+			});
 		else flatternEntry(subEntry, path + name);
 	}
 }
 flatternEntry(entryMap);
 
 //with src/ and .ts
-export const entriesFull = entries.map(entry => `src/${entry}.ts`);
-export const entriesFullSet = new Set(entriesFull); 
+export const fullEntries = entries.map(entry => `src/${entry}.ts`);

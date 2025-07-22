@@ -26,5 +26,4 @@ async function walk (path: string, srcDir: string, distDir: string) {
 	}
 }
 
-walk('', 'src/', 'js-src/');
 walk('', 'scripts/', 'scripts/');
