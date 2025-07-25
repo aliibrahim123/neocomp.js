@@ -2,9 +2,10 @@
 
 //all props are not static
 
+import { throw_undefined_info_dump_type } from "../core/errors.ts";
 import type { Linkable } from "../core/linkable.ts";
 import { throw_circular_dep_update } from "./errors.ts";
-import { Store, type Prop } from "./store.ts";
+import { Store } from "./store.ts";
 
 export interface UDispatcherOptions {
 	balance: boolean;
@@ -20,15 +21,18 @@ export interface EffectUnit {
 
 export class UpdateDispatcher {
 	#base: Linkable;
+	#store: Store<any>;
 	#records = new Map<symbol, EffectUnit[]>();
 	constructor (store: Store<any>, options: Partial<UDispatcherOptions> = {}) {
 		this.options = { 
 			...(this.constructor as typeof UpdateDispatcher).defaults, ...options
 		};
 
+		this.#store = store;
 		this.#base = store.base;
-		store.onChange.on((store, props) => this.update(props.map(prop => prop.symbol)));
-		this.#base.onUnlink.on((_, linked) => this.remove(unit => unit.from === linked));
+		store.onChange.listen((_, props) => this.update(props.map(prop => prop.symbol)));
+		this.#base.onUnlink.listen((_, linked) => this.remove(unit => unit.from === linked));
+		store.onRemove.listen((_, prop) => this.remove(unit => unit.effectedBy.includes(prop.symbol)));
 	}
 	options: UDispatcherOptions;
 	static defaults: UDispatcherOptions = {
@@ -119,12 +123,12 @@ export class UpdateDispatcher {
 			anyCalled = false
 			//swap with next batch
 			this.#currentUnits = this.#nextUnits;
-			this.#propsInvolved = new Set;
 			this.#nextUnits = [];
 		}
 		
 		//finished, reset to normal
 		this.isDispatching = false;
+		this.#propsInvolved = new Set;
 		this.#dependencies = new Map();
 	}
 
@@ -135,5 +139,16 @@ export class UpdateDispatcher {
 		}
 		else for (const [prop, units] of this.#records)
 			this.#records.set(prop, units.filter(unit => !fn(unit)));
+	}
+
+	infoDump (type: 'records'): Record<string, EffectUnit[]>;
+	infoDump (type: 'records') {
+		if (type === 'records') {
+			const records: Record<string, EffectUnit[]> = {};
+			for (const [prop, units] of this.#records) 
+				records[this.#store.getProp(prop).name] = units;
+			return records
+		}
+		throw_undefined_info_dump_type(type);
 	}
 }

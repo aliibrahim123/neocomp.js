@@ -1,12 +1,13 @@
+import type { fn } from "../../../common/types.ts";
 import type { WalkOptions } from "../walker.ts";
-import { toFun, type Fn } from "../walkInterface.ts";
+import { toFun } from "../walkInterface.ts";
 
 export type TName = { 
 	type: 'prop' | 'literial', 
 	value: string 
 } | { 
 	type: 'exp', 
-	value: Fn 
+	value: fn
 };
 export function parseTName (value: string, option: WalkOptions): TName {
 	if (value.startsWith('$:')) return {

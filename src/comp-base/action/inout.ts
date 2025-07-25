@@ -1,4 +1,4 @@
-import { $in, $inout } from '../state/inout.ts';
+import { $in, inout } from '../state/inout.ts';
 import { attachedComp, type PureComp } from '../core/comp.ts'
 import { addAction, type Action } from "./actions.ts";
 import { throw_no_attached_comp } from './errors.ts';
@@ -18,7 +18,7 @@ export function addInOutActions () {
 		const child = (el as any)[attachedComp] as PureComp;
 		if (!child) throw_no_attached_comp(comp, name);
 		//wait to init
-		child.onInit.on((child) => fn(action, comp, child)); 
+		child.onInit.listen((child) => fn(action, comp, child)); 
 	  });
 	}
 
@@ -29,6 +29,6 @@ export function addInOutActions () {
 		$in(child, action.childProp, parent, action.parentProp)
 	);
 	addAct('inout', (action, parent, child) => 
-		$inout(parent, action.parentProp, child, action.childProp)
+		inout(parent, action.parentProp, child, action.childProp)
 	);
 }

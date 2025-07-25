@@ -83,7 +83,7 @@ function onError (router: ZRORouter, options: Options, url: URL, error: Response
 	history.pushState(options.stateProvider(url), '', url);
 }
 
-//when moving elements between 2 defferent documents, come function like loading scripts dont work
+//when moving elements between 2 defferent documents, some functions like loading scripts dont work
 //so clone them
 function cloneElement (element: Element) {
 	const cloned = document.createElement(element.tagName.toLowerCase());
@@ -95,26 +95,27 @@ function cloneElement (element: Element) {
 function updateHead (page: Document, options: Options) {
 	const head = document.head;
 	const { preserveTags, preserveClass, skipTags } = options;
-	const elementsMap = new Map<string, { old: Element[], New: Element[] }>();
+	const elementsMap = new Map<string, { old: Element[], _new: Element[] }>();
 	
 	//group old elements
 	for (const element of head.children) {
 		if (!elementsMap.has(element.tagName)) 
-			elementsMap.set(element.tagName, { old: [element], New: [] });
+			elementsMap.set(element.tagName, { old: [element], _new: [] });
 		else elementsMap.get(element.tagName)?.old.push(element);
 	}
 	//group new element
 	for (const element of page.head.children) {
 		if (!elementsMap.has(element.tagName)) 
-			elementsMap.set(element.tagName, { old: [], New: [element] });
-		else elementsMap.get(element.tagName)?.New.push(element);
+			elementsMap.set(element.tagName, { old: [], _new: [element] });
+		else elementsMap.get(element.tagName)?._new.push(element);
 	}
 
 	//loop through tags
 	for (const [tag, elements] of elementsMap) {
 		if (skipTags.has(tag)) continue;
 		//preserve tags: add if not been before
-		if (preserveTags.has(tag)) { for (const newElement of elements.New)
+		if (preserveTags.has(tag)) { 
+		  for (const newElement of elements._new)
 			if (!elements.old.some(oldElement => oldElement.id === newElement.id)) 
 				head.append(cloneElement(newElement));
 		}
@@ -122,14 +123,14 @@ function updateHead (page: Document, options: Options) {
 	}
 }
 
-function updateOtherHeadEls (elements: { old: Element[], New: Element[] }, preserveClass: string) {
+function updateOtherHeadEls (elements: { old: Element[], _new: Element[] }, preserveClass: string) {
 	const head = document.head;
 	//remove old elements if not preserved
 	for (const oldElement of elements.old) 
 		if (!oldElement.classList.contains(preserveClass)) oldElement.remove();
 
 	//add new elements if not preserved or hasnt been before
-	for (const newElement of elements.New) if (!(
+	for (const newElement of elements._new) if (!(
 		newElement.classList.contains(preserveClass) 
 		 && elements.old.some(oldElement => oldElement.id === newElement.id)
 	)) head.append(cloneElement(newElement))

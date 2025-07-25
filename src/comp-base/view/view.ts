@@ -2,25 +2,20 @@
 
 import { Event } from "../../common/event.ts";
 import { query } from "../../rawdom/index.ts";
-import { attachedComp, type AnyComp, type PureComp } from "../core/comp.ts";
-import { throw_into_query_no_match, throw_not_into_query } from "./errors.ts";
+import { attachedComp, Component, type PureComp } from "../core/comp.ts";
+import { throw_into_query_no_match, throw_not_into_query, throw_undefined_chunk } from "./errors.ts";
 import type { Template } from "./templates.ts";
 import { doActions, doActionsOfTemplate, type Action } from "../action/actions.ts";
-import { get } from "./templates.ts";
-import { toDom } from "./generation.ts";
-import type { WalkOptions } from "./walker.ts";
-import { walk } from "./walker.ts";
+import { toDom } from "./toDom.ts";
 import { LiteNode } from "../../litedom/node.ts";
+import { throw_undefined_info_dump_type } from "../core/errors.ts";
 
 export interface ViewOptions {
 	defaultEl: (comp: PureComp) => HTMLElement;
-	template: Template;
 	insertMode: InsertMode;
 	into: string | undefined;
 	effectHost: boolean;
 	liteConverters: Record<string, (lite: LiteNode) => Node>;
-	walkInPreContent: boolean;
-	chunks: Record<string, Template>,
 	removeEl: boolean;
 }
 
@@ -35,7 +30,7 @@ export class View <
 	refs: Refs = {} as any;
 	#chunks: Record<Chunks, Template> = {} as any;
 
-	constructor (comp: AnyComp, el?: HTMLElement, options: Partial<ViewOptions> = {}) {
+	constructor (comp: PureComp, el?: HTMLElement, options: Partial<ViewOptions> = {}) {
 		this.comp = comp;
 		this.options = { ...(this.constructor as typeof View).defaults, ...options };
 		this.el = el || this.options.defaultEl(comp);
@@ -43,27 +38,23 @@ export class View <
 		this.comp.el = this.el;
 		(this.el as any)[attachedComp] = comp;
 		this.comp.refs = this.refs;
-		this.#chunks = this.options.chunks;
+		this.#chunks = (comp.constructor as typeof Component).chunks;
 
-		if (this.options.removeEl) comp.onRemove.on(() => this.el.remove());
+		if (this.options.removeEl) comp.onRemove.listen(() => this.el.remove());
 	}
 	options: ViewOptions;
 	static defaults: ViewOptions = {
 		defaultEl (comp) { return document.createElement('div') },
-		template: get('empty'),
 		insertMode: 'asDefault',
 		into: undefined,
 		effectHost: true,
 		liteConverters: {},
-		walkInPreContent: false,
-		chunks: {},
 		removeEl: true
 	}
 
 	initDom () {
-		const el = this.el, options = this.options, template = options.template;
-		//walk pre content
-		if (options.walkInPreContent) this.walk(el);
+		const el = this.el, options = this.options;
+		const template = (this.comp.constructor as typeof Component).template;
 
 		//generate from template
 		let templateEl: HTMLElement = undefined as any;
@@ -107,23 +98,20 @@ export class View <
 
 	constructChunk (name: Chunks | Template, context: Record<string, any> = {}) {
 		const template = typeof name === 'string' ? this.#chunks[name] : name;
+		if (!template) throw_undefined_chunk(this.comp, name as string);
 		const root = toDom(this.comp, template, this.options.liteConverters);
 		this.doActions(template.actions, root, context, template.node);
 		return root;
 	}
-	getChunk (name: Chunks) {
-		return this.#chunks[name];
+	getChunk (name: Chunks): Template {
+		const chunk = this.#chunks[name];
+		if (!chunk) throw_undefined_chunk(this.comp, name);
+		return chunk;
 	}
 
-	onWalk = new Event<(view: this, el: HTMLElement, options: Partial<WalkOptions>) => void>();
 	onAction = new Event<
 	  (view: this, top: HTMLElement, action: Action[], context: Record<string, any>) => void
 	>();
-	walk (top: HTMLElement, options: Partial<WalkOptions> = {}) {
-		options = { inDom: true, ...options }
-		this.onWalk.trigger(this, top, options);
-		this.doActions(walk(this.el, options));
-	}
 	doActions (
 	  actions: Action[], top: HTMLElement = this.el, 
 	  context: Record<string, any> = {}, lite?: LiteNode
@@ -147,5 +135,11 @@ export class View <
 		this.comp.store.dispatcher.remove((unit) => 
 			!!(unit.meta as any).el && !document.body.contains((unit.meta as any).el));
 		this.onCleanUp.trigger(this);
+	}
+
+	infoDump (type: 'chunks'): Record<Chunks, Template>; 
+	infoDump (type: 'chunks') {
+		if (type === 'chunks') return { ...this.#chunks };
+		throw_undefined_info_dump_type(type);
 	}
 }

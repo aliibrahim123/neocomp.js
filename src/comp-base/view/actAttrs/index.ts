@@ -7,6 +7,7 @@ import type { Node } from "../walkInterface.ts";
 import { addChunkAttr } from "./chunk.ts";
 import { addDoAttr } from "./do.ts";
 import { addEffectAttr } from "./effect.ts";
+import { addIfAttr } from "./if.ts";
 import { addInOutAttrs } from "./inout.ts";
 import { addOnAttr } from "./on.ts";
 import { addRefAttr } from "./ref.ts";
@@ -32,4 +33,5 @@ addDoAttr();
 addEffectAttr();
 addOnAttr();
 addInOutAttrs();
-addChunkAttr();
+addChunkAttr()
+addIfAttr();

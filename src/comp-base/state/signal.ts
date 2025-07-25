@@ -17,6 +17,9 @@ export class Signal <T> {
 	}
 	get prop () { return this.#prop }
 	get store () { return this.#store }
+	update () {
+		this.store.forceUpdate(this.prop);
+	}
 	get asReadOnly () { return new ReadOnlySignal<T>(this.#store, this.#prop) }
 	get asWriteOnly () { return new WriteOnlySignal<T>(this.#store, this.#prop) }
 }
@@ -43,6 +46,9 @@ export class WriteOnlySignal <T> {
 	}
 	set value (value: T) {
 		this.#store.set(this.#prop, value)
+	}
+	update () {
+		this.store.forceUpdate(this.prop);
 	}
 	get prop () { return this.#prop }
 	get store () { return this.#store }

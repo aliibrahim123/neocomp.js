@@ -1,27 +1,26 @@
 //the component class
 
 import { Event, OTIEvent } from "../../common/event.ts";
-import type { fn } from "../../common/types.ts";
-import { passedArgs } from "../action/attr.ts";
+import { get, type Template } from "../view/templates.ts";
 import { Store } from "../state/store.ts";
-import type { StoreOptions } from "../state/store.ts";
+import type { EffectedProp, StoreOptions } from "../state/store.ts";
 import { View } from "../view/view.ts";
 import type { ViewOptions } from "../view/view.ts";
 import { 
-	throw_link_Parent_while_has, throw_no_initFn, throw_unlink_unowned_child, throw_unlink_no_parent, 
-	throw_removing_removed_comp, throw_incorrect_init_sequence, throw_linking_same,
-	throw_unlinking_not_linked
+	throw_link_Parent_while_has, throw_unlink_unowned_child, throw_unlink_no_parent, 
+	throw_removing_removed_comp, throw_incorrect_init_sequence, throw_linking_linked,
+	throw_unlinking_not_linked, throw_adding_child_out_of_range,
+	throw_undefined_info_dump_type
 } from "./errors.ts";
 import { onNew, onRemove } from "./globalEvents.ts";
-import { link, unlink } from "./linkable.ts";
 import type { Linkable } from "./linkable.ts";
 import { addToIdMap, registry, removeFromIdMap, removeRoot } from "./registry.ts";
 import type { BaseMap } from "./typemap.ts";
+import { passedArgs } from "../action/attr.ts";
 
 export type Status = 'preInit' | 'coreInit' | 'domInit' | 'inited' | 'removing' | 'removed';
 
 export type CompOptions = {
-	initMode: 'minimal' | 'standared' | 'fullControl';
 	anonymous: boolean;
 	defaultId: (comp: PureComp) => string;
 	removeChildren: boolean;
@@ -30,27 +29,26 @@ export type CompOptions = {
 }
 
 export const attachedComp = Symbol('neocomp:attached-comp');
-export class Component <TMap extends BaseMap> implements Linkable {
-	typemap = undefined as any as TMap;
 
-	#passedArgs: Partial<TMap['args']>;
-	constructor (el?: HTMLElement, args: Partial<TMap['args']> = {}) {
+export class Component <TMap extends BaseMap> implements Linkable {
+	//extracting a parameter type from a generic requires to use that parameter in the generic
+	//if __tmap is not wraped with this optionals, errors will flood the project
+	//DO NOT TOUCH !!!
+	//hours spent: NaN
+	#__tmap: Partial<TMap> | undefined;
+
+	constructor (el?: HTMLElement, initMode: 'core' | 'dom' | 'full' = 'core') {
 		this.options = (this.constructor as typeof Component).defaults;
-		this.#passedArgs = args;
 		this.el = el as HTMLElement;
 		this.name = el?.getAttribute('neo:name') || '';
-		this.id = el?.id || this.options.defaultId(this as AnyComp);
+		this.id = el?.id || this.options.defaultId(this);
 
-		if (this.options.initMode !== 'fullControl') this.initCore();
-		if (this.options.initMode === 'minimal') {
-			this.initDom();
-			this.init();
-			this.fireInit();
-		}
-		else {
-			this.init();
-			if (this.options.initMode === 'standared') this.fireInit();
-		}
+		this.store = new Store(this, this.options.store);
+		this.view = new View(this, this.el, this.options.view);
+		this.status = 'coreInit';
+
+		if (initMode !== 'core') this.initDom();
+		if (initMode === 'full') this.fireInit();
 	}
 	
 	id: string = '';
@@ -63,18 +61,15 @@ export class Component <TMap extends BaseMap> implements Linkable {
 			`${comp.name}-${Math.round(Math.random() * 1000)}` 
 			: String(Math.round(Math.random() * 1000000)),
 		removeChildren: true,
-		initMode: 'standared',
 		store: {},
 		view: {}
 	}
 	
-	initCore () {
-		if (this.status !== 'preInit') 
-			throw_incorrect_init_sequence(this, 'coreInit', this.status);
-		this.status = 'coreInit';
+	elementArgs () {
+		const args: Record<string, any> = (this.el as any)[passedArgs];
+		delete (this.el as any)[passedArgs];
+		return args;
 
-		this.store = new Store(this, this.options.store);
-		this.view = new View(this, this.el, this.options.view);
 	}
 	initDom () {
 		if (this.status !== 'coreInit') 
@@ -99,17 +94,7 @@ export class Component <TMap extends BaseMap> implements Linkable {
 	onDomInit = new OTIEvent<(comp: this) => void>();
 	onInitInternal = new OTIEvent<(comp: this) => void>();
 	onInit = new OTIEvent<(comp: this) => void>();
-	init () {
-		throw throw_no_initFn(this);
-	}
-	args (defaults: TMap['args']): TMap['args'] {
-		const argsEl = (this.el as any)?.[passedArgs] || {};
-		const argsConstructor = this.#passedArgs;
-		if (this.el) delete (this.el as any)[passedArgs];
-		this.#passedArgs = undefined as any;
-		return { ...defaults, ...argsConstructor, ...argsEl }
-	}
-
+	
 	store: Store<TMap['props']> = undefined as any;
 	get <P extends keyof TMap['props'] & string> (name: P | symbol) {
 		return this.store.get(name)
@@ -117,24 +102,44 @@ export class Component <TMap extends BaseMap> implements Linkable {
 	set <P extends keyof TMap['props'] & string> (name: P | symbol, value: TMap['props'][P]) {
 		this.store.set(name, value)
 	}
+	setMultiple (props: Partial<TMap['props']>) {
+		this.store.setMultiple(props)
+	}
 	signal <P extends keyof TMap['props'] & string> (name: P | symbol, Default?: TMap['props'][P]) {
 		return this.store.createSignal(name, Default);
 	}
+	computed <P extends keyof TMap['props'] & string> (
+		name: P | symbol, effectedBy: EffectedProp<TMap['props']>[] | 'track', fn: () => TMap['props'][P]
+	) {
+		return this.store.computed(name, effectedBy, fn);
+	}
 	effect (
-		effectedBy: ((keyof TMap['props'] & string) | symbol)[], handler: () => void,
-		effect: ((keyof TMap['props'] & string) | symbol)[] = []
-	) { this.store.addEffect(effectedBy, handler, effect) }
+		effectedBy: EffectedProp<TMap['props']>[], handler: () => void,
+		effect?: EffectedProp<TMap['props']>[]
+	): void;
+	effect (track: 'track', handler: () => void): void;
+	effect (
+		effectedBy: EffectedProp<TMap['props']>[] | 'track', handler: () => void,
+		effect: EffectedProp<TMap['props']>[] = []
+	) { 
+		if (effectedBy === 'track') this.store.addEffect('track', handler);
+		else this.store.addEffect(effectedBy, handler, effect);
+	}
 
 	view: View<TMap['refs'], TMap['chunks']> = undefined as any;
 	el: HTMLElement;
+	static template = get('empty');
+	static chunks: Record<string, Template> = {};
 	refs: TMap['refs'] = undefined as any;
 	query <T extends HTMLElement = HTMLElement> (selector: string) { return this.view.query<T>(selector) }
+	chunk (chunk: TMap['chunks'] | Template, context?: Record<string, any>) 
+	  { return this.view.constructChunk(chunk, context) }
 
 	onLink = new Event<(comp: this, linked: Linkable) => void>();
 	onUnlink = new Event<(comp: this, unlinked: Linkable) => void>();
 	#links = new Set<Linkable>();
 	link (other: Linkable): void {
-		if (this.#links.has(other)) throw_linking_same(this, other);
+		if (this.#links.has(other)) throw_linking_linked(this, other);
 		this.#links.add(other);
 		this.onLink.trigger(this, other);
 	}
@@ -142,12 +147,6 @@ export class Component <TMap extends BaseMap> implements Linkable {
 		if (!this.#links.has(other)) throw_unlinking_not_linked(this, other);
 		this.#links.delete(other);
 		this.onUnlink.trigger(this, other);
-	}
-	linkTo (other: Linkable) {
-		link(this, other);
-	}
-	unlinkTo (other: Linkable) {
-		unlink(this, other);
 	}
 	hasLink (other: Linkable): boolean {
 		return this.#links.has(other);
@@ -157,11 +156,13 @@ export class Component <TMap extends BaseMap> implements Linkable {
 	onAddedToParent = new Event<(comp: this, parent: PureComp) => void>();
 	onUnlinkedFromParent = new Event<(comp: this, parent: PureComp) => void>();
 	onChildUnlink = new Event<(comp: this, child: PureComp) => void>();
-	parent?: PureComp;
+	parent: PureComp = undefined as any;
 	children: PureComp[] = [];
 	childmap: TMap['childmap'] = {};
-	addChild (child: AnyComp, ind = -1) {
+	addChild (child: PureComp, ind = -1) {
 		//add
+		if ((ind < 0 ? -ind-1 : ind ) > this.children.length) 
+			throw_adding_child_out_of_range(this, child, ind);
 		if (ind === -1) this.children.push(child);
 		else this.children.splice(ind, 0, child);
 		if (child.name) (this.childmap[child.name] as any) = child;
@@ -170,7 +171,7 @@ export class Component <TMap extends BaseMap> implements Linkable {
 		this.onChildAdded.trigger(this, child);
 		child.linkParent(this);
 	}
-	linkParent (parent: AnyComp) {
+	linkParent (parent: PureComp) {
 		if (this.parent) throw_link_Parent_while_has(this, this.parent);
 		this.parent = parent;
 		this.onAddedToParent.trigger(this, parent);
@@ -178,10 +179,10 @@ export class Component <TMap extends BaseMap> implements Linkable {
 	unlinkParent () {
 		if (!this.parent) throw_unlink_no_parent(this);
 		this.parent?.unlinkChild(this);
-		this.onUnlinkedFromParent.trigger(this, this.parent as AnyComp);
-		this.parent = undefined;
+		this.onUnlinkedFromParent.trigger(this, this.parent);
+		this.parent = undefined as any;
 	}
-	unlinkChild (child: AnyComp) {
+	unlinkChild (child: PureComp) {
 		let childCount = this.children.length;
 		this.children = this.children.filter(_child => _child !== child);
 		if (child.name) (this.childmap[child.name] as any) = undefined;
@@ -197,16 +198,16 @@ export class Component <TMap extends BaseMap> implements Linkable {
 		this.onRemove.trigger(this);
 
 		//links
-		for (const link of this.#links) {
-			link.unlink(this);
-			this.onUnlink.trigger(this, link);
+		for (const linkable of this.#links) {
+			linkable.unlink(this);
+			this.onUnlink.trigger(this, linkable);
 		}
 		this.#links = new Set;
 
 		//parent
 		if (this.parent) {
 			this.parent.unlinkChild(this);
-			this.parent = undefined;
+			this.parent = undefined as any;
 		}
 
 		//children
@@ -222,20 +223,23 @@ export class Component <TMap extends BaseMap> implements Linkable {
 		//globally
 		if (!this.options.anonymous) {
 			removeFromIdMap(this.id);
-			onRemove.trigger(this as AnyComp);
+			onRemove.trigger(this);
 		}
 
 		//root
-		if (registry.root === this as AnyComp) removeRoot();
+		if (registry.root === this) removeRoot();
 		
 		this.status = 'removed';
 	}
+	
+	infoDump (type: 'links'): Linkable[];
+	infoDump (type: 'properties'): TMap['props'];
+	infoDump (type: 'links' | 'properties') {
+		if (type === 'links') return Array.from(this.#links);
+		if (type === 'properties') return this.store.infoDump('properties');
+		throw_undefined_info_dump_type(type);
+	}
 }
 
-export type PureComp = Pick<Component<BaseMap>, keyof Component<BaseMap>>;
-export type AnyComp = {
-  [k in keyof Component<any>]: 
-	Component<any>[k] extends Event<fn> ? Event<fn> :
-	Component<any>[k] extends OTIEvent<fn> ? OTIEvent<fn> :
-	Component<any>[k]
-};
+//why not Component<BaseMap>, i dont know, but it works
+export type PureComp = Component<BaseMap & { props: any }>

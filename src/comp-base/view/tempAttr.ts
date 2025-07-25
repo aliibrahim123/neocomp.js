@@ -9,20 +9,19 @@
 //	- @(dynamic props){exp}
 
 import { 
-	throw_tattr_escape_seq_at_end, throw_tattr_invalid_escape_seq, throw_tattr_uneded_exp, 
+	throw_tattr_escape_seq_at_end, throw_tattr_invalid_escape_seq, throw_tattr_unended_exp, 
 	throw_tattr_unended_prop_args, throw_tattr_unexpected_token
 } from "./errors.ts";
 import type { WalkOptions } from "./walker.ts";
-import type { AnyComp } from '../core/comp.ts';
+import type { PureComp } from '../core/comp.ts';
 import { toFun } from "./walkInterface.ts";
-import type { Fn } from "./walkInterface.ts";
 import type { fn } from "../../common/types.ts";
 
 const nextTokenExp = /[\\@#$]/;
 
 export interface TAttrExp {
 	isExp: true;
-	fn: Fn
+	fn: fn
 	dynamics: string[],
 	statics: string[]
 }
@@ -32,12 +31,12 @@ export interface TAttrProp {
 	static: boolean
 }
 export type TAttrPart = string | TAttrProp | TAttrExp;
-export type TAttr = Fn | TAttrPart[];
+export type TAttr = fn | TAttrPart[];
 
 export function parseTAttr (source: string, attr: string, options: WalkOptions, globalArgs: string[]): TAttr {
 	//case mono exp
 	if (source[0] === '{') {
-		if (source.at(-1) !== '}') throw_tattr_uneded_exp('', 0, attr);
+		if (source.at(-1) !== '}') throw_tattr_unended_exp('', 0, attr);
 
 		let exp = source.slice(1, -1);
 		exp = exp.includes(';') ? exp : 'return ' + exp;
@@ -72,7 +71,7 @@ export function parseTAttr (source: string, attr: string, options: WalkOptions, 
 			//locate end of exp
 			const isDoubleBracket = source[ind + 2] === '{';
 			const expEnd = source.indexOf(isDoubleBracket ? '}}' : '}', ind);
-			if (expEnd === -1) throw_tattr_uneded_exp('constant', ind, attr);
+			if (expEnd === -1) throw_tattr_unended_exp('constant', ind, attr);
 
 			//excute exp and add it
 			const exp = source.slice(ind + (isDoubleBracket ? 3 : 2), expEnd);
@@ -86,7 +85,7 @@ export function parseTAttr (source: string, attr: string, options: WalkOptions, 
 			const nextChar = source[ind + 1];
 			if (nextChar === '{') {
 				const propEnd = source.indexOf('}', ind);
-				if (propEnd === -1) throw_tattr_uneded_exp('static', ind, attr);
+				if (propEnd === -1) throw_tattr_unended_exp('static', ind, attr);
 				addPreText();
 				parts.push({ isExp: false, prop: source.slice(ind +2, propEnd), static: true });
 				ind = propEnd +1;
@@ -110,7 +109,7 @@ export function parseTAttr (source: string, attr: string, options: WalkOptions, 
 			const nextChar = source[ind + 1];
 			if (nextChar === '{') {
 				const propEnd = source.indexOf('}', ind);
-				if (propEnd === -1) throw_tattr_uneded_exp('dynamic', ind, attr);
+				if (propEnd === -1) throw_tattr_unended_exp('dynamic', ind, attr);
 				addPreText();
 				parts.push({ isExp: false, prop: source.slice(ind +2, propEnd), static: false });
 				ind = propEnd +1;
@@ -135,7 +134,9 @@ export function parseTAttr (source: string, attr: string, options: WalkOptions, 
 
 	function addPreText () {
 		if (curText.length === 0) return;
-		parts.push(curText.join(''));
+		const text = curText.join('');
+		if (text.length === 0) return;
+		parts.push(text);
 		curText = [];
 	}
 	function handleEscapeSeq () {
@@ -184,14 +185,15 @@ export function parseTAttr (source: string, attr: string, options: WalkOptions, 
 		//get props
 		const nextBracket = source.indexOf(')', ind);
 		if (nextBracket === -1) throw_tattr_unended_prop_args(startInd, attr);
-		const props = source.slice(startInd + 2, nextBracket).split(',').map(prop => prop.trim());
+		const props = source.slice(startInd + 2, nextBracket).split(',')
+			.map(prop => prop.trim()).filter(Boolean);
 
 		//locate exp borders
 		ind = nextBracket + 1;
 		if (source[ind] !== '{') throw_tattr_unexpected_token(source[ind], ind, attr);
 		const isDoubleBracket = source[ind + 1] === '{';
 		const expEnd = source.indexOf(isDoubleBracket ? '}}' : '}', ind);
-		if (expEnd === -1) throw_tattr_uneded_exp('static', startInd, attr);
+		if (expEnd === -1) throw_tattr_unended_exp('static', startInd, attr);
 
 		//create exp fn and add it
 		const exp = source.slice(ind + (isDoubleBracket ? 2 : 1), expEnd);
@@ -204,7 +206,8 @@ export function parseTAttr (source: string, attr: string, options: WalkOptions, 
 		//get props
 		const nextBracket = source.indexOf(')', ind);
 		if (nextBracket === -1) throw_tattr_unended_prop_args(startInd, attr);
-		const props = source.slice(startInd + 2, nextBracket).split(',').map(prop => prop.trim());
+		const props = source.slice(startInd + 2, nextBracket).split(',')
+			.map(prop => prop.trim()).filter(Boolean);
 		const staticProps: string[] = [], dynamicProps: string[] = [];
 		for (const prop of props)
 			if (prop[0] === '$') staticProps.push(prop.slice(1));
@@ -215,7 +218,7 @@ export function parseTAttr (source: string, attr: string, options: WalkOptions, 
 		if (source[ind] !== '{') throw_tattr_unexpected_token(source[ind], ind, attr);
 		const isDoubleBracket = source[ind + 1] === '{';
 		const expEnd = source.indexOf(isDoubleBracket ? '}}' : '}', ind);
-		if (expEnd === -1) throw_tattr_uneded_exp('dynamic', startInd, attr);
+		if (expEnd === -1) throw_tattr_unended_exp('dynamic', startInd, attr);
 
 		//create exp fn and add it
 		const exp = source.slice(ind + (isDoubleBracket ? 2 : 1), expEnd);
@@ -229,7 +232,7 @@ export function parseTAttr (source: string, attr: string, options: WalkOptions, 
 }
 
 export function evalTAttr (
-  attr: TAttr, comp: AnyComp, el: HTMLElement, context: Record<string, any>, props: any[]
+  attr: TAttr, comp: PureComp, el: HTMLElement, context: Record<string, any>, props: any[]
 ) {
 	if (Array.isArray(attr)) return attr.map(part => {
 		//string
@@ -237,10 +240,10 @@ export function evalTAttr (
 		//prop
 		if (!part.isExp) return comp.store.get(part.prop);
 		//exp
-		return (part.fn as fn)(comp, el, context, 
+		return part.fn(comp, el, context, 
 		  ...props.concat(part.statics.concat(part.dynamics).map(prop => comp.store.get(prop)))
 		);
 	}).join('');
 
-	else return (attr as fn)(comp, el, context, ...props);
+	else return attr(comp, el, context, ...props);
 }

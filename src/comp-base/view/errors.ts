@@ -1,75 +1,84 @@
 import type { LiteNode } from "../../litedom/node.ts";
 import { compInfo } from "../core/errors.ts";
-import type { AnyComp } from '../core/comp.ts'
-import { CompError } from '../core/error.ts'
+import type { PureComp } from '../core/comp.ts'
+import { errorsLevels, raiseError } from '../core/error.ts'
 
 //template registry
 export function throw_adding_existing_template (name: string) {
-	throw new CompError(`template registry: adding exsisitng template (${name})`);
+	raiseError(`template registry: adding exsisitng template (${name})`, 301);
 }
 export function throw_getting_undefined_template (name: string) {
-	throw new CompError(`template registry: getting undefined template (${name})`);
+	raiseError(`template registry: getting undefined template (${name})`, 302);
 }
 
-//init dom
-export function throw_not_into_query (comp: AnyComp) {
-	throw new CompError(`view: no into query while insertMode is into (${compInfo(comp)})`);
+//view
+export function throw_not_into_query (comp: PureComp) {
+	raiseError(`view: no into query while insertMode is into (${compInfo(comp)})`, 303);
 }
-export function throw_into_query_no_match (comp: AnyComp, query: string) {
-	throw new CompError(`view: into query has not match (query: ${query}, ${compInfo(comp)})`);
+export function throw_into_query_no_match (comp: PureComp, query: string) {
+	raiseError(`view: into query has not match (query: ${query}, ${compInfo(comp)})`, 304);
+}
+export function throw_undefined_chunk (comp: PureComp, name: string) {
+	raiseError(`view: using undefined chunk (name: ${name}, ${compInfo(comp)})`, 307);
 }
 
 //template parse
 export function throw_text_in_root () {
-	throw new CompError(`template parse: unexpected text in root`);
+	raiseError(`template parse: unexpected text in root`, 401);
 }
 export function throw_top_node_no_id (node: LiteNode, ind: number) {
-	throw new CompError(`template parse: top node without an id (node: ${node.tag} at ${ind})`);
+	raiseError(`template parse: top node without an id (node: ${node.tag} at ${ind})`, 402);
 }
 export function throw_undefined_supplement_type (node: LiteNode, id: string) {
-	throw new CompError(`template parse: undefined supplement type (type: ${node.tag}), node: (${node.tag}#${id})`);
+	raiseError(
+		`template parse: undefined supplement type (type: ${node.tag}), node: (${node.tag}#${id})`,
+		403
+	);
 }
 
 //tAttr
 export function throw_tattr_unended_prop_args_in_name (attr: string) {
-	throw new CompError(`TAttr: unexpected unended property argumanets at attribute (${attr})`);
+	raiseError(`TAttr: unexpected unended property argumanets at attribute (${attr})`, 404);
 }
 export function throw_tattr_no_text (attr: string) {
-	throw new CompError(`TAttr: target is text while node has node children, expected only text (${attr})`);
+	raiseError(`TAttr: target is text while node has node children, expected only text (${attr})`, 405);
 }
 
 export function throw_tattr_unexpected_token (token: string, ind: number, attr: string) {
-	throw new CompError(`TAttr: unexpected token (${token}) at (${ind}) of attribute (${attr})`);
+	raiseError(`TAttr: unexpected token (${token}) at (${ind}) of attribute (${attr})`, 406);
 }
-export function throw_tattr_uneded_exp (type: string, ind: number, attr: string) {
-	throw new CompError(`TAttr: unexpected unended ${type ? type + ' ' : ''}expression at (${ind}) of attribute (${attr})`);
+export function throw_tattr_unended_exp (type: string, ind: number, attr: string) {
+	raiseError(
+		`TAttr: unexpected unended ${type ? type + ' ' : ''}expression at (${ind}) of attribute (${attr})`,
+		407
+	);
 }
 export function throw_tattr_unended_prop_args (ind: number, attr: string) {
-	throw new CompError(`TAttr: unexpected unended property arguments at (${ind}) of attribute (${attr})`);
+	raiseError(`TAttr: unexpected unended property arguments at (${ind}) of attribute (${attr})`, 408);
 }
 export function throw_tattr_escape_seq_at_end (ind: number, attr: string) {
-	throw new CompError(`TAttr: unexpected unended escape sequence at the end of input at (${ind}) of attribute (${attr})`);
+	raiseError(
+		`TAttr: unexpected unended escape sequence at the end of input at (${ind}) of attribute (${attr})`,
+		409
+	);
 }
 export function throw_tattr_invalid_escape_seq (seq: string, ind: number, attr: string) {
-	throw new CompError(`TAttr: invalid escape sequence (${seq}) at (${ind}) of attribute (${attr})`);
+	raiseError(`TAttr: invalid escape sequence (${seq}) at (${ind}) of attribute (${attr})`, 410);
 }
 
 //action attrs
 export function throw_adding_existing_act_attr (name: string) {
-	throw new CompError(`action attributes: adding existing action attribute handler (${name})`);
+	raiseError(`action attributes: adding existing action attribute handler (${name})`, 305);
 }
 export function throw_getting_undefined_act_attr (name: string) {
-	throw new CompError(`action attributes: getting undefined action attribute handler (${name})`);
-}
-export function throw_comp_this_multiple () {
-	throw new CompError(`@comp\\:this attr: detected multiple comp:this attr`);
+	raiseError(`action attributes: getting undefined action attribute handler (${name})`, 306);
 }
 export function throw_on_attr_no_args () {
-	throw new CompError(`@on attr: no event arguments`);
+	raiseError(`@on attr: no event arguments`, 411);
 }
 export function throw_chunk_attr_no_name () {
-	throw new CompError(`@chunk attr: no chunk name`);
+	raiseError(`@chunk attr: no chunk name`, 412);
 }
 export function throw_attr_no_props (attr: string) {
-	throw new CompError(`@${attr} attr: no property arguments`);
+	raiseError(`@${attr} attr: no property arguments`, 413);
 }

@@ -88,11 +88,11 @@ can be passed an `Array` of properties to filter.
 
 ## components state 2 way binding
 ```typescript
-export function $in<From extends AnyComp, To extends AnyComp> (
+export function $in<From extends PureComp, To extends PureComp> (
   from: From, fromProp: keyof getProps<From> | symbol,
   to: To, toProp: keyof getProps<To> | symbol
 ): void;
-export function $inout<A extends AnyComp, B extends AnyComp, T> (
+export function $inout<A extends PureComp, B extends PureComp, T> (
   a: A, aProp: keyof getProps<A> | symbol, 
   b: B, bProp: keyof getProps<B> | symbol,
   comparator?: (a: T, b: T) => boolean

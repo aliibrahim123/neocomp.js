@@ -16,6 +16,6 @@ export function addCompAction () {
 		  type === 'prop' ? comp.get(value) : 
 		  (value as fn)(comp, el, context);
 		const child = new (get(name))(el);
-		child.onInit.on((child) => comp.addChild(child));
+		child.onInit.listen((child) => comp.addChild(child));
 	})
-}  
+}

@@ -3,70 +3,72 @@
 import type { fn } from './types.ts';
 
 export class Event <Listener extends fn> {
-	#listeners: Listener[] = [];
+	#listeners: fn[] = [];
 	
-	on (listener: Listener) {
+	listen (listener: Listener) {
 		this.#listeners.push(listener);
-		return this
 	}
-	off (listener: Listener) {
+	unlisten (listener: Listener) {
 		this.#listeners = this.#listeners.filter(fn => fn !== listener)
-		return this
 	}
 
 	trigger (...args: Parameters<Listener>) {
 		for (const listener of this.#listeners) listener(...args);
-		return this
 	}
 
 	once (listener: Listener) {
 		const fn = (...args: any[]) => {
 			listener(...args);
-			this.off(fn as Listener);
+			this.unlisten(fn as Listener);
 		}
-		this.#listeners.push(fn as Listener);
-		return this;
+		this.#listeners.push(fn as Listener);;
 	}
 	
 	async awaitForIt (): Promise<Parameters<Listener>> {
 		return new Promise(res => 
-			this.once(((...args: any[]) => res(args as any)) as Listener)
+			this.once(((...args) => res(args as any)) as Listener)
 		)
 	}
 }
 
 //one time init event
-export class OTIEvent <Listener extends fn> {
-	#listeners: Listener[] = [];
+export class OTIEvent <Listener extends fn> extends Event<Listener> {
+	#listeners: fn[] = [];
 	#inited: boolean = false;
 	#args: Parameters<Listener> = undefined as any; 
 	
-	on (listener: Listener) {
+	override listen (listener: Listener) {
 		if (this.#inited) listener(...this.#args);
 		else this.#listeners.push(listener);
-		return this
 	}
-	off (listener: Listener) {
+	override unlisten (listener: Listener) {
 		this.#listeners = this.#listeners.filter(fn => fn !== listener)
-		return this
 	}
 
-	trigger (...args: Parameters<Listener>) {
+	override trigger (...args: Parameters<Listener>) {
+		if (this.#inited) throw new TypeError('OTIEvent: event already triggered');
 		for (const listener of this.#listeners) listener(...args);
 		this.#inited = true;
 		this.#args = args;
 		this.#listeners = [];
-		return this
 	}
 
-	once (listener: Listener) {
-		this.on(listener);
-		return this;
+	override once (listener: Listener) {
+		this.listen(listener);;
 	}
 
-	async awaitForIt (): Promise<Parameters<Listener>> {
+	override async awaitForIt (): Promise<Parameters<Listener>> {
 		return new Promise(res => 
-			this.on(((...args: any[]) => res(args as any)) as Listener)
+			this.listen(((...args: any[]) => res(args as any)) as Listener)
 		)
 	}
+}
+
+export type ListenerOf <event extends Event<fn>> = 
+	event extends Event<infer listener> ? listener : never;
+
+export function listenUntil <listener extends fn>
+  (source: Event<fn>, target: Event<listener>, listener: listener) {
+	target.listen(listener);
+	source.once(() => target.unlisten(listener));
 }

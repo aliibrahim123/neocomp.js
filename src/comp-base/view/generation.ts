@@ -1,28 +1,9 @@
-import { LiteNode, liteToNative, nativeToLite } from "../../litedom/core.ts";
-import type { AnyComp } from "../core/comp.ts";
-import { onConvertTemplate } from "../core/globalEvents.ts";
+import { LiteNode, nativeToLite } from "../../litedom/core.ts";
 import type { Template } from "./templates.ts";
 import { parse, type Options as ParseOptions } from "../../litedom/parse.ts";
 import { throw_top_node_no_id, throw_text_in_root, throw_undefined_supplement_type } from "./errors.ts";
 import { walk, type WalkOptions } from "./walker.ts";
 
-
-export function toDom (
-  comp: AnyComp, template: Template, converters: Record<string, (lite: LiteNode) => Node> = {}
-) {
-	const el = liteToNative(template.node, {
-		//svg converter
-		svg (lite) { 
-			const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-			for (const [name, value] of lite.attrs) svg.setAttribute(name, String(value));
-			svg.innerHTML = lite.children.join('');
-			return svg
-		},
-		...converters
-	});
-	onConvertTemplate.trigger(comp, template, el);
-	return el;
-}
 
 export interface Supplement {
 	type: symbol
@@ -36,6 +17,7 @@ export interface Plugin {
 }
 
 const defaultParseOptions: Partial<ParseOptions> = {
+	rootTag: 'div',
 	attrStart: /^[^'"=`<>\s]/,
 	attrRest: /^[^'"=`<>\s]+/,
 	lowerAttr: false,
@@ -67,6 +49,21 @@ export function generateFromLite (
 	return template;
 }
 export function generateFromString (
+	source: string, plugins: Plugin[] = [], walkOptions: Partial<WalkOptions> = {}
+) {
+	//get parse options
+	const parseOptions = { ...defaultParseOptions };
+	for (const plugin of plugins) if (plugin.onSource) plugin.onSource(source, parseOptions);
+
+	//parse
+	let root = parse(source, parseOptions);
+	if (root.children[0] instanceof LiteNode && root.children[0].tag === 'neo:template')
+		root = root.children[0];
+
+	//generate
+	return generateFromLite(root, plugins, walkOptions);
+}
+export function generateFromSource (
 	source: string, plugins: Plugin[] = [], walkOptions: Partial<WalkOptions> = {}
 ): Record<string, FileContent> {
 	//get parse options

@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import directoryPlugin from 'vite-plugin-directory-index';
 import { entries, fullEntries } from './scripts/entries.ts';
+import { neoTempPlugin } from './src/build/plugin.ts';
 
 //config
 export default defineConfig({

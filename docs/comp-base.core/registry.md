@@ -12,7 +12,7 @@ export const registry: {
 
 export const onAdd: Event<(name: string, comp: CompConstructor) => void>;
 
-type CompClass = new (...args: any[]) => AnyComp;
+type CompClass = new (...args: any[]) => PureComp;
 export type CompProvider = (name: string) => CompClass;
 ```
 class registry stores the classes of the components and the providers.
@@ -38,7 +38,7 @@ built in provides: [`lazy`](#lazy-provider).
 ## id map
 ```typescript
 export const registry: {
-	addToIdMap (id: string, comp: AnyComp): void
+	addToIdMap (id: string, comp: PureComp): void
 	getById (id: string): PureComp;
 	removeFromIdMap (id: string): boolean;
 }
@@ -65,7 +65,7 @@ export const onRemove: Event<(comp: PureComp) => void>;
 ```typescript
 export const registry: {
 	root: PureComp | undefined;
-	setRoot (comp: AnyComp): void;
+	setRoot (comp: PureComp): void;
 	removeRoot (): void;
 }
 

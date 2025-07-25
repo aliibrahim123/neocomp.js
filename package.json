@@ -1,46 +1,32 @@
 {
 	"name": "@neocomp/full",
-	"version": "0.2.16",
+	"version": "0.3.0",
 	"description": "new generation of reactivity and speed",
 	"author": "aliibrahim123",
 	"scripts": {
 		"start": "vite .",
 		"build": "vite build",
 		"generate-js-source": "node scripts/generateJSSource.js",
-		"generate-test-html": "node scripts/generateTestHTML.js",
-		"generate-types": "node scripts/generateTypes.js"
+		"generate-test-html": "node scripts/generateTestHTML.js"
 	},
 	"type": "module",
-	"types": "./types.d.ts",
 	"exports": {
-		"./rawdom": {
-			"import": "./dist/rawdom/index.js",
-			"types": "./types.d.ts"
-		},
-		"./rawdom/elements": {
-			"import": "./dist/rawdom/elements.js",
-			"types": "./types.d.ts"
-		},
-		"./litedom": {
-			"import": "./dist/litedom/core.js",
-			"types": "./types.d.ts"
-		},
-		"./litedom/parse": {
-			"import": "./dist/litedom/parse.js",
-			"types": "./types.d.ts"
-		},
-		"./zro-router": {
-			"import": "./dist/zro-router/index.js",
-			"types": "./types.d.ts"
-		},
-		"./comp-base": {
-			"import": "./dist/comp-base/core.js",
-			"types": "./types.d.ts"
-		},
-		"./build": {
-			"import": "./dist/build/plugin.js",
-			"types": "./types.d.ts"
-		}
+		"./rawdom": "./src/rawdom/index.ts",
+		"./rawdom/elements": "./src/rawdom/elements.ts",
+		"./litedom": "./src/litedom/core.ts",
+		"./litedom/parse": "./src/litedom/parse.ts",
+		"./zro-router": "./src/zro-router/index.ts",
+		"./comp-base": "./src/comp-base/core.ts",
+		"./comp-base/tempGen": "./src/comp-base/tempGen.ts",
+		"./build": "./src/build/plugin.ts",
+		"./dist/rawdom": "./dist/rawdom/index.js",
+		"./dist/rawdom/elements": "./dist/rawdom/elements.js",
+		"./dist/litedom": "./dist/litedom/core.js",
+		"./dist/litedom/parse": "./dist/litedom/parse.js",
+		"./dist/zro-router": "./dist/zro-router/index.js",
+		"./dist/comp-base": "./dist/comp-base/core.js",
+		"./dist/comp-base/tempGen": "./dist/comp-base/tempGen.js",
+		"./dist/build": "./dist/build/plugin.js"
 	},
 	"homepage": "https://aliibrahim123.github.io/neocomp.js/",
 	"bugs": {
@@ -53,7 +39,6 @@
 	"license": "MIT",
 	"devDependencies": {
 		"@types/node": "^22.10.5",
-		"dts-buddy": "^0.6.2",
 		"vite": "^6.0.2",
 		"vite-plugin-directory-index": "^3.0.1"
 	}

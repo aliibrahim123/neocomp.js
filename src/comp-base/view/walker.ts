@@ -5,12 +5,15 @@ import type { fn } from "../../common/types.ts";
 import type { Action } from "../action/actions.ts";
 import type { AttrAction } from "../action/attr.ts";
 import type { CompThisAction } from "../action/comp.ts";
+import { type PureComp } from "../core/comp.ts";
+import { doActions } from "../action/actions.ts";
 import { getActionAttr } from "./actAttrs/index.ts";
 import { parseTName } from "./actAttrs/utils.ts";
-import { throw_comp_this_multiple, throw_tattr_no_text, throw_tattr_unended_prop_args_in_name } from "./errors.ts";
+import { throw_tattr_no_text, throw_tattr_unended_prop_args_in_name } from "./errors.ts";
 import { parseTAttr } from "./tempAttr.ts";
 import { 
 	hasAttr, attrsOf, decodeAttrArg, setAttr, removeAttr, getTarget, childrenOf, getText,
+	removeChildren,
 } from "./walkInterface.ts";
 import type { Node } from "./walkInterface.ts";
 
@@ -31,9 +34,10 @@ function handleTAttr (
 ) {
 	const paranInd = attr.indexOf('('), hasProps = paranInd !== -1;
 	let name = attr.slice(1, hasProps ? paranInd : attr.length);
-	if (name.startsWith('prop:') || name.startsWith('arg:')) 
+	if (name.startsWith('prop.') || name.startsWith('arg.')) 
 		name = decodeAttrArg(name, options);
 
+	let autoTrack = false;
 	const staticProps: string[] = [], dynamicProps: string[] = [];
 	if (hasProps) {
 		//get props end
@@ -43,7 +47,8 @@ function handleTAttr (
 		//get props
 		const props = decodeAttrArg(attr.slice(paranInd +1, paranEnd), options).split(',');
 		for (const prop of props) if (prop !== '') {
-			if (prop[0] === '$') staticProps.push(prop.slice(1));
+			if (prop === '...') autoTrack = true;
+			else if (prop[0] === '$') staticProps.push(prop.slice(1));
 			else dynamicProps.push(prop);
 		}
 	}
@@ -53,6 +58,7 @@ function handleTAttr (
 		const text = getText(node);
 		if (text === undefined) return throw_tattr_no_text(attr);
 		value = text;
+		removeChildren(node);
 	}
 
 	//parse attr
@@ -61,8 +67,8 @@ function handleTAttr (
 	
 	//case const and doesnt need runtime handling, set it directly
 	const maybeConst = !(
-		name === 'html' || name === 'content' || name.startsWith('style:') || 
-		name.startsWith('prop:') || name.startsWith('class:') || name.startsWith('arg:')
+		name === 'html' || name === 'content' || name.startsWith('style.') || 
+		name.startsWith('prop.') || name.startsWith('class.') || name.startsWith('arg.')
 	);
 
 	//case parted template
@@ -71,10 +77,9 @@ function handleTAttr (
 
 	//else add action
 	else actions.push({
-		type: 'attr',
-		target: getTarget(node),
-		attr: name,
-		template, staticProps, dynamicProps
+		type: 'attr', target: getTarget(node), 
+		attr: name, template,
+		autoTrack, staticProps, dynamicProps
 	} satisfies AttrAction);
 	
 	removeAttr(node, attr);
@@ -92,10 +97,9 @@ function Walk (node: Node, actions: Action[], options: WalkOptions): Action[] {
 
 	for (const [attr, value] of Array.from(attrsOf(node))) {
 		//case templated attr
-		if (attr[0] === ':') handleTAttr(node, attr, value, options, actions);
+		if (attr[0] === '.') handleTAttr(node, attr, value, options, actions);
 		//case @comp:this
 		else if (attr === '@comp:this') {
-			if (compThisAct) throw_comp_this_multiple();
 			compThisAct = { type: 'comp:this', target: getTarget(node), comp: parseTName(value, options) };
 			removeAttr(node, attr);
 		}
@@ -119,4 +123,11 @@ function Walk (node: Node, actions: Action[], options: WalkOptions): Action[] {
 	//walk children
 	for (const child of childrenOf(node)) Walk(child, actions, options);
 	return actions
+}
+
+export function walkInDom (
+	comp: PureComp, el: HTMLElement, context: Record<string, any>, options: Partial<WalkOptions> = {}
+) {
+	const actions = Walk(el, [], { ...defalutOptions, inDom: true, ...options });
+	doActions(comp, actions, context);
 }

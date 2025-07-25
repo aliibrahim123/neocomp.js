@@ -13,17 +13,17 @@ interface TypeMap extends BaseMap {}
 export interface BaseMap {
 	props: Record<string, any>,
 	refs: Record<string, HTMLElement | HTMLElement[]>,
-	childmap: Record<string, AnyComp>,
+	childmap: Record<string, PureComp>,
 	args: Record<keyof any, any>,
 	chunks: string
 }
 
-export type getTypeMap <Comp extends AnyComp> = BaseMap;
-export type getProps <Comp extends AnyComp> = BaseMap['props'];
-export type getRefs <Comp extends AnyComp> = BaseMap['refs'];
-export type getChildMap <Comp extends AnyComp> = BaseMap['childmap'];
-export type getArgs <Comp extends AnyComp> = BaseMap['args'];
-export type getChunks <Comp extends AnyComp> = BaseMap['chunks'];
+export type getTypeMap <Comp extends PureComp> = BaseMap;
+export type getProps <Comp extends PureComp> = BaseMap['props'];
+export type getRefs <Comp extends PureComp> = BaseMap['refs'];
+export type getChildMap <Comp extends PureComp> = BaseMap['childmap'];
+export type getArgs <Comp extends PureComp> = BaseMap['args'];
+export type getChunks <Comp extends PureComp> = BaseMap['chunks'];
 ```
 `TypeMap`: is an abstracted type that groups the types passed to `Component`.
 
@@ -193,8 +193,8 @@ components has a parent children hierarchy.
 ### linking
 ```typescript
 export class Component {
-	addChild (child: AnyComp, ind?: number): void;
-	linkParent (parent: AnyComp): void;
+	addChild (child: PureComp, ind?: number): void;
+	linkParent (parent: PureComp): void;
 	onChildAdded: Event<(comp: this, child: PureComp) => void>;
 	onAddedToParent: Event<(comp: this, parent: PureComp) => void>;
 }
@@ -212,7 +212,7 @@ export class Component {
 ```typescript
 export class Component {
 	unlinkParent (): void;
-	unlinkChild (child: AnyComp) :void;
+	unlinkChild (child: PureComp) :void;
 
 	onUnlinkedFromParent: Event<(comp: this, parent: PureComp) => void>;
 	onChildUnlink: Event<(comp: this, child: PureComp) => void>;
@@ -301,13 +301,13 @@ export class Component {
 ## component variants
 ```typescript
 export type PureComp = Component<BaseMap>;
-export type AnyComp = Component<BaseMap> & /* ... */;
+export type PureComp = Component<BaseMap> & /* ... */;
 ```
 `PureComp`: is pureset `Component`, it is used to interact with any component.
 
-`AnyComp`: is any `Component`, it accept any `Component`. it is custom typed to do this.
+`PureComp`: is any `Component`, it accept any `Component`. it is custom typed to do this.
 
-use `AnyComp` for arguments that take any `Component` and convert it to `PureComp` when working
+use `PureComp` for arguments that take any `Component` and convert it to `PureComp` when working
 with it, dont try to use `PureComp` for arguments else you will recieve type errors.
 
 ## boilerplate code for a component

@@ -1,5 +1,5 @@
 import type { ConstructorFor } from "../common/types.ts";
-import { SerializedFn, type Fn } from "../comp-base/view/walkInterface.ts";
+import { SerializedFn } from "../comp-base/view/walkInterface.ts";
 import { LiteNode } from "../litedom/node.ts";
 import type { GenData, Options } from "./plugin.ts";
 
@@ -42,7 +42,7 @@ serializers.set(LiteNode, (value: LiteNode, data, options) => {
 	const attrs = serialize(attrsObj, data, options);
 	const children = serialize(value.children, data, options);
 	const meta = serialize(mapToObject(value.meta), data, options);
-	return `new LiteNode('${value.tag}', ${attrs}, ${children}, ${meta})`
+	return `new _LiteNode('${value.tag}', ${attrs}, ${children}, ${meta})`
 });
 
 function mapToObject (map: Map<string, any>) {

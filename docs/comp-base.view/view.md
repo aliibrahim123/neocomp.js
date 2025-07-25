@@ -7,7 +7,7 @@ for working with DOM.
 ## constructor and options
 ```typescript
 export class View <Refs extends Record<string, HTMLElement | HTMLElement[]>, Chunks extends string> {
-	constructor (comp: AnyComp, el?: HTMLElement, options?: Partial<ViewOptions>);
+	constructor (comp: PureComp, el?: HTMLElement, options?: Partial<ViewOptions>);
 	comp: PureComp;
 	el: HTMLElement;
 	options: ViewOptions;

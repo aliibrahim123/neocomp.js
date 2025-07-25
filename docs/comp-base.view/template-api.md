@@ -40,7 +40,7 @@ it is the global registry of `Template`s.
 ```typescript
 export const tempGen = {
 	toDom (
-	  comp: AnyComp, template: Template, converters: Record<string, (lite: LiteNode) => Node> = {}
+	  comp: PureComp, template: Template, converters: Record<string, (lite: LiteNode) => Node> = {}
 	): HTMLElement,
 	generateFromDom (root: HTMLElement, plugins?: Plugin[], walkOptions?: Partial<WalkOptions>)
 	  : Template,
@@ -124,10 +124,10 @@ export interface Action {
 type Handler = (comp: PureComp, el: HTMLElement, action: Action, context: Record<string, any>) => void;
 export function addAction (name: string, handler: Handler): void;
 
-export function doActions (comp: AnyComp, actions: Action[], context: Record<string, any> = {}): void;
+export function doActions (comp: PureComp, actions: Action[], context: Record<string, any> = {}): void;
 
 export function doActionsOfTemplate (
-  comp: AnyComp, top: HTMLElement, liteTop: LiteNode, 
+  comp: PureComp, top: HTMLElement, liteTop: LiteNode, 
   actions: Action[], context: Record<string, any> = {}
 ): void;
 ```
@@ -270,7 +270,7 @@ export function parseTAttr (
 ): TAttr;
 
 export function evalTAttr (
-	attr: TAttr, comp: AnyComp, el: HTMLElement, context: Record<string, any>, props: any[]
+	attr: TAttr, comp: PureComp, el: HTMLElement, context: Record<string, any>, props: any[]
 ): any;
 ```
 `parseTAttr`: parses a templated attribute, `attr` is the attribute name and `globalArgs` are 

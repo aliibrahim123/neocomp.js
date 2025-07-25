@@ -61,9 +61,11 @@ export function apply <E extends keyof TypeMap> (el: TypeMap[E], param: CreatePa
 		//text node
 		else el.append(param);
 	}
+	
 	else if (param instanceof Node) el.append(param);
 	else if (Array.isArray(param)) for (const item of param) apply(el, item);
 	else if (typeof(param) === 'function') apply(el, param(el));
+
 	else if (typeof(param) === 'object' && param !== null) for (const key in param) {
 		if      (key === 'classList') el.classList.add(...param.classList as any);
 		else if (key === 'style') 

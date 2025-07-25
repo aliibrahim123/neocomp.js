@@ -1,4 +1,5 @@
 //interface for walk handlers that work on native and lite dom
+import type { fn } from "../../common/types.ts";
 import { LiteNode } from "../../litedom/node.ts";
 import type { WalkOptions } from "./walker.ts";
 
@@ -52,7 +53,6 @@ export function setText (node: Node, text: string) {
 	else node.innerText = text
 }
 
-export type Fn = ((...args: any[]) => any) | SerializedFn;
 export class SerializedFn {
 	args: string[]; 
 	source: string
@@ -61,9 +61,9 @@ export class SerializedFn {
 		this.source = source;
 	}
 }
-export function toFun (options: WalkOptions, args: string[], source: string): Fn {
-	if (options.serialize) return new SerializedFn(args, source);
-	return new Function(...args, source) as Fn;
+export function toFun (options: WalkOptions, args: string[], source: string): fn {
+	if (options.serialize) return new SerializedFn(args, source) as any as fn;
+	return new Function(...args, source) as fn;
 }
 export function decodeAttrArg (value: string, options: WalkOptions) {
 	if (options.inDom) return value.replaceAll(/-[^-]/g, v => v[1].toUpperCase())

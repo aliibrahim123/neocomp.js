@@ -1,11 +1,10 @@
 //component bindings
 
 import type { getProps } from "../core/typemap.ts";
-import { Component } from "../core/comp.ts";
 import { link } from "../core/linkable.ts";
-import type { AnyComp } from "../core/comp.ts";
+import type { PureComp } from "../core/comp.ts";
 
-export function $in<From extends AnyComp, To extends AnyComp> (
+export function $in<From extends PureComp, To extends PureComp> (
 	from: From, fromProp: (keyof getProps<From> & string) | symbol,
 	to: To, toProp: (keyof getProps<To> & string) | symbol
 ) {
@@ -13,10 +12,10 @@ export function $in<From extends AnyComp, To extends AnyComp> (
 	if (!from.hasLink(to)) link(from, to);
 	from.effect([fromProp], () => to.set(toProp, from.get(fromProp)));
 }
-export function $inout<A extends AnyComp, B extends AnyComp, T> (
+export function inout<A extends PureComp, B extends PureComp, T> (
 	a: A, aProp: (keyof getProps<A> & string) | symbol,
 	b: B, bProp: (keyof getProps<B> & string) | symbol,
-	comparator = (a: T, b: T) => a === b
+	comparator = (a: getProps<A>[typeof aProp], b: getProps<B>[typeof bProp]) => a === b
 ) {
 	//link if required
 	if (!a.hasLink(b)) link(a, b);

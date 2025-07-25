@@ -1,6 +1,5 @@
 import type { fn } from "../../common/types.ts";
 import type { TName } from "../view/actAttrs/utils.ts";
-import type { Fn } from "../view/walkInterface.ts";
 import { addAction } from "./actions.ts";
 import type { Action } from "./actions.ts";
 

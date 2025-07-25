@@ -8,20 +8,24 @@ export interface Template {
 	actions: Action[];
 }
 
-const templateRegistry = new Map<string, Template>;
-templateRegistry.set('empty', { node: new LiteNode('div', {}, [], { 'neocomp:id': 0 }), actions: [] });
+const registry = new Map<string, Template>;
+registry.set('empty', { node: new LiteNode('div', {}, [], { 'neocomp:id': 0 }), actions: [] });
 
 export function add (name: string, template: Template) {
-	if (templateRegistry.has(name)) throw_adding_existing_template(name);
+	if (registry.has(name)) throw_adding_existing_template(name);
 	onAddTemplate.trigger(name, template);
-	templateRegistry.set(name, template);
+	registry.set(name, template);
 }
 export function get (name: string) {
-	if (!templateRegistry.has(name)) throw_getting_undefined_template(name);
-	return templateRegistry.get(name) as Template
+	if (!registry.has(name)) throw_getting_undefined_template(name);
+	return registry.get(name) as Template
 }
 export function has (name: string) {
-	return templateRegistry.has(name);
+	return registry.has(name);
+}
+
+export function infoDump (type: 'templates') {
+	if (type === 'templates') return Object.fromEntries(registry);
 }
 
 export const templates = { add, get, has }
