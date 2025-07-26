@@ -31,10 +31,11 @@ function setAttr (comp: PureComp, el: HTMLElement, action: AttrAction, context: 
 		if (Array.isArray(value)) el.replaceChildren(...value);
 		else el.replaceChildren(value === undefined ? '' : value);
 	}
-	else if (attr.startsWith('prop.')) (el as any)[attr.slice(5)] = value;
-	else if (attr.startsWith('class.')) el.classList.toggle(attr.slice(6), !!value);
-	else if (attr.startsWith('style.')) el.style.setProperty(attr.slice(6), value);
-	else if (attr.startsWith('arg.')) {
+	else if (attr.startsWith('prop:')) (el as any)[attr.slice(5)] = value;
+	else if (attr.startsWith('bool:')) el.toggleAttribute(attr.slice(5), !!value);
+	else if (attr.startsWith('class:')) el.classList.toggle(attr.slice(6), !!value);
+	else if (attr.startsWith('style:')) el.style.setProperty(attr.slice(6), value);
+	else if (attr.startsWith('arg:')) {
 		if (!(el as any)[passedArgs]) (el as any)[passedArgs] = {};
 		(el as any)[passedArgs][attr.slice(4)] = value
 	}

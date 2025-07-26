@@ -132,13 +132,20 @@ export class UpdateDispatcher {
 		this.#dependencies = new Map();
 	}
 
-	remove (fn: (unit: EffectUnit) => boolean, props?: symbol[]) {
-		if (props) for (const prop of props) {
-			const units = this.#records.get(prop);
-			if (units) this.#records.set(prop, units.filter(unit => !fn(unit)));
+	remove (unit: EffectUnit): void;
+	remove (fn: (unit: EffectUnit) => boolean, props?: symbol[]): void;
+	remove (toRemove: ((unit: EffectUnit) => boolean) | EffectUnit, props?: symbol[]) {
+		if (typeof(toRemove) === 'function') {
+			if (props) for (const prop of props) {
+				const units = this.#records.get(prop);
+				if (units) this.#records.set(prop, units.filter(unit => !toRemove(unit)));
+			}
+			else for (const [prop, units] of this.#records)
+				this.#records.set(prop, units.filter(unit => !toRemove(unit)));
 		}
-		else for (const [prop, units] of this.#records)
-			this.#records.set(prop, units.filter(unit => !fn(unit)));
+		else for (const prop of toRemove.effectedBy) {
+			this.#records.set(prop, this.#records.get(prop)?.filter(unit => unit !== toRemove) as any);
+		}
 	}
 
 	infoDump (type: 'records'): Record<string, EffectUnit[]>;

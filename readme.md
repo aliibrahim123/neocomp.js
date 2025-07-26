@@ -4,8 +4,13 @@ board of frameworks magic, want a lightweight solution for building scalable web
 introducing **neocomp**, a lightweight, fast, flexible and modern javascript web framework simplifing
 web develepment without sacrificing maintainability or language identity.
 
-it achieves this goal by being close to the root, it is simple javascript with normal html as 
-templating, and doesnt have fancy features that requires transpiling or learning new paradigm.
+it achieves this goal by being close to the root, favoring direct DOM interaction and minimizing the 
+internals depth.
+
+# quick start
+- [first steps](./docs/quick-guide/first-steps.md)
+- [basic state management](./docs/quick-guide/basic-state.md)
+- [templates](./docs/quick-guide/templates.md)
 
 # docs
 this is the index of the documentation.

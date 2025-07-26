@@ -1,4 +1,5 @@
-import type { fn } from "../../common/types.ts";
+import type { ConstructorFor, fn } from "../../common/types.ts";
+import type { PureComp } from "../core.ts";
 import { get } from "../core/registry.ts";
 import type { TName } from "../view/actAttrs/utils.ts";
 import { addAction, type Action } from "./actions.ts";
@@ -11,11 +12,11 @@ export interface CompThisAction extends Action {
 export function addCompAction () {
 	addAction('comp:this', (comp, el, action, context) => {
 		const { type, value } = (action as CompThisAction).comp;
-		const name = 
+		const name = (
 		  type === 'literial' ? value : 
 		  type === 'prop' ? comp.get(value) : 
-		  (value as fn)(comp, el, context);
-		const child = new (get(name))(el);
+		  (value as fn)(comp, el, context)) as string | ConstructorFor<PureComp>;
+		const child = new (typeof(name) === 'string' ? get(name) : name)(el);
 		child.onInit.listen((child) => comp.addChild(child));
 	})
 }

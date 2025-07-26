@@ -18,7 +18,10 @@ export function addIfAction () {
 		}
 
 		//case auto track dependencies
-		if (props[0] === '...') comp.store.addEffect('track', effect, undefined, undefined, { el });
+		if (props[0] === '...') {
+			props.pop(); //remove ...
+			comp.store.addEffect('track', effect, undefined, undefined, { el });
+		}
 		
 		//case manual dependencies
 		else comp.store.addEffect(props, effect, [], undefined, { el });

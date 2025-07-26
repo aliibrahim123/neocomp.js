@@ -27,7 +27,6 @@ export interface Prop <T> {
 	symbol: symbol;
 	static: boolean;
 	meta?: Record<keyof any, any>;
-	init?: (this: this, store: Store<any>) => void;
 	setter?: (this: this, value: T, store: Store<any>) => void;
 	getter?: (this: this, store: Store<any>) => T;
 	comparator: (old: T, New: T, store: Store<any>) => boolean;
@@ -89,9 +88,7 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 		}
 		//without all the properties share the same default meta
 		if (prop.meta) prop.meta = { ...prop.meta };
-		//init
-		if (prop.init) prop.init.call(prop, this);
-
+		
 		//add
 		this.#propsByName.set(name, prop);
 		this.#propsBySymbol.set(symbol, prop);

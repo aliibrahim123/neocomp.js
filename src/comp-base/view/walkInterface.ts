@@ -28,6 +28,10 @@ export function setAttr (node: Node, attr: string, value: string) {
 	if (node instanceof LiteNode) node.attrs.set(attr, value);
 	else (node.attributes.getNamedItem(attr) as Attr).value = value;
 }
+export function toggleAttr (node: Node, attr: string, value: boolean) {
+	if (value) setAttr(node, attr, '');
+	else removeAttr(node, attr);
+}
 export function removeAttr (node: Node, attr: string) {
 	if (node instanceof LiteNode) node.attrs.delete(attr);
 	else node.removeAttribute(attr);
@@ -51,6 +55,16 @@ export function getText (node: Node) {
 export function setText (node: Node, text: string) {
 	if (node instanceof LiteNode) node.children = [text];
 	else node.innerText = text
+}
+export function addClass (node: Node, className: string) {
+	if (node instanceof LiteNode) 
+		node.attrs.set('class', `${node.attrs.get('class') || ''} ${className}`);
+	else node.classList.add(className);
+}
+export function removeClass (node: Node, className: string) {
+	if (node instanceof LiteNode) 
+		node.attrs.set('class', (node.attrs.get('class') || '').replace(className, ''));
+	else node.classList.remove(className);
 }
 
 export class SerializedFn {

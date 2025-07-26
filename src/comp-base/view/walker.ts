@@ -14,6 +14,8 @@ import { parseTAttr } from "./tempAttr.ts";
 import { 
 	hasAttr, attrsOf, decodeAttrArg, setAttr, removeAttr, getTarget, childrenOf, getText,
 	removeChildren,
+	addClass,
+	toggleAttr,
 } from "./walkInterface.ts";
 import type { Node } from "./walkInterface.ts";
 
@@ -34,7 +36,7 @@ function handleTAttr (
 ) {
 	const paranInd = attr.indexOf('('), hasProps = paranInd !== -1;
 	let name = attr.slice(1, hasProps ? paranInd : attr.length);
-	if (name.startsWith('prop.') || name.startsWith('arg.')) 
+	if (name.startsWith('prop:') || name.startsWith('arg:')) 
 		name = decodeAttrArg(name, options);
 
 	let autoTrack = false;
@@ -67,13 +69,15 @@ function handleTAttr (
 	
 	//case const and doesnt need runtime handling, set it directly
 	const maybeConst = !(
-		name === 'html' || name === 'content' || name.startsWith('style.') || 
-		name.startsWith('prop.') || name.startsWith('class.') || name.startsWith('arg.')
+		name === 'html' || name === 'content' || name.startsWith('style:') || name.startsWith('class:') ||
+		name.startsWith('prop:') || name.startsWith('arg:')
 	);
 
 	//case parted template
-	if (maybeConst && Array.isArray(template) && template.every(part => typeof(part) === 'string'))
-		setAttr(node, name, template.join(''));
+	if (maybeConst && Array.isArray(template) && template.every(part => typeof(part) === 'string')) {
+		if (name.startsWith('bool:')) toggleAttr(node, name.slice(5), !!template.join(''));
+		else setAttr(node, name, template.join(''));
+	}
 
 	//else add action
 	else actions.push({

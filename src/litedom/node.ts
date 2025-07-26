@@ -1,12 +1,12 @@
 export class LiteNode {
 	tag: string;
-	attrs = new Map<string, string | number | boolean>();
+	attrs = new Map<string, string>();
 	children: (string | LiteNode)[];
 	parent: LiteNode | undefined;
 	meta = new Map<string, any>();
 
 	constructor (
-		tag: string, attrs: Record<string, string | number | boolean> = {},
+		tag: string, attrs: Record<string, string> = {},
 		children: (string | LiteNode)[] = [], meta: Record<string, any> = {}
 	) {
 		this.tag = tag;
