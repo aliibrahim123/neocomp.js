@@ -36,54 +36,48 @@ export class LiteNode {
 		return siblings[siblings.indexOf(this) - 1];
 	}
 
-	append (...children: (LiteNode | string)[]): this {
+	append (...children: (LiteNode | string)[]) {
 		this.children.push(...children);
 		for (const child of children) 
 			if (child instanceof LiteNode) child.parent = this;
-		return this;
 	}
-	prepend (...children: (LiteNode | string)[]): this {
+	prepend (...children: (LiteNode | string)[]) {
 		this.children.unshift(...children);
 		for (const child of children) 
 			if (child instanceof LiteNode) child.parent = this;
-		return this;
 	}
-	insertAt (ind: number, ...children: (LiteNode | string)[]): this {
+	insertAt (ind: number, ...children: (LiteNode | string)[]) {
 		this.children.splice(ind, 0, ...children);
 		for (const child of children) 
 			if (child instanceof LiteNode) child.parent = this;
 		return this
 	}
 	
-	before (...newSiblings: (LiteNode | string)[]): this {
-		if (!this.parent) return this;
+	before (...newSiblings: (LiteNode | string)[]) {
+		if (!this.parent) return;
 		const siblings = this.parent.children;
 		siblings.splice(siblings.indexOf(this), 0, ...newSiblings);
 		for (const sibling of newSiblings)
 			if (sibling instanceof LiteNode) sibling.parent = this.parent;
-		return this;
 	}
-	after (...newSiblings: (LiteNode | string)[]): this {
-		if (!this.parent) return this;
+	after (...newSiblings: (LiteNode | string)[]) {
+		if (!this.parent) return;
 		const siblings = this.parent.children;
 		siblings.splice(siblings.indexOf(this) + 1, 0, ...newSiblings);
 		for (const sibling of newSiblings)
 			if (sibling instanceof LiteNode) sibling.parent = this.parent;
-		return this;
 	}
 
-	remove (): this {
+	remove () {
 		if (this.parent) this.parent.children = this.parent.children.filter(child => child !== this);
 		this.parent = undefined;
-		return this;
 	}
-	replaceWith (node: LiteNode | string): this {
-		if (!this.parent) return this;
+	replaceWith (node: LiteNode | string) {
+		if (!this.parent) return;
 		const siblings = this.parent.children;
 		siblings[siblings.indexOf(this)] = node;
 		if (node instanceof LiteNode) node.parent = this.parent;
 		this.parent = undefined;
-		return this;
 	}
 
 	removeChild (ind: number) {
@@ -91,16 +85,14 @@ export class LiteNode {
 		this.children.splice(ind, 1);
 		return this
 	}
-	replaceChild (ind: number, child: LiteNode | string): this {
+	replaceChild (ind: number, child: LiteNode | string) {
 		if (this.children[ind] instanceof LiteNode) this.children[ind].parent = undefined;
 		this.children[ind] = child;
 		if (child instanceof LiteNode) child.parent = this.parent;
-		return this;
 	}
-	removeChildren (): this {
+	removeChildren () {
 		for (const child of this.children) 
 			if (child instanceof LiteNode) child.parent = undefined;
 		this.children = [];
-		return this;
 	}
 }

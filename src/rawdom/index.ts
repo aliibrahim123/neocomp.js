@@ -18,7 +18,7 @@ export function from (
 	//case arrayLike
 	if (a?.length !== undefined) return Array.from(a);
 	//invalid input
-	if (Throw) throw new TypeError(`cannot convert ${a?.constructor?.name} to Element[]`)
+	if (Throw) throw new TypeError(`cannot convert ${a?.constructor?.name} to HTMLElement[]`)
 	return [];
 }
 

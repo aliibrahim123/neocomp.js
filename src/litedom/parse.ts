@@ -54,12 +54,12 @@ export function parse (source: string, opts: Partial<Options>): LiteNode {
 		keepWhiteSpaceTags, rawTextTags
 	} = options;
 	const root = new LiteNode(options.rootTag), stack = [root];
-	let parentWSTags = 0;
+	let parentWSTags = 0; //parents with whitespace preserve tags
 	let ind = 0;
 	
 	while (ind < source.length) {
 		const curNode = stack.at(-1) as LiteNode, children = curNode.children;
-		//next '<', if curnode is raw text, next end tag of it
+		//next '<', if curNode is raw text, next end tag of it
 		const nextBracket = source.indexOf(
 			rawTextTags.has(curNode.tag) ? `</${curNode.tag}>` : '<', 
 		ind);
@@ -128,6 +128,7 @@ export function parse (source: string, opts: Partial<Options>): LiteNode {
 		//attributes
 		let thereWasWS = false;
 		while (source[ind] !== '>' && source[ind] !== '/') {
+			//disallow <tag attr="value"attr="value"
 			if (skipWhiteSpace() && !thereWasWS) throw new 
 				SyntaxError(`litedom.parse: expected whitespace at (${ind})`);
 			thereWasWS = false;
@@ -144,6 +145,7 @@ export function parse (source: string, opts: Partial<Options>): LiteNode {
 			//case empty value
 			const thereIsNoWS = skipWhiteSpace();
 			if (source[ind] !== '=') {
+				//allow <tag attr>
 				const isEnd = source[ind] === '>' || source[ind] === '/';
 				if (!isEnd && thereIsNoWS) throw new 
 					SyntaxError(`litedom.parse: unexpected token at (${ind})`);
@@ -188,9 +190,10 @@ export function parse (source: string, opts: Partial<Options>): LiteNode {
 		if (source[ind] === '/') stack.pop();
 		else if (options.voidTags.has(tag)) stack.pop();
 
+		//do not use tag since we may pop it above
 		if (keepWhiteSpaceTags.has(stack.at(-1)?.tag as string)) parentWSTags++;
 
-		ind+= source[ind] === '/' ? 2 : 1; //skip '>'
+		ind += source[ind] === '/' ? 2 : 1; //skip '>'
 	}
 	function parseEndTag (curNode: LiteNode) {
 		//extract tag
@@ -214,7 +217,7 @@ export function parse (source: string, opts: Partial<Options>): LiteNode {
 		if (keepWhiteSpaceTags.has(tag)) parentWSTags--;
 
 		stack.pop();
-		ind += 3 + tag.length;
+		ind += 3 + tag.length; //skip '</...>'
 	}
 	function parseComment (curNode: LiteNode) {
 		const commentEnd = source.indexOf('-->', ind + 4);

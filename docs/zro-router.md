@@ -1,25 +1,17 @@
 # `zro-router` module
-a lightweight router that implements zero refresh optimization.
+a lightweight multi page router that implements zero refresh optimization.
 
-in simple terms, it intercepts the navigate events and updates the page without refreshing, it
-does this by merging the head and replacing the body.
+it intercepts the navigate events and updates the page without refreshing, it does this by
+merging the head elements and replacing the body.
 
-this keeps the already loaded scripts and optionaly styles and only loads the necessary ones,
-this enable instantanous page updates and mostly reduce the network traffic.
+this mechanism reuse the already loaded scripts and optionaly styles and only loads the necessary
+ones, also it preserve the state between pages and allow inter page transitions.
 
-this gives the multi page websites the instantanous update latency of single page websites 
-while keeping the smaller initial load latency.
+by that, it compines the benifits of single page websites and the multi page websites, providing
+instantanous update, smaller initial load latency and reduced network traffic.
 
 # `ZRORouter` class
 the class of the router.
-
-### example
-```typescript
-import { ZRORouter } from '@neocomp/full/zro-router/index.ts';
-
-const router = new ZRORouter();
-router.attachToDom();
-```
 
 ## constructor and options
 ```typescript
@@ -43,15 +35,21 @@ export interface Options {
 	errorPage: (router: ZRORouter, url: URL, error: Error | Response) => void = defaultErrorPage
 }
 ```
-construct the router.
+`constructor`: construct the router with the given options.
+
+### setup
+```typescript
+const router = new ZRORouter();
+router.attachToDom();
+```
 
 ### update options
-- `transitions`: enable view transitions api.
+- `transitions`: use view transitions api, allow animations between pages.
 - `interceptClass`: anchor elements (`<a>`) with this class are only intercepted, if it is `''`,
 all the anchor elements are intercepted.
 - `preserveClass`: elements with this class are preserved during page update.
-- `preserveTags`: elements with these tags are fully preserved, will not be removed during update.
-- `skipTags`: elements with these tags are skiped during update, will not be removed nor added.
+- `preserveTags`: head elements with these tags are fully preserved, will not be removed during update.
+- `skipTags`: head elements with these tags are skiped during update, will not be removed nor added.
 
 ### hash related options
 - `scrollToHash`: scroll to hash like what browsers do, can be `false` to disable it or 
@@ -69,7 +67,7 @@ as state, default give `undefined`.
 - `errorPage`: a function that update the page to show the error encountered during update,
 if not specified use the default error page.
 
-## routing
+## navigation
 ```typescript
 export class ZRORouter {
 	go (url: URL | string): void;
@@ -88,6 +86,21 @@ export class ZRORouter {
 `onRoute`: an event triggered when routing, pass a function called `set` that can be called to
 change the url or to reject the request if called with `false`, `false` win then last one.
 
+#### example
+```typescript
+//in page 1
+router.go('/page2.html'); // navigate to page2
+router.back(); //return to page1
+
+router.onRoute.listen((router, url, set) => {
+	//redirect page2 to page3
+	if (url.pathname === '/page2.html') set('/page3.html');
+
+	//block from page1 to page4
+	if (url.pathname === '/page4.html' && router.lastURL.pathname === '/page1.html') set(false);	
+});
+```
+
 ## attaching to DOM
 ```typescript
 export class ZRORouter {
@@ -95,10 +108,21 @@ export class ZRORouter {
 	onAttach: Event<(router: ZRORouter) => void>;
 }
 ```
-`attachToDom`: attach the router to DOM. 
+`attachToDom`: attach the router to DOM, override the default click behaviour of anchor elements. 
 
-by default it adds click handlers to anchor elements `<a>`, but user can add custom logic by
-listening to `onAttach` event.
+custom logic can be added by listening to `onAttach` event.
+
+new anchors added after calling `attachToDom` will not be intercepted, another call is required.
+
+#### example
+```typescript
+router.attachToDom();
+
+someElement.append(newAnchor);
+
+//required for normal function
+router.attachToDom();
+```	
 
 ## update events
 ```typescript
@@ -116,8 +140,27 @@ export class ZRORouter {
 `onAfterFetch`: is an event triggered after fetching the new page, passed with the response.
 
 `onBeforeUpdate`: is event triggered before updating the page, passed with the fetched page 
-document.
+document, can be used to modify the page before updating.
 
-`onAfterUpdate`: is event triggered after updating the page.
+`onAfterUpdate`: is event triggered after updating the page, used to perform actions after update.
 
-`onError`: is event triggered when encountering an error during update.
+`onError`: is event triggered when encountering an error during update, do not use it to show 
+error page.
+
+#### example 
+```typescript
+router.onBeforeFetch.listen((router, url, set) => {
+	//redirect page1 to page2
+	if (url.pathname === '/page1.html') set('/page2.html');
+});
+
+router.onBeforeUpdate.listen((router, url, page) => {
+	//in case some preparation is needed before update
+	preparePageToUpdate(page);
+});
+
+router.onAfterUpdate.listen((router, url) => {
+	//case using neocomp, root must be updated
+	resigtry.removeRoot();
+	registry.setRoot(new RootComponent(document.getElementById('root')));
+})
