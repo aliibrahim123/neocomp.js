@@ -18,20 +18,19 @@ this is the index of the documentation.
 - **litedom:**
   - [core](./docs/litedom/core.md)
   - [parse](./docs/litedom/parse.md)
-- [events](./docs/events.md)
 - [zro router](./docs/zro-router.md)
 - **`comp-base` module:**
   - **core:**
 	- [`Component`](./docs/comp-base.core/component.md)
 	- [`registry`](./docs/comp-base.core/registry.md)
-	- [`Linkable`s and `Context`s](./docs/comp-base.core/linkable-and-context.md)
+	- [general utilities](./docs/comp-base.core/utilities.md)
   - **state:**
-    - [accessing state](./docs/comp-base.state/accessing.md)
-    - [bindings](./docs/comp-base.state/binding.md)
+    - [fundamentals](./docs/comp-base.state/accessing.md)
     - [`Store`](./docs/comp-base.state/store.md)
+    - [state utilities](./docs/comp-base.state/binding.md)
   - **view:**
-    - [`View`](./docs/comp-base.view/view.md)
-    - [template api](./docs/comp-base.view/template-api.md)
+    - [`View` and template runtime](./docs/comp-base.view/view.md)
+    - [template generation](./docs/comp-base.view/template-api.md)
     - [template reference](./docs/comp-base.view/template.md)
 - [vite plugin](./docs/plugin.md)
 

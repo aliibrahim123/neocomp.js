@@ -34,6 +34,11 @@ export function get (name: string) {
 	return classRegistry.get(name) as ConstructorFor<PureComp>
 }
 
+export function addProvider (name: string, provider: CompProvider) {
+	if (providers.has(name)) throw_adding_existing_provider(name);
+	providers.set(name, provider)
+}
+
 export function addToIdMap (id: string, comp: PureComp) {
 	IdMap.set(id, comp);
 }
@@ -44,10 +49,6 @@ export function removeFromIdMap (id: string) {
 	return IdMap.delete(id)
 }
 
-export function addProvider (name: string, provider: CompProvider) {
-	if (providers.has(name)) throw_adding_existing_provider(name);
-	providers.set(name, provider)
-}
 
 export function setRoot (comp: PureComp) {
 	if (registry.root) throw_adding_root_while_there(registry.root, comp);
@@ -57,7 +58,6 @@ export function setRoot (comp: PureComp) {
 export function removeRoot () {
 	if (!registry.root) throw_remove_unexisting_root();
 	onRootRemove.trigger(registry.root);
-	registry.root?.remove();
 	registry.root = undefined as any;
 }
 

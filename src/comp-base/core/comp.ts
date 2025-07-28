@@ -18,7 +18,7 @@ import { addToIdMap, registry, removeFromIdMap, removeRoot } from "./registry.ts
 import type { BaseMap } from "./typemap.ts";
 import { passedArgs } from "../action/attr.ts";
 
-export type Status = 'preInit' | 'coreInit' | 'domInit' | 'inited' | 'removing' | 'removed';
+export type Status = 'coreInit' | 'domInit' | 'inited' | 'removing' | 'removed';
 
 export type CompOptions = {
 	anonymous: boolean;
@@ -45,7 +45,6 @@ export class Component <TMap extends BaseMap> implements Linkable {
 
 		this.store = new Store(this, this.options.store);
 		this.view = new View(this, this.el, this.options.view);
-		this.status = 'coreInit';
 
 		if (initMode !== 'core') this.initDom();
 		if (initMode === 'full') this.fireInit();
@@ -53,13 +52,13 @@ export class Component <TMap extends BaseMap> implements Linkable {
 	
 	id: string = '';
 	name: string = '';
-	status: Status = 'preInit';
+	status: Status = 'coreInit';
 	options: CompOptions;
 	static defaults: CompOptions = {
 		anonymous: false,
 		defaultId: (comp) => comp.name ? 
 			`${comp.name}-${Math.round(Math.random() * 1000)}` 
-			: String(Math.round(Math.random() * 1000000)),
+			: String(Math.round(Math.random() * 1000000000)),
 		removeChildren: true,
 		store: {},
 		view: {}
@@ -205,10 +204,7 @@ export class Component <TMap extends BaseMap> implements Linkable {
 		this.#links = new Set;
 
 		//parent
-		if (this.parent) {
-			this.parent.unlinkChild(this);
-			this.parent = undefined as any;
-		}
+		if (this.parent) this.unlinkParent();
 
 		//children
 		for (const child of this.children) {

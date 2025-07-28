@@ -5,7 +5,7 @@ import type { PureComp, Component } from "./comp.ts";
 export interface BaseMap {
 	props: Record<string, any>,
 	refs: Record<string, HTMLElement | HTMLElement[]>,
-	childmap: Record<string, PureComp>,
+	childmap: Record<string	, PureComp>,
 	chunks: string
 }
 

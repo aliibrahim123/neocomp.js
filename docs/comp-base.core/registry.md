@@ -13,29 +13,49 @@ export const registry: {
 export const onAdd: Event<(name: string, comp: CompConstructor) => void>;
 
 type CompClass = new (...args: any[]) => PureComp;
-export type CompProvider = (name: string) => CompClass;
+type CompProvider = (name: string) => CompClass;
 ```
-class registry stores the classes of the components and the providers.
+class registry stores the classes of the components and the providers to be used by other systems.
 
 `CompClass`: a class extending `Component`.
 
-`add`: add a `CompClass` to the registry.
+builtin components: `base: PureComp`.
 
-`get`: get the `CompClass` registered as `name`.   
-if `name` of syntax `@provider:comp`, return the `CompClass` of the given `comp` provided by
+`add`: register component class as `name` to the registry.
+
+`get`: get the component class registered as the given name.
+
+if name is of syntax `@provider:comp`, return the component class of the given `comp` provided by
 the `provider`.
 
-`has`: check if there is a `CompClass` registered as a given name.
+`has`: check whether there is a compoment class registered as a given name.
 
-`CompProvider`: is a function that takes a name and returns a `CompClass`.
+`CompProvider`: a provider takes a name and returns a custom `CompClass`, they provide custom 
+creation for the specified components.
 
-built in provides: [`lazy`](#lazy-provider).
+built in providers: [`lazy`](#lazy-provider).
 
-`addProvider`: add the given `CompProvider`.
+`addProvider`: add the given component provider.
 
-`onAdd`: an event triggered after a new `CompClass` is registered.
+`onAdd`: an event triggered after a new component class is registered.
 
-## id map
+#### example
+```typescript
+onAdd.listen((name) => console.log('registered', name));
+
+class ExampleComp extends Component { }
+registry.add('example', ExampleComp); // => registered example
+
+registry.get('example'); // => ExampleComp
+
+registry.has('example'); // => true
+registry.has('unknown'); // => false
+
+registry.addProvider('of-tag', (name) => () => new ExampleComp(create(name)));
+new (registry.get('@of-tag:span'))(); //ExampleComp { el: <span> }
+```
+
+## idmap
 ```typescript
 export const registry: {
 	addToIdMap (id: string, comp: PureComp): void
@@ -43,7 +63,7 @@ export const registry: {
 	removeFromIdMap (id: string): boolean;
 }
 ```
-id map stores the components by their ids.
+id map is a global registry that stores the components by their ids.
 
 `addToIdMap`: add a component by its id.
 
@@ -51,6 +71,20 @@ id map stores the components by their ids.
 
 `removeFromIdMap`: remove a component from id map by id, returns `true` if there was a 
 component added before, else `false`.
+
+components are added to id map by default after initialization.
+
+#### example
+```typescript
+const comp = new ExampleComp(constructOne(`<div id=id></div>`));
+registry.getById('id'); // => ExampleComp
+
+comp.remove();
+registry.getById('id'); // => undefined
+
+new AnanymousComp(constructOne(`<div id=id></div>`)); // options.anonymous = true
+registry.getById('id'); // => undefined
+```
 
 ## global component events
 ```typescript
@@ -60,6 +94,18 @@ export const onRemove: Event<(comp: PureComp) => void>;
 `onNew`: an event triggered after a component is inited.
 
 `onRemove`: an event triggered after a component is removed.
+
+triggered after component initialization.
+
+#### example
+```typescript
+onNew.listen((comp) => console.log('new', comp));
+onRemove.listen((comp) => console.log('removed', comp));
+
+const comp = new ExampleComp()); // => new ExampleComp
+
+comp.remove(); // => removed ExampleComp
+```
 
 ## root
 ```typescript
@@ -74,15 +120,31 @@ export const onRootRemove: Event<(comp: PureComp) => void>;
 ```
 `root` is the root component that contains all the components in the page.
 
-`setRoot`: set the given component as a root.
+`setRoot`: set the given component as a root, doesnt append it to DOM nor remove the old root.
 
-`removeRoot`: remove the root completely by calling `remove` on it.
+`removeRoot`: remove the root from registry, doesnt remove it itself.
 
-**note**: `remove` method on `Component` also remove itself from the registry if it is the root.
+`remove` method on `Component` also remove itself from the registry if it is the root.
 
 `onRootAdd`: an event triggered when a root is added.
 
 `onRootRemove`: an event triggered when the root is removed.
+
+#### example
+```typescript
+onRootAdd.listen((comp) => console.log('root added', comp));
+onRootRemove.listen((comp) => console.log('root removed', comp));
+
+const root = new ExampleComp();
+registry.setRoot(root); // => root added ExampleComp
+registry.root; // => ExampleComp
+
+registry.removeRoot(); // => root removed ExampleComp
+root.status; // => 'inited'
+
+registry.setRoot(root);
+registry.root.remove(); // => root removed ExampleComp
+```
 
 # `lazy` provider
 ```typescript
@@ -93,15 +155,21 @@ export class LazyComp {
 ```
 the `lazy` provider allow lazy loading for components.
 
-**syntax**: `'@lazy:comp'` where comp is the component name.   
+**syntax**: `'@lazy:comp'` where comp is the component class name.   
 **returns**: `LazyComp`.
 
-`LazyComp` is a placeholder for a future `Component`, it is constructed by a given name and an
-optional element and arguments that are passed to the future component.
+`LazyComp` is a placeholder for a future component of class name `comp`, it is constructed by a 
+given name and optional element and arguments that are passed to the future component.
 
-it waits for the waited `CompClass` to be registered, then it construct a component with the
-given arguments and pass it to the `onInit` event, after that normal interactions with the
-component is done.
+it waits for the specified component class to be registered, then it construct a component with
+the given arguments and pass it to the `onInit` event, and normal interactions continue with
+the new component.
 
-**note**: by convention, every interaction with an unkown state component is done on the 
-`onInit` event.
+#### example
+```typescript
+const lazy = new (registry.get('@lazy:example'))(); //LazyComp
+parent.onChildAdded.listen((comp) => console.log('child added', comp));
+lazy.onInit.listen((comp) => parent.addChild(comp));
+
+registry.add('example', ExampleComp); //child added ExampleComp
+```

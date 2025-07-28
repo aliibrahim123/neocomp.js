@@ -1,3 +1,46 @@
+## `Linkable`
+```typescript
+export interface Linkable {
+	onLink: Event<(self: any, other: Linkable) => void>;
+	onUnlink: Event<(self: any, other: Linkable) => void>;
+	link (other: Linkable): void;
+	unlink (other: Linkable): void;
+	hasLink (other: Linkable): boolean;
+}
+
+export function link (a: Linkable, b: Linkable): void; 
+export function unlink (a: Linkable, b: Linkable): void;
+
+export function tryLink (a: Linkable, b: Linkable): void;
+export function tryUnlink (a: Linkable, b: Linkable): void;
+```
+a `Linkable` is an interface that represent a unit that can be link to another `Linkable`.
+
+it simplifies dependecies management by standardizing and automating it.
+
+### `Linkable` methods
+`link`: add a linkable to the links.
+
+`unlink`: remove a linkable from the links.
+
+`hasLink`: check if a linkable is in links.
+
+`onLink`: an event triggered when linking a linkable.
+
+`onUnlink`: an event triggered when unlinking a linkable.
+
+### linking funtions
+`link`: links two linkable togather.
+
+`unlink`: unlinks two linkable from each other.
+
+`tryLink`: try linking two linkable if they are not already linked.
+
+`tryUnlink`: try unlinking two linkable if they are already linked.
+
+the linking method on linkable do a one way link, while these do two way link.   
+use these for linking.
+
 # events
 events are common objects in neocomp and used in different modules.
 
@@ -96,3 +139,24 @@ event.trigger(1, 2); // => 1 2
 onRemove.trigger();
 event.trigger(1, 2); // => nothing
 ```
+
+# errors
+```typescript
+export class CompError extends Error { }
+
+type ErrorLevel = 'ignore' | 'warn' | 'error' | 'debug';
+
+export const errorsLevels = { 
+	base: ErrorLevel = 'error'
+	[key: `Err${number}`]?: ErrorLevel
+}	
+```
+`CompError` is the error type used in neocomp.
+
+`errorsLevels` is a record that define for each error by its error code its `ErrorLevel`, it can 
+be:
+- `ignore`: ignore the error, maybe the error can not be ignore and the app break in another way.
+- `warn`: log into the console a warning message, do not pause the app, but like `ignore` can be
+breaked by another way.
+- `error`: throw an error and pause the app.
+- `debug`: throw an error, pause the app and open the debugger at the error breakpoint.

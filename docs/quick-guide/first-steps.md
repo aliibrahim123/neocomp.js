@@ -70,15 +70,6 @@ registry.add('example', ExampleComponent);
 this might seem a lot of code, but in real many of it is optional, and provide improved developer
 experience.
 
-### why not a function
-being a function requires you to construct the element synchronously, also it has inflixible 
-organazation (only one function).    
-
-classes on the other hand can create the base synchronously and then perform asyncronous updates.    
-also logic can be organized into methods with shared states in properties.  
-
-functions are good in factory paradigm, but classes are the best for logicfull components.
-
 # integrating neocomp
 neocomp components are be used freely as independent units. but if used as the base of a site, 
 they must start from a common root.
