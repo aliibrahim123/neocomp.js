@@ -25,9 +25,9 @@ this is the index of the documentation.
 	- [`registry`](./docs/comp-base.core/registry.md)
 	- [general utilities](./docs/comp-base.core/utilities.md)
   - **state:**
-    - [fundamentals](./docs/comp-base.state/accessing.md)
+    - [fundamentals](./docs/comp-base.state/fundamentals.md)
     - [`Store`](./docs/comp-base.state/store.md)
-    - [state utilities](./docs/comp-base.state/binding.md)
+    - [state utilities](./docs/comp-base.state/utilities.md)
   - **view:**
     - [`View` and template runtime](./docs/comp-base.view/view.md)
     - [template generation](./docs/comp-base.view/template-api.md)
@@ -37,4 +37,4 @@ this is the index of the documentation.
 ---- 
 thanks for selecting neocomp as your base framework, if you noticed issues or have ideas dont be
 shy to share.   
-`request(new Time(!bug))`.
+`request(new Time() |> filter(!bug))`.

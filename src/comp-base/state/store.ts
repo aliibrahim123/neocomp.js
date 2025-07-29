@@ -32,8 +32,10 @@ export interface Prop <T> {
 	comparator: (old: T, New: T, store: Store<any>) => boolean;
 }
 
+
+type DistributeUnion <T> = T extends T ? Signal<T> : never;
 export type EffectedProp <Props extends Record<string, any>> = 
-	(keyof Props & string) | symbol | Signal<Props[keyof Props]>;
+	(keyof Props & string) | symbol | DistributeUnion<Props[keyof Props]>;
 
 export class Store <Props extends Record<string, any> = Record<string, any>> {
 	#propsBySymbol = new Map<symbol, Prop<any>>();
@@ -194,12 +196,67 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 		this.onRemove.trigger(this, prop);
 	}
 
-	computed <P extends keyof Props & string> (
+	createComputed <P extends keyof Props & string> (
 		name: P | symbol, effectedBy: EffectedProp<Props>[] | 'track', fn: () => Props[P]
-	): ReadOnlySignal<Prop<P>> {
+	): ReadOnlySignal<Props[P]> {
 		if (effectedBy === 'track') this.addEffect('track', () => this.set(name, fn()));
 		else this.addEffect(effectedBy, () => this.set(name, fn()), [name]);
 		return new ReadOnlySignal(this, typeof(name) === 'symbol' ? name : this.getSymbolFor(name));
+	}
+	
+	#initForUse <P extends keyof Props & string> (name: P | symbol, Default?: Props[P]): symbol {
+		if (this.has(name)) return this.getProp(name).symbol;
+		if (Default !== undefined) {
+			if (typeof(name) === 'string') return this.add(name, { value: Default }).symbol;
+			this.set(name, Default);
+			return this.getProp(name).symbol;
+		}
+		//possibly request to be added
+		if (typeof(name) === 'string') return this.getSymbolFor(name);
+		if (!this.#propsBySymbol.has(name)) throw_undefined_prop('using', name, ' by symbol', 207);
+		return name
+	}
+	createSignal <P extends keyof Props & string> (name: P | symbol, Default?: Props[P])
+	  : Signal<Props[P]> {
+		return new Signal(this, this.#initForUse(name, Default))
+	}
+	createROSignal <P extends keyof Props & string> (name: P | symbol, Default?: Props[P]) 
+	: ReadOnlySignal<Props[P]> {
+		return new ReadOnlySignal(this, this.#initForUse(name, Default));
+	}
+	createWOSignal <P extends keyof Props & string> (name: P | symbol, Default?: Props[P]) 
+	: WriteOnlySignal<Props[P]> {
+		return new WriteOnlySignal(this, this.#initForUse(name, Default));
+	}
+
+	addEffect (
+		effectedBy: EffectedProp<Props>[], handler: (this: EffectUnit) => void,
+		effect: EffectedProp<Props>[], from?: Linkable, meta?: object
+	): void;
+	addEffect(
+		track: 'track', handler: (this: EffectUnit) => void, unused?: undefined, 
+		from?: Linkable, meta?: object
+	): void;
+	addEffect(
+		effectedBy: EffectedProp<Props>[] | 'track', handler: (this: EffectUnit) => void,
+		effect: EffectedProp<Props>[] = [], from?: Linkable, meta: object = {}
+	) {
+		if (effectedBy === 'track') this.startTrack();
+		
+		//call on define
+		handler.call(undefined as any);
+		
+		//get tracked properties
+		if (effectedBy === 'track')
+			({ effected: effect, effecting: effectedBy } = this.endTrack());
+		
+		//add effect unit
+		const toSymbol = (prop: EffectedProp<Props>) => 
+			typeof(prop) === 'symbol' ? prop 
+		: prop instanceof Signal ? prop.prop
+		: this.getSymbolFor(prop);
+		
+		this.dispatcher.add(effectedBy.map(toSymbol), effect.map(toSymbol), handler, from, meta);
 	}
 
 	#bulkUpdates = 0;
@@ -252,68 +309,14 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 		if (!this.#isTracking) throw_end_track_while_not_tracking();
 		this.#isTracking = false;
 		this.endBulkUpdate();
-		const trackedProps = { ...this.#trackProps };
+		const trackedProps = this.#trackProps ;
 		this.#trackProps = { effectedBy: new Set, effected: new Set };
-		return trackedProps
-	}
-
-	#initForUse <P extends keyof Props & string> (name: P | symbol, Default?: Props[P]): symbol {
-		if (this.has(name)) return this.getProp(name).symbol;
-		if (Default !== undefined) {
-			this.set(name, Default);
-			return this.getProp(name).symbol;
+		return { 
+			effecting: Array.from(trackedProps.effectedBy), 
+			effected: Array.from(trackedProps.effected) 
 		}
-		//possibly request to be added
-		if (typeof(name) === 'string') return this.getSymbolFor(name);
-		if (!this.#propsBySymbol.has(name)) throw_undefined_prop('using', name, ' by symbol', 207);
-		return name
 	}
-	createSignal <P extends keyof Props & string> (name: P | symbol, Default?: Props[P])
-	  : Signal<Props[P]> {
-		return new Signal(this, this.#initForUse(name, Default))
-	}
-	createROSignal <P extends keyof Props & string> (name: P | symbol, Default?: Props[P]) 
-	: ReadOnlySignal<Props[P]> {
-		return new ReadOnlySignal(this, this.#initForUse(name, Default));
-	}
-	createWOSignal <P extends keyof Props & string> (name: P | symbol, Default?: Props[P]) 
-	: WriteOnlySignal<Props[P]> {
-		return new WriteOnlySignal(this, this.#initForUse(name, Default));
-	}
-
-	addEffect (
-		effectedBy: EffectedProp<Props>[], handler: (this: EffectUnit) => void,
-		effect: EffectedProp<Props>[], from?: Linkable, meta?: object
-	): void;
-	addEffect(
-		track: 'track', handler: (this: EffectUnit) => void, unused?: undefined, 
-		from?: Linkable, meta?: object
-	): void;
-	addEffect(
-		effectedBy: EffectedProp<Props>[] | 'track', handler: (this: EffectUnit) => void,
-		effect: EffectedProp<Props>[] = [], from?: Linkable, meta: object = {}
-	) {
-		if (effectedBy === 'track') this.startTrack();
-
-		//call on define
-		handler.call(undefined as any);
-
-		//get tracked properties
-		if (effectedBy === 'track') {
-			const trackedProps = this.endTrack();
-			effectedBy = Array.from(trackedProps.effectedBy);
-			effect = Array.from(trackedProps.effected);
-		}
-
-		//add effect unit
-		const toSymbol = (prop: EffectedProp<Props>) => 
-			typeof(prop) === 'symbol' ? prop 
-			: prop instanceof Signal ? prop.prop
-			: this.getSymbolFor(prop);
-		
-		this.dispatcher.add(effectedBy.map(toSymbol), effect.map(toSymbol), handler, from, meta);
-	}
-
+	
 	*[Symbol.iterator] () {
 		for (const [_, prop] of this.#propsByName) yield prop;
 	}

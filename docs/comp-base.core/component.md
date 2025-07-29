@@ -464,7 +464,7 @@ every `Component` has a `Store` that contains the state.
 
 `effect`: add an effect effected by and effecting a given properties.
 
-for more details read [fundamentals](../comp-base.state/fundamentals.md)
+for more details read [state fundamentals](../comp-base.state/fundamentals.md)
 
 #### example
 ```typescript
@@ -532,15 +532,3 @@ comp.chunk('hello', { to: 'world' }); // => <span>hello world</span>
 export type PureComp = Component<BaseMap>;
 ```
 `PureComp`: is any `Component`, it is used to interact with components of any kind.
-
-## infodump
-```typescript
-export class Component {
-	infoDump (type: 'links'): Linkable[];
-	infoDump (type: 'properties'): TMap['props'];
-}
-```
-info dumps is a function used in debugging.
-
-`infoDump('links')` returns the linkables linked to the component.
-`infoDump('properties')` return the properties of the component.

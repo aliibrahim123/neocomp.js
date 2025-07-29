@@ -160,3 +160,8 @@ be:
 breaked by another way.
 - `error`: throw an error and pause the app.
 - `debug`: throw an error, pause the app and open the debugger at the error breakpoint.
+
+#### example
+```typescript
+errorsLevels.Err112 = 'debug'; //add breakpoint at error of removing removed component
+```

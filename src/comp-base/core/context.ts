@@ -29,7 +29,7 @@ export class Context <Props extends Record<string, any>> implements Linkable {
 	computed <P extends keyof Props & string> (
 		name: P | symbol, effectedBy: EffectedProp<Props>[] | 'track', fn: () => Props[P]
 	) {
-		return this.store.computed(name, effectedBy, fn);
+		return this.store.createComputed(name, effectedBy, fn);
 	}
 	effect (
 		effectedBy: EffectedProp<Props>[], handler: () => void,

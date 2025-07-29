@@ -1,6 +1,6 @@
 //portable lightweight signals
 
-import { Store } from "./store.ts";
+import { Store, type Prop } from "./store.ts";
 
 export class Signal <T> {
 	#store: Store<any>;
@@ -16,6 +16,8 @@ export class Signal <T> {
 		this.#store.set(this.#prop, value)
 	}
 	get prop () { return this.#prop }
+	get name () { return this.#store.getProp(this.#prop).name }
+	get Prop (): Prop<T> {  return this.#store.getProp(this.#prop) }
 	get store () { return this.#store }
 	update () {
 		this.store.forceUpdate(this.prop);

@@ -110,7 +110,7 @@ export class Component <TMap extends BaseMap> implements Linkable {
 	computed <P extends keyof TMap['props'] & string> (
 		name: P | symbol, effectedBy: EffectedProp<TMap['props']>[] | 'track', fn: () => TMap['props'][P]
 	) {
-		return this.store.computed(name, effectedBy, fn);
+		return this.store.createComputed(name, effectedBy, fn);
 	}
 	effect (
 		effectedBy: EffectedProp<TMap['props']>[], handler: () => void,
