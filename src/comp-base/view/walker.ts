@@ -6,7 +6,7 @@ import type { Action } from "../action/actions.ts";
 import type { AttrAction } from "../action/attr.ts";
 import type { CompThisAction } from "../action/comp.ts";
 import { type PureComp } from "../core/comp.ts";
-import { doActions } from "../action/actions.ts";
+import { doActionsFromDom } from "../action/actions.ts";
 import { getActionAttr } from "./actAttrs/index.ts";
 import { parseTName } from "./actAttrs/utils.ts";
 import { throw_tattr_no_text, throw_tattr_unended_prop_args_in_name } from "./errors.ts";
@@ -130,8 +130,8 @@ function Walk (node: Node, actions: Action[], options: WalkOptions): Action[] {
 }
 
 export function walkInDom (
-	comp: PureComp, el: HTMLElement, context: Record<string, any>, options: Partial<WalkOptions> = {}
+	comp: PureComp, el: HTMLElement, context: Record<string, any> = {}, options: Partial<WalkOptions> = {}
 ) {
 	const actions = Walk(el, [], { ...defalutOptions, inDom: true, ...options });
-	doActions(comp, actions, context);
+	doActionsFromDom(comp, actions, context);
 }

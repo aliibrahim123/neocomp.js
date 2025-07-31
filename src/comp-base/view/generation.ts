@@ -9,15 +9,17 @@ export interface Supplement {
 	type: symbol
 }
 export interface Plugin {
-	onSource?: (source: string, options: Partial<ParseOptions>) => void;
-	onDom?: (root: HTMLElement) => void;
-	onRoot?: (root: LiteNode) => void;
-	onTemplate?: (template: Template) => void;
-	onSupplement?: (name: string, top: LiteNode) => undefined | Supplement;
+	onSource?: (source: string, options: Partial<ParseOptions>, meta: Map<string, any>) => void;
+	onDom?: (root: HTMLElement, meta: Map<string, any>) => void;
+	onRoot?: (root: LiteNode, meta: Map<string, any>) => void;
+	onTemplate?: (template: Template, meta: Map<string, any>) => void;
+	onSupplement?: (name: string, top: LiteNode, meta: Map<string, any>) => undefined | Supplement;
 }
 
 const defaultParseOptions: Partial<ParseOptions> = {
-	rootTag: 'div',
+	rootTag: 'neo:template',
+	tagStart: /^[^'"=`<>/\s]/,
+	tagRest: /^[^'"=`<>/\s]+/,
 	attrStart: /^[^'"=`<>\s]/,
 	attrRest: /^[^'"=`<>\s]+/,
 	lowerAttr: false,
@@ -32,28 +34,34 @@ function initLiteNode (node: LiteNode) {
 
 	for (let child of node.children) if (child instanceof LiteNode) initLiteNode(child);
 }
-export function generateFromLite (
-	root: LiteNode, plugins: Plugin[] = [], walkOptions: Partial<WalkOptions> = {}
+function fromLite (
+	root: LiteNode, plugins: Plugin[] = [], walkOptions: Partial<WalkOptions> = {}, meta: Map<string, any>
 ) {
 	//init root
 	initLiteNode(root);
-	for (const plugin of plugins) if (plugin.onRoot) plugin.onRoot(root);
+	for (const plugin of plugins) if (plugin.onRoot) plugin.onRoot(root, meta);
 	
 	//collect actions
 	const actions = walk(root, walkOptions);
 
 	//join into template
-	const template = { node: root, actions };
-	for (const plugin of plugins) if (plugin.onTemplate) plugin.onTemplate(template);
+	const template = { root, actions };
+	for (const plugin of plugins) if (plugin.onTemplate) plugin.onTemplate(template, meta);
 
 	return template;
+}
+export function generateFromLite (
+	root: LiteNode, plugins: Plugin[] = [], walkOptions: Partial<WalkOptions> = {}
+) {
+	return fromLite(root, plugins, walkOptions, new Map());
 }
 export function generateFromString (
 	source: string, plugins: Plugin[] = [], walkOptions: Partial<WalkOptions> = {}
 ) {
+	const meta = new Map();
 	//get parse options
 	const parseOptions = { ...defaultParseOptions };
-	for (const plugin of plugins) if (plugin.onSource) plugin.onSource(source, parseOptions);
+	for (const plugin of plugins) if (plugin.onSource) plugin.onSource(source, parseOptions, meta);
 
 	//parse
 	let root = parse(source, parseOptions);
@@ -61,14 +69,15 @@ export function generateFromString (
 		root = root.children[0];
 
 	//generate
-	return generateFromLite(root, plugins, walkOptions);
+	return fromLite(root, plugins, walkOptions, meta);
 }
 export function generateFromSource (
 	source: string, plugins: Plugin[] = [], walkOptions: Partial<WalkOptions> = {}
 ): Record<string, FileContent> {
+	const meta = new Map();
 	//get parse options
 	const parseOptions = { ...defaultParseOptions };
-	for (const plugin of plugins) if (plugin.onSource) plugin.onSource(source, parseOptions);
+	for (const plugin of plugins) if (plugin.onSource) plugin.onSource(source, parseOptions, meta);
 
 	//parse
 	const root = parse(source, parseOptions);
@@ -82,14 +91,14 @@ export function generateFromSource (
 		if (!id) throw_top_node_no_id(child, ind);
 
 		//case template
-		if (child.tag === 'neo:template') content[id] = generateFromLite(child, plugins, walkOptions);
+		if (child.tag === 'neo:template') content[id] = fromLite(child, plugins, walkOptions, meta);
 
 		//case supplement
 		else {
 			let supplement: Supplement | undefined = undefined;
 			//maybe a plugin that handle it
 			for (const plugin of plugins) if (plugin.onSupplement) {
-				supplement = plugin.onSupplement(child.tag, child);
+				supplement = plugin.onSupplement(child.tag, child, meta);
 				if (supplement) break;
 			}
 			//if no throw
@@ -104,11 +113,12 @@ export function generateFromSource (
 export function generateFromDom (
   root: HTMLElement, plugins: Plugin[] = [], walkOptions: Partial<WalkOptions> = {}
 ): Template {
+	const meta = new Map();
 	//trigger onDom
-	for (const plugin of plugins) if (plugin.onDom) plugin.onDom(root);
+	for (const plugin of plugins) if (plugin.onDom) plugin.onDom(root, meta);
 	
 	//convert to lite
 	const liteRoot = nativeToLite(root);
 	
-	return generateFromLite(liteRoot, plugins, walkOptions);
+	return fromLite(liteRoot, plugins, walkOptions, meta);
 }

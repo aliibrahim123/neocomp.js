@@ -7,7 +7,7 @@ import type { Template } from "./templates.ts";
 export function toDom(
 	comp: PureComp, template: Template, converters: Record<string, (lite: LiteNode) => Node> = {}
 ) {
-	const el = liteToNative(template.node, {
+	const el = liteToNative(template.root, {
 		//svg converter
 		svg(lite) {
 			const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');

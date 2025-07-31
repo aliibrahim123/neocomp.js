@@ -519,6 +519,7 @@ class ExampleComponent extends Component<TypeMap> {
 const comp = new ExampleComponent(constructOne(`<div id=comp></div>`));
 
 comp.el; // => <div id=comp></div>
+comp.el[attachedComp] // => comp
 
 comp.query('span'); // => [<span>hello</span>, <span>world</span>]
 

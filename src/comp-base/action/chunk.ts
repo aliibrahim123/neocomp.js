@@ -17,7 +17,7 @@ export function addChunkAction () {
 		const root = comp.view.constructChunk(chunk, context);
 
 		//transfer attributes from chunk root to host element
-		if (context.effectHost !== false) for (const [attr, value] of chunk.node.attrs) 
+		if (context.effectHost !== false) for (const [attr, value] of chunk.root.attrs) 
 			if (attr !== 'id') el.setAttribute(attr, String(value));
 
 		//insert into dom

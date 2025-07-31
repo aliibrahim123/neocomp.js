@@ -22,14 +22,14 @@ this is the index of the documentation.
 - **`comp-base` module:**
   - **core:**
 	- [`Component`](./docs/comp-base.core/component.md)
-	- [`registry`](./docs/comp-base.core/registry.md)
+	- [registry](./docs/comp-base.core/registry.md)
 	- [general utilities](./docs/comp-base.core/utilities.md)
   - **state:**
     - [fundamentals](./docs/comp-base.state/fundamentals.md)
     - [`Store`](./docs/comp-base.state/store.md)
     - [state utilities](./docs/comp-base.state/utilities.md)
   - **view:**
-    - [`View` and template runtime](./docs/comp-base.view/view.md)
+    - [`View`](./docs/comp-base.view/view.md)
     - [template generation](./docs/comp-base.view/template-api.md)
     - [template reference](./docs/comp-base.view/template.md)
 - [vite plugin](./docs/plugin.md)

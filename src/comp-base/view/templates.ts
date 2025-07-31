@@ -4,12 +4,12 @@ import { onAddTemplate } from "../core/globalEvents.ts";
 import { throw_adding_existing_template, throw_getting_undefined_template } from "./errors.ts";
 
 export interface Template {
-	node: LiteNode;
+	root: LiteNode;
 	actions: Action[];
 }
 
 const registry = new Map<string, Template>;
-registry.set('empty', { node: new LiteNode('div', {}, [], { 'neocomp:id': 0 }), actions: [] });
+registry.set('empty', { root: new LiteNode('div', {}, [], { 'neocomp:id': 0 }), actions: [] });
 
 export function add (name: string, template: Template) {
 	if (registry.has(name)) throw_adding_existing_template(name);

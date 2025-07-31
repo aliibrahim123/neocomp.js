@@ -5,7 +5,7 @@ import { query } from "../../rawdom/index.ts";
 import { attachedComp, Component, type PureComp } from "../core/comp.ts";
 import { throw_into_query_no_match, throw_not_into_query, throw_undefined_chunk } from "./errors.ts";
 import type { Template } from "./templates.ts";
-import { doActions, doActionsOfTemplate, type Action } from "../action/actions.ts";
+import { doActionsFromDom, doActionsOfTemplate, type Action } from "../action/actions.ts";
 import { toDom } from "./toDom.ts";
 import { LiteNode } from "../../litedom/node.ts";
 import { throw_undefined_info_dump_type } from "../core/errors.ts";
@@ -13,13 +13,13 @@ import { throw_undefined_info_dump_type } from "../core/errors.ts";
 export interface ViewOptions {
 	defaultEl: (comp: PureComp) => HTMLElement;
 	insertMode: InsertMode;
-	into: string | undefined;
 	effectHost: boolean;
 	liteConverters: Record<string, (lite: LiteNode) => Node>;
 	removeEl: boolean;
 }
 
-export type InsertMode = 'asDefault' | 'replace' | 'atTop' | 'into' | 'atBottom' | 'none';
+type InsertMode = 
+	'asDefault' | 'replace' | 'atTop' | 'atBottom' | 'none' | { type: 'into', target: string };
 
 export class View <
   Refs extends Record<string, HTMLElement | HTMLElement[]> = Record<string, HTMLElement>, 
@@ -45,8 +45,7 @@ export class View <
 	options: ViewOptions;
 	static defaults: ViewOptions = {
 		defaultEl (comp) { return document.createElement('div') },
-		insertMode: 'asDefault',
-		into: undefined,
+		insertMode: 'atBottom',
 		effectHost: true,
 		liteConverters: {},
 		removeEl: true
@@ -64,30 +63,29 @@ export class View <
 		)) templateEl = toDom(this.comp, template, options.liteConverters);
 
 		//transfer attributes from template root to host element
-		if (options.effectHost) for (const [attr, value] of template.node.attrs)
+		if (options.effectHost) for (const [attr, value] of template.root.attrs)
 			if (attr !== 'id') el.setAttribute(attr, String(value));
 
 		//do actions
-		if (templateEl) this.doActions(template.actions, templateEl, {}, template.node);
+		if (templateEl) this.doActions(template.actions, {}, templateEl, template.root);
 
 		//insert into dom
-		const tempInsert = options.insertMode;
-		if  	(tempInsert === 'replace') 
+		const insertMode = options.insertMode;
+		if  	(insertMode === 'replace') 
 			el.replaceChildren(...templateEl.childNodes);
 
-		else if (tempInsert === 'asDefault' && el.childNodes.length === 0)
+		else if (insertMode === 'asDefault' && el.childNodes.length === 0)
 			el.append(...templateEl.childNodes);
 
-		else if (tempInsert === 'atTop')
+		else if (insertMode === 'atTop')
 			el.prepend(...templateEl.childNodes);
 
-		else if (tempInsert === 'atBottom')
+		else if (insertMode === 'atBottom')
 			el.append(...templateEl.childNodes);
 
-		else if (tempInsert === 'into') {
-			if (options.into === undefined) return throw_not_into_query(this.comp);
-			const into = query(options.into, this.el);
-			if (into.length === 0) throw_into_query_no_match(this.comp, options.into);
+		else if (typeof(insertMode) !== 'string' && insertMode.type === 'into') { 
+			const into = query(insertMode.target, this.el);
+			if (into.length === 0) throw_into_query_no_match(this.comp, insertMode.target);
 			into[0].replaceChildren(...templateEl.childNodes);
 		}
 	}
@@ -100,7 +98,7 @@ export class View <
 		const template = typeof name === 'string' ? this.#chunks[name] : name;
 		if (!template) throw_undefined_chunk(this.comp, name as string);
 		const root = toDom(this.comp, template, this.options.liteConverters);
-		this.doActions(template.actions, root, context, template.node);
+		this.doActions(template.actions, context, root, template.root);
 		return root;
 	}
 	getChunk (name: Chunks): Template {
@@ -110,15 +108,15 @@ export class View <
 	}
 
 	onAction = new Event<
-	  (view: this, top: HTMLElement, action: Action[], context: Record<string, any>) => void
+	  (view: this, top: HTMLElement, actions: Action[], context: Record<string, any>) => void
 	>();
 	doActions (
-	  actions: Action[], top: HTMLElement = this.el, 
-	  context: Record<string, any> = {}, lite?: LiteNode
+	  actions: Action[],  context: Record<string, any> = {},
+	  top: HTMLElement = this.el, lite?: LiteNode
 	) {
 		this.onAction.trigger(this, top, actions, context);
 		if (lite) doActionsOfTemplate(this.comp, top, lite, actions, context);
-		else doActions(this.comp, actions, context);
+		else doActionsFromDom(this.comp, actions, context);
 	}
 
 	addRef <R extends keyof Refs> (name: R, el: Refs[R]) {

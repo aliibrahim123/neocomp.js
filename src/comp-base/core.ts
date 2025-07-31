@@ -21,7 +21,7 @@ export * from './state/inout.ts';
 export * from './state/query.ts';
 export type * from './state/query.ts';
 
-export { addAction, doActions, doActionsOfTemplate } from './action/actions.ts';
+export { addAction, doActionsFromDom, doActionsOfTemplate } from './action/actions.ts';
 export type * from './action/actions.ts';
 
 export * from './view/view.ts';

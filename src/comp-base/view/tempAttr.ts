@@ -235,7 +235,7 @@ export function evalTAttr (
   attr: TAttr, comp: PureComp, el: HTMLElement, context: Record<string, any>, props: any[]
 ) {
 	if (Array.isArray(attr)) return attr.map(part => {
-		//string
+		//laterial
 		if (typeof(part) === 'string') return part;
 		//prop
 		if (!part.isExp) return comp.store.get(part.prop);

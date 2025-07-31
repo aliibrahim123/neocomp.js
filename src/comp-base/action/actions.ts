@@ -44,7 +44,7 @@ function doAction (comp: PureComp, el: HTMLElement, action: Action, context: Rec
 	if (!handler) return throw_undefined_action(action.type);
 	handler(comp, el, action, context);
 }
-export function doActions (comp: PureComp, actions: Action[], context: Record<string, any>) {
+export function doActionsFromDom (comp: PureComp, actions: Action[], context: Record<string, any>) {
 	for (const action of actions) doAction(comp, action.target as HTMLElement, action, context);
 }
 //works since actions are grouped in parent->child order

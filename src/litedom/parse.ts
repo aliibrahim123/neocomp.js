@@ -43,7 +43,7 @@ export const defaultOptions: Options = {
 	lowerTag: true,
 	attrStart: /^[a-zA-Z:_]/,
 	attrRest: /^[a-zA-Z:_.0-9-]+/,
-	attrUnquoted: /^[^\s'"=<>`]+/,
+	attrUnquoted: /^[^\s'"=<>/`]+/,
 	lowerAttr: true
 }
 
