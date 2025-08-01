@@ -125,7 +125,7 @@ function transformMacroMod (source: string, options: Options) {
 	//substitute $template with reference to the serialized template
 	const serializedTemplates: { name: string, source: string }[] = [];
 	let curNameInd = 0;
-	const substituted = source.replaceAll(/\$template\s*\(\s*`([^`]+)`\s*\)/g, (_, source) => {
+	const substituted = source.replaceAll(/\$template\s*\(\s*(?:\/[^/]+\/)?\s*`([^`]+)`\s*\)/g, (_, source) => {
 		const name = `$__temp${curNameInd++}`;
 
 		//generate content
