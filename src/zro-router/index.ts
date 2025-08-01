@@ -73,7 +73,7 @@ export class ZRORouter {
 		this.onRoute.trigger(this, fullURL, 
 		  (result) => interceptResult = interceptResult === false ? false : result
 		);
-		if (!interceptResult) return;
+		if (interceptResult === false) return;
 		if (interceptResult instanceof URL) fullURL = interceptResult;
 
 		handleRoute(this, this.#options, fullURL);
