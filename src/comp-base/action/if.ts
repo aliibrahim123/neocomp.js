@@ -17,13 +17,13 @@ export function addIfAction () {
 			else el.style.display = 'none';
 		}
 
-		//case auto track dependencies
+		// case auto track dependencies
 		if (props[0] === '...') {
-			props.pop(); //remove ...
+			props.pop(); // remove ...
 			comp.store.addEffect('track', effect, undefined, undefined, { el });
 		}
 		
-		//case manual dependencies
+		// case manual dependencies
 		else comp.store.addEffect(props, effect, [], undefined, { el });
 	})
 }

@@ -1,4 +1,4 @@
-//linkable unit for easy dependecies managment
+// linkable unit for easy dependecies managment
 
 import { Event } from "../../common/event.ts";
 import { throw_linking_linked, throw_unlinking_not_linked } from "./errors.ts";

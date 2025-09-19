@@ -1,4 +1,4 @@
-//component registry
+// component registry
 
 import type { ConstructorFor } from "../../common/types.ts";
 import type { PureComp } from "./comp.ts";

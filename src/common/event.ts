@@ -1,4 +1,4 @@
-//simple typed event unit
+// simple typed event unit
 
 import type { fn } from './types.ts';
 
@@ -31,7 +31,7 @@ export class Event <Listener extends fn> {
 	}
 }
 
-//one time init event
+// one time init event
 export class OTIEvent <Listener extends fn> extends Event<Listener> {
 	#listeners: fn[] = [];
 	#inited: boolean = false;

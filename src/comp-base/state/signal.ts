@@ -1,4 +1,4 @@
-//portable lightweight signals
+// portable lightweight signals
 
 import { Store, type Prop } from "./store.ts";
 

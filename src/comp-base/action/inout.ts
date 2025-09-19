@@ -17,7 +17,7 @@ export function addInOutActions () {
 		const action = _action as InOutAction;
 		const child = (el as any)[attachedComp] as PureComp;
 		if (!child) throw_no_attached_comp(comp, name);
-		//wait to init
+		// wait to init
 		child.onInit.listen((child) => fn(action, comp, child)); 
 	  });
 	}

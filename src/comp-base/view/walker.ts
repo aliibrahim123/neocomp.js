@@ -1,5 +1,5 @@
-//walk the dom and gather actions
-//works on lite and native
+// walk the dom and gather actions
+// works on lite and native
 
 import type { fn } from "../../common/types.ts";
 import type { Action } from "../action/actions.ts";
@@ -42,11 +42,11 @@ function handleTAttr (
 	let autoTrack = false;
 	const staticProps: string[] = [], dynamicProps: string[] = [];
 	if (hasProps) {
-		//get props end
+		// get props end
 		const paranEnd = attr.indexOf(')', paranInd);
 		if (paranEnd === -1) throw_tattr_unended_prop_args_in_name(attr);
 
-		//get props
+		// get props
 		const props = decodeAttrArg(attr.slice(paranInd +1, paranEnd), options).split(',');
 		for (const prop of props) if (prop !== '') {
 			if (prop === '...') autoTrack = true;
@@ -55,7 +55,7 @@ function handleTAttr (
 		}
 	}
 
-	//case text
+	// case text
 	if (name === 'text') {
 		const text = getText(node);
 		if (text === undefined) return throw_tattr_no_text(attr);
@@ -63,23 +63,23 @@ function handleTAttr (
 		removeChildren(node);
 	}
 
-	//parse attr
+	// parse attr
 	const template = 
 	  parseTAttr(value, attr, options, ['comp', 'el', 'context'].concat(staticProps, dynamicProps));
 	
-	//case const and doesnt need runtime handling, set it directly
+	// case const and doesnt need runtime handling, set it directly
 	const maybeConst = !(
 		name === 'html' || name === 'content' || name.startsWith('style:') || name.startsWith('class:') ||
 		name.startsWith('prop:') || name.startsWith('arg:')
 	);
 
-	//case parted template
+	// case parted template
 	if (maybeConst && Array.isArray(template) && template.every(part => typeof(part) === 'string')) {
 		if (name.startsWith('bool:')) toggleAttr(node, name.slice(5), !!template.join(''));
 		else setAttr(node, name, template.join(''));
 	}
 
-	//else add action
+	// else add action
 	else actions.push({
 		type: 'attr', target: getTarget(node), 
 		attr: name, template,
@@ -90,24 +90,24 @@ function handleTAttr (
 }
 
 function Walk (node: Node, actions: Action[], options: WalkOptions): Action[] {
-	//case static, skip
+	// case static, skip
 	if (hasAttr(node, 'is:static')) return actions;
-	//for debugging
+	// for debugging
 	(walk as any).lastVisited = node;
 
-	//defer actions that relay on comp:this action
+	// defer actions that relay on comp:this action
 	let compThisAct: undefined | CompThisAction;
 	const deferedActions: Action[] = [];
 
 	for (const [attr, value] of Array.from(attrsOf(node))) {
-		//case templated attr
+		// case templated attr
 		if (attr[0] === '.') handleTAttr(node, attr, value, options, actions);
-		//case @comp:this
+		// case @comp:this
 		else if (attr === '@comp:this') {
 			compThisAct = { type: 'comp:this', target: getTarget(node), comp: parseTName(value, options) };
 			removeAttr(node, attr);
 		}
-		//case act attr
+		// case act attr
 		else if (attr[0] === '@') {
 			const name = attr.split(/[:(\[]/, 1)[0].slice(1);
 			getActionAttr(name)(node, attr, value, (action, defer = false) => {
@@ -117,14 +117,14 @@ function Walk (node: Node, actions: Action[], options: WalkOptions): Action[] {
 		}
 	}
 
-	//push comp:this if found then add defered actions
+	// push comp:this if found then add defered actions
 	if (compThisAct) {
 		actions.push(compThisAct, ...deferedActions);
 		return actions;
 	}
 	actions.push(...deferedActions);
 
-	//walk children
+	// walk children
 	for (const child of childrenOf(node)) Walk(child, actions, options);
 	return actions
 }

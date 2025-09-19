@@ -16,7 +16,7 @@ export function addRefAction () {
 		  type === 'literial' ? value : 
 		  type === 'prop' ? comp.get(value) : 
 		  (value as fn)(comp, el, context);
-		//syntax: name[]
+		// syntax: name[]
 		if (name.endsWith('[]')) comp.view.addRef(name.slice(0, -2), [el]);
 		
 		else comp.view.addRef(name, el);

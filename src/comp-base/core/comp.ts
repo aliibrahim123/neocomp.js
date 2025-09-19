@@ -1,4 +1,4 @@
-//the component class
+// the component class
 
 import { Event, OTIEvent } from "../../common/event.ts";
 import { get, type Template } from "../view/templates.ts";
@@ -31,10 +31,10 @@ export type CompOptions = {
 export const attachedComp = Symbol('neocomp:attached-comp');
 
 export class Component <TMap extends BaseMap> implements Linkable {
-	//extracting a parameter type from a generic requires to use that parameter in the generic
-	//if __tmap is not wraped with this optionals, errors will flood the project
-	//DO NOT TOUCH !!!
-	//hours spent: NaN
+	// extracting a parameter type from a generic requires to use that parameter in the generic
+	// if __tmap is not wraped with this optionals, errors will flood the project
+	// DO NOT TOUCH !!!
+	// hours spent: NaN
 	#__tmap: Partial<TMap> | undefined;
 
 	constructor (el?: HTMLElement, initMode: 'core' | 'dom' | 'full' = 'core') {
@@ -159,14 +159,14 @@ export class Component <TMap extends BaseMap> implements Linkable {
 	children: PureComp[] = [];
 	childmap: TMap['childmap'] = {};
 	addChild (child: PureComp, ind = -1) {
-		//add
+		// add
 		if ((ind < 0 ? -ind-1 : ind ) > this.children.length) 
 			throw_adding_child_out_of_range(this, child, ind);
 		if (ind === -1) this.children.push(child);
 		else this.children.splice(ind, 0, child);
 		if (child.name) (this.childmap[child.name] as any) = child;
 
-		//trigger events
+		// trigger events
 		this.onChildAdded.trigger(this, child);
 		child.linkParent(this);
 	}
@@ -196,33 +196,33 @@ export class Component <TMap extends BaseMap> implements Linkable {
 		this.status = 'removing';
 		this.onRemove.trigger(this);
 
-		//links
+		// links
 		for (const linkable of this.#links) {
 			linkable.unlink(this);
 			this.onUnlink.trigger(this, linkable);
 		}
 		this.#links = new Set;
 
-		//parent
+		// parent
 		if (this.parent) this.unlinkParent();
 
-		//children
+		// children
 		for (const child of this.children) {
 			if (this.options.removeChildren) child.remove();
 			else child.unlinkParent();
 		}
 		this.children = [];
 
-		//dom
+		// dom
 		delete (this.el as any)[attachedComp];
 
-		//globally
+		// globally
 		if (!this.options.anonymous) {
 			removeFromIdMap(this.id);
 			onRemove.trigger(this);
 		}
 
-		//root
+		// root
 		if (registry.root === this) removeRoot();
 		
 		this.status = 'removed';
@@ -237,5 +237,5 @@ export class Component <TMap extends BaseMap> implements Linkable {
 	}
 }
 
-//why not Component<BaseMap>, i dont know, but it works
+// why not Component<BaseMap>, i dont know, but it works
 export type PureComp = Component<BaseMap & { props: any }>

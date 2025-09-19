@@ -1,6 +1,6 @@
-//dispatch updates without overcall
+// dispatch updates without overcall
 
-//all props are not static
+// all props are not static
 
 import { throw_undefined_info_dump_type } from "../core/errors.ts";
 import type { Linkable } from "../core/linkable.ts";
@@ -57,13 +57,13 @@ export class UpdateDispatcher {
 			}
 			return;
 		}
-		//add props to queue
+		// add props to queue
 		for (const prop of props) {
 			if (!this.#records.has(prop)) continue;
 			this.#addProp(prop, true);
 		}
 
-		//if not dispatching, start it
+		// if not dispatching, start it
 		if (this.isDispatching) return;
 		this.isDispatching = true;
 		this.#dispatch();
@@ -76,18 +76,18 @@ export class UpdateDispatcher {
 	#propsInvolved = new Set<symbol>();
 	#dependencies = new Map<symbol, number>();
 	#addProp (prop: symbol, force = false) {
-		//skip if already added
+		// skip if already added
 		if (this.#propsInvolved.has(prop) && !force) return;
 		this.#propsInvolved.add(prop);
 		const units = this.#records.get(prop);
-		//skip if not units
+		// skip if not units
 		if (!units) return;
 		for (const unit of units) {
-			//skip if in queue
+			// skip if in queue
 			if (this.#unitsInvolved.has(unit)) continue;
 			this.#unitsInvolved.add(unit);
 			this.#currentUnits.push(unit);
-			//add effected props
+			// add effected props
 			for (const prop of unit.effect) {
 				this.#dependencies.set(prop, (this.#dependencies.get(prop) || 0) + 1);
 				this.#addProp(prop);
@@ -96,37 +96,37 @@ export class UpdateDispatcher {
 	}
 	#dispatch () {
 		let anyCalled = false;
-		//while there are in queue
+		// while there are in queue
 		while (this.#currentUnits.length !== 0) {
 			for (let ind = 0; ind < this.#currentUnits.length; ind++) {
 				const curUnit = this.#currentUnits[ind];
-				//if not all dependencies are up to date, someone will update them
+				// if not all dependencies are up to date, someone will update them
 				if (curUnit.effectedBy.some(prop => {
 					const count = this.#dependencies.get(prop);
 					return count !== undefined && count > 0
 				})) {
-					//add to the next patch
+					// add to the next patch
 					this.#nextUnits.push(curUnit);
 					continue;
 				}
-				//else can be called safely
+				// else can be called safely
 				curUnit.handler();
 				this.#unitsInvolved.delete(curUnit);
-				//dec its effected props dependencies count 
+				// dec its effected props dependencies count 
 				for (const prop of curUnit.effect) 
 					this.#dependencies.set(prop, this.#dependencies.get(prop) as number - 1);
 				anyCalled = true;
 			}
 			
-			//stop if there are circular dependency
+			// stop if there are circular dependency
 			if (!anyCalled) throw_circular_dep_update();
 			anyCalled = false
-			//swap with next batch
+			// swap with next batch
 			this.#currentUnits = this.#nextUnits;
 			this.#nextUnits = [];
 		}
 		
-		//finished, reset to normal
+		// finished, reset to normal
 		this.isDispatching = false;
 		this.#propsInvolved = new Set;
 		this.#dependencies = new Map();

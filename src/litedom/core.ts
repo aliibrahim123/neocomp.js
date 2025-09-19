@@ -1,14 +1,14 @@
-//lite dom respresentation
+// lite dom respresentation
 
 import { LiteNode } from "./node.ts";
 
 export function liteToNative (
   lite: LiteNode, converters: Record<string, (lite: LiteNode) => Node> = {}
 ): HTMLElement {
-	//use given converter if defined
+	// use given converter if defined
 	if (lite.tag in converters) return converters[lite.tag](lite) as HTMLElement;
 
-	//construct normally
+	// construct normally
 	const native = document.createElement(lite.tag);
 	for (const [name, value] of lite.attrs) native.setAttribute(name, String(value));
 	for (const child of lite.children) 

@@ -1,12 +1,12 @@
-//typebase for html element: attributes, tags, events
+// typebase for html element: attributes, tags, events
 
-//taken from https://github.com/stagas/html-jsx file index.d.ts version 1.0.0
-//edited for small size
-//removed comments
-//removed svg
-//removed deprectated elements 
-//removed csstype dependency
-//converted event attributes from EventHandler to string, use CreateObject.events
+// taken from https:// github.com/stagas/html-jsx file index.d.ts version 1.0.0
+// edited for small size
+// removed comments
+// removed svg
+// removed deprectated elements 
+// removed csstype dependency
+// converted event attributes from EventHandler to string, use CreateObject.events
 
 interface AriaAttrs {
 	'aria-activedescendant'?: string;

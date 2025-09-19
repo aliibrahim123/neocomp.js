@@ -1,4 +1,4 @@
-//interface for walk handlers that work on native and lite dom
+// interface for walk handlers that work on native and lite dom
 import type { fn } from "../../common/types.ts";
 import { LiteNode } from "../../litedom/node.ts";
 import type { WalkOptions } from "./walker.ts";

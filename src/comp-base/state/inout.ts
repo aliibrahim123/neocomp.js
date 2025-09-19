@@ -1,4 +1,4 @@
-//component bindings
+// component bindings
 
 import type { BaseMap, getProps } from "../core/typemap.ts";
 import { link } from "../core/linkable.ts";
@@ -17,7 +17,7 @@ function get (comp: PureComp, prop: EffectedProp<any>) {
 export function $in<From extends PureComp, To extends PureComp> (
 	from: From, fromProp: EffectedProp<getProps<From>>,	to: To, toProp: EffectedProp<getProps<To>>
 ) {
-	//link if required
+	// link if required
 	if (!from.hasLink(to)) link(from, to);
 	from.effect([fromProp], () => set(to, toProp, get(from, fromProp)));
 }
@@ -26,7 +26,7 @@ export function inout<A extends PureComp, B extends PureComp, T> (
 	a: A, aProp: EffectedProp<getProps<A>>, b: B, bProp: EffectedProp<getProps<B>>,
 	comparator = (a: T, b: T) => a === b
 ) {
-	//link if required
+	// link if required
 	if (!a.hasLink(b)) link(a, b);
 
 	a.store.addEffect([aProp], () => {

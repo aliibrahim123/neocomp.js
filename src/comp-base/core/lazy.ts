@@ -1,4 +1,4 @@
-//lazy component
+// lazy component
 
 import { OTIEvent, type ListenerOf } from "../../common/event.ts";
 import { attachedComp, type PureComp } from "./comp.ts";

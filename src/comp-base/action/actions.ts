@@ -1,4 +1,4 @@
-//lightweight representation for actions of element
+// lightweight representation for actions of element
 
 import { LiteNode } from "../../litedom/node.ts";
 import type { PureComp } from "../core/comp.ts";
@@ -47,7 +47,7 @@ function doAction (comp: PureComp, el: HTMLElement, action: Action, context: Rec
 export function doActionsFromDom (comp: PureComp, actions: Action[], context: Record<string, any>) {
 	for (const action of actions) doAction(comp, action.target as HTMLElement, action, context);
 }
-//works since actions are grouped in parent->child order
+// works since actions are grouped in parent->child order
 export function doActionsOfTemplate (
 	comp: PureComp, top: HTMLElement, liteTop: LiteNode, actions: Action[], context: Record<string, any> = {}
 ) {

@@ -1,4 +1,4 @@
-//simple utility for creating elements in typesafe manner
+// simple utility for creating elements in typesafe manner
 
 import type { AttrsMap as AttrMap, EventMap, TypeMap } from './typebase.ts';
 
@@ -6,18 +6,18 @@ export function from (
 	a: string | HTMLElement | HTMLElement[] | ArrayLike<HTMLElement>, Throw = false
 ): HTMLElement[] {
 	if (typeof(a) === 'string') {
-		//construct if = '<el>text</el>'
+		// construct if = '<el>text</el>'
 		if (a[0] === '<') return construct(a);
-		//create element if = 'tag'
+		// create element if = 'tag'
 		if (a[0].match(/[a-z]/)) return [document.createElement(a)];
-		//else query
+		// else query
 		return Array.from(document.querySelectorAll(a));
 	}
 	if (a instanceof Element) return [a];
 	if (Array.isArray(a)) return a;
-	//case arrayLike
+	// case arrayLike
 	if (a?.length !== undefined) return Array.from(a);
-	//invalid input
+	// invalid input
 	if (Throw) throw new TypeError(`cannot convert ${a?.constructor?.name} to HTMLElement[]`)
 	return [];
 }
@@ -54,11 +54,11 @@ export function apply (el: HTMLElement, param: CreateParam<keyof TypeMap>): void
 export function apply <E extends keyof TypeMap> (el: TypeMap[E], param: CreateParam<E>) {
 	if (!param) {}
 	else if (typeof(param) === 'string') {
-		//id
+		// id
 		if      (param[0] === '#') el.id = param.slice(1);
-		//class
+		// class
 		else if (param[0] === '.') el.classList.add(param.slice(1));
-		//text node
+		// text node
 		else el.append(param);
 	}
 	
@@ -84,7 +84,7 @@ export function construct (template: string, withText: boolean = false) {
 	const temp = document.createElement('div');
 	temp.innerHTML = template;
 	const childs = Array.from(withText ? temp.childNodes : temp.children);
-	temp.replaceChildren(); //release temp
+	temp.replaceChildren(); // release temp
 	return Array.from(childs)
 }
 
@@ -92,6 +92,6 @@ export function constructOne (template: string) {
 	const temp = document.createElement('div');
 	temp.innerHTML = template;
 	const el = temp.children[0];
-	temp.replaceChildren() //release temp;
+	temp.replaceChildren() // release temp;
 	return el as HTMLElement
 }

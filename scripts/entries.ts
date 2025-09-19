@@ -21,9 +21,9 @@ const entryMap: EntryMap = {
 	}
 }
 
-//as straight path, without src/ or .ts
+// as straight path, without src/ or .ts
 export const entries: string[] = [];
-//as exported in package.json
+// as exported in package.json
 export const exportedEntries: string[] = [];
 
 function flatternEntry (entry: EntryMap, path: string = '') {
@@ -43,5 +43,5 @@ function flatternEntry (entry: EntryMap, path: string = '') {
 }
 flatternEntry(entryMap);
 
-//with src/ and .ts
+// with src/ and .ts
 export const fullEntries = entries.map(entry => `src/${entry}.ts`);

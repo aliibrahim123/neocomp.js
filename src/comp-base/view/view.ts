@@ -1,4 +1,4 @@
-//the connection with dom
+// the connection with dom
 
 import { Event } from "../../common/event.ts";
 import { query } from "../../rawdom/index.ts";
@@ -55,21 +55,21 @@ export class View <
 		const el = this.el, options = this.options;
 		const template = (this.comp.constructor as typeof Component).template;
 
-		//generate from template
+		// generate from template
 		let templateEl: HTMLElement = undefined as any;
 		if (!(
 			options.insertMode === 'none' ||
 			(options.insertMode === 'asDefault' && el.childNodes.length > 0)
 		)) templateEl = toDom(this.comp, template, options.liteConverters);
 
-		//transfer attributes from template root to host element
+		// transfer attributes from template root to host element
 		if (options.effectHost) for (const [attr, value] of template.root.attrs)
 			if (attr !== 'id') el.setAttribute(attr, String(value));
 
-		//do actions
+		// do actions
 		if (templateEl) this.doActions(template.actions, {}, templateEl, template.root);
 
-		//insert into dom
+		// insert into dom
 		const insertMode = options.insertMode;
 		if  	(insertMode === 'replace') 
 			el.replaceChildren(...templateEl.childNodes);
@@ -129,7 +129,7 @@ export class View <
 
 	onCleanUp = new Event<(view: this) => void>();
 	cleanup () {
-		//clean up effects for deattached elements
+		// clean up effects for deattached elements
 		this.comp.store.dispatcher.remove((unit) => 
 			!!(unit.meta as any).el && !document.body.contains((unit.meta as any).el));
 		this.onCleanUp.trigger(this);

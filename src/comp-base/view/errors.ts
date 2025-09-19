@@ -3,7 +3,7 @@ import { compInfo } from "../core/errors.ts";
 import type { PureComp } from '../core/comp.ts'
 import { errorsLevels, raiseError } from '../core/error.ts'
 
-//template registry
+// template registry
 export function throw_adding_existing_template (name: string) {
 	raiseError(`template registry: adding exsisitng template (${name})`, 301);
 }
@@ -11,7 +11,7 @@ export function throw_getting_undefined_template (name: string) {
 	raiseError(`template registry: getting undefined template (${name})`, 302);
 }
 
-//view
+// view
 export function throw_not_into_query (comp: PureComp) {
 	raiseError(`view: no into query while insertMode is into (${compInfo(comp)})`, 303);
 }
@@ -22,7 +22,7 @@ export function throw_undefined_chunk (comp: PureComp, name: string) {
 	raiseError(`view: using undefined chunk (name: ${name}, ${compInfo(comp)})`, 307);
 }
 
-//template parse
+// template parse
 export function throw_text_in_root () {
 	raiseError(`template parse: unexpected text in root`, 401);
 }
@@ -36,7 +36,7 @@ export function throw_undefined_supplement_type (node: LiteNode, id: string) {
 	);
 }
 
-//tAttr
+// tAttr
 export function throw_tattr_unended_prop_args_in_name (attr: string) {
 	raiseError(`TAttr: unexpected unended property argumanets at attribute (${attr})`, 404);
 }
@@ -66,7 +66,7 @@ export function throw_tattr_invalid_escape_seq (seq: string, ind: number, attr: 
 	raiseError(`TAttr: invalid escape sequence (${seq}) at (${ind}) of attribute (${attr})`, 410);
 }
 
-//action attrs
+// action attrs
 export function throw_adding_existing_act_attr (name: string) {
 	raiseError(`action attributes: adding existing action attribute handler (${name})`, 305);
 }

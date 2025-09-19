@@ -1,4 +1,4 @@
-//the framework core
+// the framework core
 
 export * from './core/globalEvents.ts';
 export { registry } from './core/registry.ts';

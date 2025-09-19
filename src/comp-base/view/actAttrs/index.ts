@@ -1,4 +1,4 @@
-//action attributes: attributes holding actions
+// action attributes: attributes holding actions
 
 import type { Action } from "../../action/actions.ts";
 import { throw_adding_existing_act_attr, throw_getting_undefined_act_attr } from "../errors.ts";

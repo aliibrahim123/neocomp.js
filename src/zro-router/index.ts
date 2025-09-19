@@ -1,7 +1,7 @@
 //"Zero Refresh Optimisation" router
-//simple router for multiple page websites
-//update pages without a single refresh
-//by merging heads and replacing bodies
+// simple router for multiple page websites
+// update pages without a single refresh
+// by merging heads and replacing bodies
 
 import { Event } from '../common/event.ts';
 import { attach } from './attach.ts';
@@ -51,7 +51,7 @@ export class ZRORouter {
 			...options
 		};
 
-		//upcase tags related options
+		// upcase tags related options
 		const preserveTags = new Set<string>();
 		for (const tag of this.#options.preserveTags) preserveTags.add(tag.toUpperCase());
 		this.#options.preserveTags = preserveTags;
@@ -59,16 +59,16 @@ export class ZRORouter {
 		for (const tag of this.#options.skipTags) skipTags.add(tag.toUpperCase());
 		this.#options.skipTags = skipTags;
 		
-		//attach to window
+		// attach to window
 		window.addEventListener('popstate', () => this.go(new URL(location.href)));
 	}
 
 	go (url: URL | string) {
-		//normalize url
+		// normalize url
 		var fullURL = new URL(url, location.href);
 		if (fullURL.href === this.lastURL.href)
 
-		//handle intercepting route
+		// handle intercepting route
 		var interceptResult: URL | false | undefined;
 		this.onRoute.trigger(this, fullURL, 
 		  (result) => interceptResult = interceptResult === false ? false : result

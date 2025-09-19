@@ -11,11 +11,11 @@ export function addEffectAction () {
 	addAction('effect', (comp, el, _action, context) => {
 		const action = _action as EffectAction;
 		
-		//case auto track dependencies
+		// case auto track dependencies
 		if (action.props[0] === '...') 
 			comp.store.addEffect('track', () => action.fn(comp, el, context), undefined, undefined, { el });
 
-		//case manual dependencies
+		// case manual dependencies
 		else comp.store.addEffect(action.props, 
 			() => action.fn(comp, el, context, ...action.props.map(prop => comp.store.get(prop))),
 		[], undefined, { el });

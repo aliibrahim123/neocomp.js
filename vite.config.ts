@@ -3,7 +3,7 @@ import directoryPlugin from 'vite-plugin-directory-index';
 import { entries, fullEntries } from './scripts/entries.ts';
 import { neoTempPlugin } from './src/build/plugin.ts';
 
-//config
+// config
 export default defineConfig({
 	server: {
 		port: 8080,

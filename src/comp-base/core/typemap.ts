@@ -1,4 +1,4 @@
-//group types for components
+// group types for components
 
 import type { PureComp, Component } from "./comp.ts";
 

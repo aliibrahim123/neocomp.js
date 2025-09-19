@@ -2,7 +2,7 @@ import { Component, type PureComp, type Status } from "./comp";
 import { errorsLevels, raiseError } from "./error";
 import type { Linkable } from "./linkable.ts";
 
-//registry
+// registry
 export function throw_adding_existing_class (name: string) {
 	raiseError(`registry: adding exsisitng class (${name})`, 101);
 }
@@ -25,7 +25,7 @@ export function throw_remove_unexisting_root () {
 	raiseError(`registry: removing root while there is no one`, 106);
 }
 
-//init
+// init
 export function compInfo (comp: PureComp, name = 'comp') {
 	return `${name}: ${comp.constructor.name}#${comp.id}`;
 }
@@ -34,7 +34,7 @@ export function throw_incorrect_init_sequence (comp: PureComp, calling: Status, 
 	raiseError(`init: incorrect init sequence (calling ${calling} at ${at}, ${compInfo(comp)})`, 107);
 }
 
-//hierarchy
+// hierarchy
 export function throw_adding_child_out_of_range (comp: PureComp, child: PureComp, ind: number) {
 	raiseError(
 		`hierarchy: adding child out of range (index: ${ind} / ${comp.children.length}, ${compInfo(comp)}, ${compInfo(child, 'child')})`,
@@ -60,7 +60,7 @@ export function throw_removing_removed_comp (comp: PureComp) {
 	raiseError(`hierarchy: removing removed component (${compInfo(comp)})`, 112);
 }
 
-//linking
+// linking
 export function throw_linking_linked (self: PureComp | Linkable, other: Linkable) {
 	raiseError(
 		`linking: linking linkable that is linked (linking: ${other.constructor.name}, ${self instanceof Component ? compInfo(self) : ('to: ' + self.constructor.name)})`,

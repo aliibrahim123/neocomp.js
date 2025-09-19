@@ -1,4 +1,4 @@
-//attribute actions
+// attribute actions
 
 import type { fn } from "../../common/types.ts";
 import type { PureComp } from "../core/comp.ts";
@@ -18,12 +18,12 @@ export interface AttrAction extends Action {
 export const passedArgs = Symbol('neocomp:passed-args');
 
 function setAttr (comp: PureComp, el: HTMLElement, action: AttrAction, context: Record<string, any>) {
-	//compute value
+	// compute value
 	const value = evalTAttr(action.template, comp, el, context,
 	  action.staticProps.concat(action.dynamicProps).map(prop => comp.store.get(prop))
 	);
 
-	//set attr
+	// set attr
 	const attr = action.attr;
 	if      (attr === 'text') el.innerText = value;
 	else if (attr === 'html') el.innerHTML = value;
@@ -46,16 +46,16 @@ export function addAttrAction () {
 	addAction('attr', (comp, el, _action, context) => {
 		const action = _action as AttrAction;
 		
-		//case auto track dependencies
+		// case auto track dependencies
 		if (action.autoTrack) comp.store.addEffect('track', 
 			() => setAttr(comp, el, action, context), 
 		undefined, undefined, { el });
 		
-		//cause manual dynamic dependencies
+		// cause manual dynamic dependencies
 		else if (action.dynamicProps.length > 0 || Array.isArray(action.template) && action.template.some(
 			part => typeof(part) !== 'string' && (part.isExp ? part.dynamics.length > 0 : !part.static)
 		)) {
-			//collect dynamic props
+			// collect dynamic props
 			const dynamicProps = new Set(action.dynamicProps);
 			if (Array.isArray(action.template)) 
 			  for (const part of action.template) if (typeof(part) !== 'string') {
@@ -63,13 +63,13 @@ export function addAttrAction () {
 				  for (const prop of part.dynamics) dynamicProps.add(prop);
 				else if (!part.static) dynamicProps.add(part.prop);
 			  }
-			//add effect
+			// add effect
 			comp.store.addEffect(
 			  Array.from(dynamicProps), () => setAttr(comp, el, action, context), [], undefined, { el }
 			);
 		}
 
-		//case no dependencies
+		// case no dependencies
 		else setAttr(comp, el, action, context);
 	})
 }

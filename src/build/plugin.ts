@@ -1,4 +1,4 @@
-//vite plugin for neo template
+// vite plugin for neo template
 
 import type { Plugin as VitePlugin } from 'vite';
 import { generateFromSource, generateFromString, type Plugin } from '../comp-base/view/generation.ts';
@@ -39,12 +39,12 @@ export function neoTempPlugin (options: Partial<Options> = {}): VitePlugin {
 		enforce: 'pre',
 		name: 'neo-template',
 		resolveId(id, importer) {
-			//convert .neo.html module to virtual module with .js extention to make as normal module
+			// convert .neo.html module to virtual module with .js extention to make as normal module
 			if (!id.endsWith('.neo.html') || !importer) return;
 			return `${virtmodNS}/${resolve(dirname(importer), id + '.js')}`
 		},
 		async load (id) {
-			//case .neo.html module
+			// case .neo.html module
 			if (id.startsWith(virtmodNS)) {
 				let file: string, path = id.slice(virtmodNS.length + 1, -3);
 				try { file = await readFile(path, { encoding: 'utf-8' }) }
@@ -55,7 +55,7 @@ export function neoTempPlugin (options: Partial<Options> = {}): VitePlugin {
 				return { code: transformNeoTemp(file, opts) }
 			}
 			
-			//module with $template macro
+			// module with $template macro
 			const path = resolve(id);
 			if (opts.macro && opts.include.some(dir => path.startsWith(dir))) {
 				try { var file = await readFile(path, { encoding: 'utf-8' }) }
@@ -69,7 +69,7 @@ export function neoTempPlugin (options: Partial<Options> = {}): VitePlugin {
 		handleHotUpdate ({ file, server, timestamp }) {
 			if (!file.endsWith('.neo.html')) return;
 
-			//hot reload
+			// hot reload
 			const id = `${virtmodNS}/${file}.js`;
 			const mod = server.moduleGraph.getModuleById(id);
 			if (!mod) return;
@@ -83,7 +83,7 @@ export function neoTempPlugin (options: Partial<Options> = {}): VitePlugin {
 }
 
 function transformNeoTemp (source: string, options: Options) {
-	//generate contents
+	// generate contents
 	const contents = generateFromSource(source, options.plugins, options.walk);
 
 	const data: GenData = {
@@ -95,13 +95,13 @@ function transformNeoTemp (source: string, options: Options) {
 
 	const serialized = serialize(contents, data, options);
 
-	const chunks = ['//auto generated from .neo.template'];
+	const chunks = ['// auto generated from .neo.template'];
 	
-	//imports
+	// imports
 	for (const path in data.imports) 
 		chunks.push(`import { ${Array.from(data.imports[path]).join(', ')} } from '${path}';`);
 	
-	//const
+	// const
 	for (const name in data.consts)
 		chunks.push(`const ${name} = ${data.consts[name]};`);
 
@@ -120,9 +120,9 @@ function transformMacroMod (source: string, options: Options) {
 		},
 	};
 
-	const chunks = ['//auto generated from $template macro enabled module'];
+	const chunks = ['// auto generated from $template macro enabled module'];
 
-	//substitute $template with reference to the serialized template
+	// substitute $template with reference to the serialized template
 	const serializedTemplates: { name: string, source: string }[] = [];
 	let curNameInd = 0;
 	const substituted = source.replaceAll(/\$template\s*\(\s*(?:\/[^/]+\/)?\s*`([^`]+)`\s*\)/g, (_, source) => {
@@ -130,7 +130,7 @@ function transformMacroMod (source: string, options: Options) {
 
 		const name = `$__temp${curNameInd++}`;
 
-		//generate content
+		// generate content
 		const template = generateFromString(source, options.plugins, options.walk);
 		const serialized = serialize(template, data, options);
 
@@ -138,20 +138,20 @@ function transformMacroMod (source: string, options: Options) {
 		return name;
 	});
 
-	//imports
+	// imports
 	for (const path in data.imports) 
 		chunks.push(`import { ${Array.from(data.imports[path]).join(', ')} } from '${path}';`);
 	
-	//const
+	// const
 	for (const name in data.consts)
 		chunks.push(`const ${name} = ${data.consts[name]};`);
 
-	//templates
+	// templates
 	for (const { name, source } of serializedTemplates) 
 		chunks.push(`const ${name} = ${source};`);
 
-	//the rest
-	chunks.push('//module source', substituted);
+	// the rest
+	chunks.push('// module source', substituted);
 	
 	return chunks.join('\n');
 }

@@ -29,7 +29,7 @@ const defaultParseOptions: Partial<ParseOptions> = {
 export type FileContent = Template | Supplement
 
 function initLiteNode (node: LiteNode) {
-	//add id
+	// add id
 	node.meta.set('neocomp:id', Math.round(Math.random() * 100000000));
 
 	for (let child of node.children) if (child instanceof LiteNode) initLiteNode(child);
@@ -37,14 +37,14 @@ function initLiteNode (node: LiteNode) {
 function fromLite (
 	root: LiteNode, plugins: Plugin[] = [], walkOptions: Partial<WalkOptions> = {}, meta: Map<string, any>
 ) {
-	//init root
+	// init root
 	initLiteNode(root);
 	for (const plugin of plugins) if (plugin.onRoot) plugin.onRoot(root, meta);
 	
-	//collect actions
+	// collect actions
 	const actions = walk(root, walkOptions);
 
-	//join into template
+	// join into template
 	const template = { root, actions };
 	for (const plugin of plugins) if (plugin.onTemplate) plugin.onTemplate(template, meta);
 
@@ -59,49 +59,49 @@ export function generateFromString (
 	source: string, plugins: Plugin[] = [], walkOptions: Partial<WalkOptions> = {}
 ) {
 	const meta = new Map();
-	//get parse options
+	// get parse options
 	const parseOptions = { ...defaultParseOptions };
 	for (const plugin of plugins) if (plugin.onSource) plugin.onSource(source, parseOptions, meta);
 
-	//parse
+	// parse
 	let root = parse(source, parseOptions);
 	if (root.children[0] instanceof LiteNode && root.children[0].tag === 'neo:template')
 		root = root.children[0];
 
-	//generate
+	// generate
 	return fromLite(root, plugins, walkOptions, meta);
 }
 export function generateFromSource (
 	source: string, plugins: Plugin[] = [], walkOptions: Partial<WalkOptions> = {}
 ): Record<string, FileContent> {
 	const meta = new Map();
-	//get parse options
+	// get parse options
 	const parseOptions = { ...defaultParseOptions };
 	for (const plugin of plugins) if (plugin.onSource) plugin.onSource(source, parseOptions, meta);
 
-	//parse
+	// parse
 	const root = parse(source, parseOptions);
 	
 	const content: Record<string, FileContent> = {};
 	let ind = 0;
 	for (const child of root.children) {
-		//check id and no text in root
+		// check id and no text in root
 		if (typeof(child) === 'string') return throw_text_in_root() as any;
 		const id = child.attrs.get('id') as string;
 		if (!id) throw_top_node_no_id(child, ind);
 
-		//case template
+		// case template
 		if (child.tag === 'neo:template') content[id] = fromLite(child, plugins, walkOptions, meta);
 
-		//case supplement
+		// case supplement
 		else {
 			let supplement: Supplement | undefined = undefined;
-			//maybe a plugin that handle it
+			// maybe a plugin that handle it
 			for (const plugin of plugins) if (plugin.onSupplement) {
 				supplement = plugin.onSupplement(child.tag, child, meta);
 				if (supplement) break;
 			}
-			//if no throw
+			// if no throw
 			if (!supplement) throw_undefined_supplement_type(child, id);
 			content[id] = supplement as Supplement;
 		}
@@ -114,10 +114,10 @@ export function generateFromDom (
   root: HTMLElement, plugins: Plugin[] = [], walkOptions: Partial<WalkOptions> = {}
 ): Template {
 	const meta = new Map();
-	//trigger onDom
+	// trigger onDom
 	for (const plugin of plugins) if (plugin.onDom) plugin.onDom(root, meta);
 	
-	//convert to lite
+	// convert to lite
 	const liteRoot = nativeToLite(root);
 	
 	return fromLite(liteRoot, plugins, walkOptions, meta);

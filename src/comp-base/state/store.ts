@@ -1,9 +1,9 @@
-//reactive store for reactive states
+// reactive store for reactive states
 
-//symbol as key for optimazation
+// symbol as key for optimazation
 
-//bulk update: collect updates to avoid overupdate
-//same prop multiple updates last won
+// bulk update: collect updates to avoid overupdate
+// same prop multiple updates last won
 
 import { Event } from "../../common/event.ts";
 import { throw_undefined_info_dump_type } from "../core/errors.ts";
@@ -74,7 +74,7 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 		name: P, propObj: Partial<Omit<Prop<Props[P]>, 'name' | 'symbol'>> = {}
 	): Prop<Props[P]> {
 		if (this.#propsByName.has(name)) throw_adding_existing_prop(name);
-		//if requested before adding
+		// if requested before adding
 		if (this.#propsToBeAdded.has(name)) {
 			var symbol = this.#propsToBeAdded.get(name) as symbol;
 			this.#propsToBeAdded.delete(name);
@@ -82,19 +82,19 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 		}
 		else var symbol = Symbol(`neocomp:prop(${name})`);
 
-		//define prop
+		// define prop
 		const prop: Prop<Props[P]> = {
 			...this.options.baseProp,
 			name, symbol, static: this.options.static,
 			...propObj,
 		}
-		//without all the properties share the same default meta
+		// without all the properties share the same default meta
 		if (prop.meta) prop.meta = { ...prop.meta };
 		
-		//add
+		// add
 		this.#propsByName.set(name, prop);
 		this.#propsBySymbol.set(symbol, prop);
-		//trigger events
+		// trigger events
 		this.onAdd.trigger(this, prop);
 		if (this.options.updateOnDefine) this.#update(prop, true);
 
@@ -106,7 +106,7 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 			this.#propsByName.get(name) : 
 			this.#propsBySymbol.get(name);
 		
-		//track
+		// track
 		if (this.#isTracking && !(prop && prop.static)) this.#trackProps?.effectedBy.add(
 			prop?.symbol || (typeof(name) === 'symbol' ? name : this.getSymbolFor(name))
 		);
@@ -119,16 +119,16 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 			this.#propsByName.get(name) : 
 			this.#propsBySymbol.get(name)) as Prop<Props[P]>;
 		
-		//track
+		// track
 		if (this.#isTracking && !prop.static) this.#trackProps.effectedBy.add(prop.symbol);
 
 		return prop
 	}
 	getSymbolFor (name: keyof Props & string): symbol {
-		//case added before
+		// case added before
 		const prop = this.#propsByName.get(name);
 		if (prop) return prop.symbol;
-		//else request to added
+		// else request to added
 		if (this.#propsToBeAdded.has(name)) return this.#propsToBeAdded.get(name) as symbol;
 		const symbol = Symbol(`neocomp:prop(${name})`);
 		this.#propsToBeAdded.set(name, symbol);
@@ -141,7 +141,7 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 			this.#propsByName.get(name) : 
 			this.#propsBySymbol.get(name);
 		
-		//add if not defined
+		// add if not defined
 		if (!prop) {
 			if (!this.options.addUndefined) throw_undefined_prop('setting', name, '', 203);
 			if (typeof(name) === 'symbol') {
@@ -151,11 +151,11 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 			}
 			prop = this.add(name as P, { value });
 
-			//update if not updated by add method
+			// update if not updated by add method
 			if (this.options.updateOnSet && !this.options.updateOnDefine) 
 				this.#update(prop);
 
-			//track
+			// track
 			if (this.#isTracking && !prop.static) this.#trackProps.effected.add(prop.symbol);
 
 			return;
@@ -165,11 +165,11 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 		if (prop.setter) prop.setter.call(prop, value, this);
 		else prop.value = value;
 
-		//update
+		// update
 		if (this.options.updateOnSet && !prop.static && !prop.comparator(old, prop.value, this))
 			this.#update(prop);
 		
-		//track
+		// track
 		if (this.#isTracking && !prop.static) this.#trackProps.effected.add(prop.symbol);
 	}
 	setMultiple (props: Partial<Props>) {
@@ -211,7 +211,7 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 			this.set(name, Default);
 			return this.getProp(name).symbol;
 		}
-		//possibly request to be added
+		// possibly request to be added
 		if (typeof(name) === 'string') return this.getSymbolFor(name);
 		if (!this.#propsBySymbol.has(name)) throw_undefined_prop('using', name, ' by symbol', 207);
 		return name
@@ -243,14 +243,14 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 	) {
 		if (effectedBy === 'track') this.startTrack();
 		
-		//call on define
+		// call on define
 		handler.call(undefined as any);
 		
-		//get tracked properties
+		// get tracked properties
 		if (effectedBy === 'track')
 			({ effected: effect, effecting: effectedBy } = this.endTrack());
 		
-		//add effect unit
+		// add effect unit
 		const toSymbol = (prop: EffectedProp<Props>) => 
 			typeof(prop) === 'symbol' ? prop 
 		: prop instanceof Signal ? prop.prop
