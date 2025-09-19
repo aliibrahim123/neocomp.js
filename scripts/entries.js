@@ -8,7 +8,8 @@ const entryMap = {
   },
   "litedom": {
     core: "litedom",
-    parse: ""
+    parse: "",
+    builder: ""
   },
   "comp-base": {
     core: "comp-base",

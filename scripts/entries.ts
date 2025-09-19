@@ -9,7 +9,8 @@ const entryMap: EntryMap = {
 	},
 	'litedom': {
 		core: 'litedom',
-		parse: ''
+		parse: '',
+		builder: ''
 	},
 	'comp-base': {
 		core: 'comp-base',

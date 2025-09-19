@@ -455,13 +455,13 @@ export function parseChunk (
 		// extract tag
 		let tag = part.slice(ind + 2).match(tagRest)?.[0] as string;
 		tag = lowerTag ? tag.toLowerCase() : tag;
-		const nextBracket = part.slice(ind + 2).indexOf('>') + ind + 2;
+		const nextBracket = part.slice(ind + 2).indexOf('>');
 
 		if (nextBracket === -1) throw new 
 			SyntaxError(`litedom.parse: unended end tag at (${ind + partStart})`);
 		
 		// other than whitespace between tag and '>'
-		if (!part.slice(ind + 2 + tag.length, nextBracket).match(/^\s*$/))
+		if (!part.slice(ind + 2 + tag.length, nextBracket + ind + 2).match(/^\s*$/))
 			throw new SyntaxError(`litedom.parse: invalid end tag at (${ind})`);
 
 		// case closing root tag, change root to its parent

@@ -4,3 +4,4 @@ test/html/
 dist/
 types.d.ts
 types.d.ts.map
+scripts/*.js
