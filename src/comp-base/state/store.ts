@@ -1,267 +1,172 @@
 // reactive store for reactive states
 
-// symbol as key for optimazation
-
 // bulk update: collect updates to avoid overupdate
 // same prop multiple updates last won
 
 import { Event } from "../../common/event.ts";
 import { throw_undefined_info_dump_type } from "../core/errors.ts";
-import type { Linkable } from "../core/linkable.ts";
-import { throw_adding_existing_prop, throw_end_track_while_not_tracking, throw_track_while_tracking, throw_undefined_prop } from "./errors.ts";
+import type { DataSource, Linkable } from "../core/linkable.ts";
+import { throw_end_track_while_not_tracking, throw_track_while_tracking, throw_undefined_prop } from "./errors.ts";
 import { ReadOnlySignal, Signal, WriteOnlySignal } from "./signal.ts";
-import { UpdateDispatcher, type EffectUnit, type UDispatcherOptions } from "./updateDispatcher.ts";
+import { UpdateDispatcher, type EffectUnit } from "./updateDispatcher.ts";
 
 export interface StoreOptions {
 	static: boolean;
-	addUndefined: boolean;
-	baseProp: Prop<any>;
-	updateOnDefine: boolean;
-	updateOnSet: boolean;
-	updateDispatcher: Partial<UDispatcherOptions>
+	baseProp: Prop;
 }
 
-export interface Prop <T> {
-	value: T;
-	name: string;
-	symbol: symbol;
+export interface Prop {
+	value: any;
+	id: number,
 	static: boolean;
-	meta?: Record<keyof any, any>;
-	setter?: (this: this, value: T, store: Store<any>) => void;
-	getter?: (this: this, store: Store<any>) => T;
-	comparator: (old: T, New: T, store: Store<any>) => boolean;
+	meta: Record<keyof any, any>;
+	comparator: (old: any, New: any, store: Store) => boolean;
 }
 
+export type PropId <T> = number & { type: T };
 
-type DistributeUnion <T> = T extends T ? Signal<T> : never;
-export type EffectedProp <Props extends Record<string, any>> = 
-	(keyof Props & string) | symbol | DistributeUnion<Props[keyof Props]>;
-
-export class Store <Props extends Record<string, any> = Record<string, any>> {
-	#propsBySymbol = new Map<symbol, Prop<any>>();
-	#propsByName = new Map<string, Prop<any>>();
-	#propsToBeAdded = new Map<string, symbol>();
-	#propsToBeAddedNames = new Map<symbol, string>();
+export class Store {
+	#props = new Map<number, Prop>();
+	#curId = 0;
 	
 	dispatcher: UpdateDispatcher;
-	base: Linkable;
-	constructor (base: Linkable, options: Partial<StoreOptions> = {}) {
+	base: DataSource;
+	constructor (base: DataSource, options: Partial<StoreOptions> = {}) {
 		this.options = { ...(this.constructor as typeof Store).defaults, ...options};
 		this.base = base;
-		this.dispatcher = new UpdateDispatcher(this, this.options.updateDispatcher);
+		this.dispatcher = new UpdateDispatcher(this);
 	}
 	options: StoreOptions;
 	static defaults: StoreOptions = {
 		static: false,
-		addUndefined: false,
-		updateOnDefine: true,
-		updateOnSet: true,
-		updateDispatcher: {},
 		baseProp: {
-			name: '',
-			symbol: Symbol('neocomp:prop(UNDEFINED)'),
+			id: 0,
 			value: undefined,
 			static: false,
+			meta: {},
 			comparator: (old, New) => old === New
 		},
 	}
 
-	onAdd = new Event<(store: this, prop: Prop<any>) => void>();
-	onRemove = new Event<(store: this, prop: Prop<any>) => void>();
-	onChange = new Event<(store: this, props: Prop<any>[]) => void>();
+	onAdd = new Event<(store: this, prop: Prop) => void>();
+	onRemove = new Event<(store: this, prop: Prop) => void>();
+	onChange = new Event<(store: this, props: Prop[]) => void>();
 
-	add <P extends keyof Props & string> (
-		name: P, propObj: Partial<Omit<Prop<Props[P]>, 'name' | 'symbol'>> = {}
-	): Prop<Props[P]> {
-		if (this.#propsByName.has(name)) throw_adding_existing_prop(name);
-		// if requested before adding
-		if (this.#propsToBeAdded.has(name)) {
-			var symbol = this.#propsToBeAdded.get(name) as symbol;
-			this.#propsToBeAdded.delete(name);
-			this.#propsToBeAddedNames.delete(symbol);
-		}
-		else var symbol = Symbol(`neocomp:prop(${name})`);
-
+	add (propObj: Partial<Omit<Prop, 'id'>> = {}): Prop {
 		// define prop
-		const prop: Prop<Props[P]> = {
-			...this.options.baseProp,
-			name, symbol, static: this.options.static,
-			...propObj,
+		const prop: Prop = {
+			...this.options.baseProp, id: this.#curId++, static: this.options.static, ...propObj,
 		}
 		// without all the properties share the same default meta
 		if (prop.meta) prop.meta = { ...prop.meta };
 		
 		// add
-		this.#propsByName.set(name, prop);
-		this.#propsBySymbol.set(symbol, prop);
+		this.#props.set(prop.id, prop);
 		// trigger events
 		this.onAdd.trigger(this, prop);
-		if (this.options.updateOnDefine) this.#update(prop, true);
+		if (!prop.static) this.#update(prop, true);
 
 		return prop
 	}
 
-	get <P extends keyof Props & string> (name: P | symbol): Props[P] {
-		const prop = typeof(name) === 'string' ? 
-			this.#propsByName.get(name) : 
-			this.#propsBySymbol.get(name);
+	get <T = any> (id: PropId<T> | number): T {
+		const prop = this.#props.get(id);
 		
-		// track
-		if (this.#isTracking && !(prop && prop.static)) this.#trackProps?.effectedBy.add(
-			prop?.symbol || (typeof(name) === 'symbol' ? name : this.getSymbolFor(name))
-		);
+		if (!prop) throw_undefined_prop('getting', id, '', 204);
 
-		if (!prop) return undefined as any;
-		return prop.getter ? prop.getter.call(prop, this) : prop.value
+		// track
+		if (this.#isTracking && !prop?.static) this.#trackProps?.effecting.add(id);
+
+		return prop?.value
 	}
-	getProp <P extends keyof Props & string> (name: P | symbol): Prop<Props[P]> {
-		const prop = (typeof(name) === 'string' ? 
-			this.#propsByName.get(name) : 
-			this.#propsBySymbol.get(name)) as Prop<Props[P]>;
+	getProp (id: number): Prop {
+		const prop = this.#props.get(id)!;
 		
 		// track
-		if (this.#isTracking && !prop.static) this.#trackProps.effectedBy.add(prop.symbol);
+		if (this.#isTracking && !prop.static) this.#trackProps.effecting.add(id);
 
 		return prop
 	}
-	getSymbolFor (name: keyof Props & string): symbol {
-		// case added before
-		const prop = this.#propsByName.get(name);
-		if (prop) return prop.symbol;
-		// else request to added
-		if (this.#propsToBeAdded.has(name)) return this.#propsToBeAdded.get(name) as symbol;
-		const symbol = Symbol(`neocomp:prop(${name})`);
-		this.#propsToBeAdded.set(name, symbol);
-		this.#propsToBeAddedNames.set(symbol, name);
-		return symbol
-	}
 
-	set <P extends keyof Props & string> (name: P | symbol, value: Props[P]) {
-		let prop = typeof(name) === 'string' ? 
-			this.#propsByName.get(name) : 
-			this.#propsBySymbol.get(name);
+	set <T = any> (id: PropId<T> | number, value: T) {
+		let prop = this.#props.get(id);
 		
-		// add if not defined
-		if (!prop) {
-			if (!this.options.addUndefined) throw_undefined_prop('setting', name, '', 203);
-			if (typeof(name) === 'symbol') {
-				const requestedName = this.#propsToBeAddedNames.get(name) as P;
-				if (!requestedName) return throw_undefined_prop('setting', name, ' by symbol', 204);
-				name = requestedName;
-			}
-			prop = this.add(name as P, { value });
-
-			// update if not updated by add method
-			if (this.options.updateOnSet && !this.options.updateOnDefine) 
-				this.#update(prop);
-
-			// track
-			if (this.#isTracking && !prop.static) this.#trackProps.effected.add(prop.symbol);
-
-			return;
-		}
-
+		if (!prop) return throw_undefined_prop('setting', id, '', 203);
 		const old = prop.value;
-		if (prop.setter) prop.setter.call(prop, value, this);
-		else prop.value = value;
-
+		prop.value = value;
+	
 		// update
-		if (this.options.updateOnSet && !prop.static && !prop.comparator(old, prop.value, this))
+		if (!prop.static && !prop.comparator(old, prop.value, this))
 			this.#update(prop);
-		
+
 		// track
-		if (this.#isTracking && !prop.static) this.#trackProps.effected.add(prop.symbol);
-	}
-	setMultiple (props: Partial<Props>) {
-		this.startBulkUpdate();
-		for (const prop in props) this.set(prop, props[prop] as any);
-		this.endBulkUpdate();
+		if (this.#isTracking && !prop.static) this.#trackProps.effected.add(prop.id);
 	}
 
-	has (name: keyof Props & string | symbol) {
-		return typeof(name) === 'string' ?
-			this.#propsByName.has(name) :
-			this.#propsBySymbol.has(name)
+	has (id: number) {
+		return this.#props.has(id);
 	}
 
-	remove (name: keyof Props & string | symbol) {
-		const prop = typeof(name) === 'string' ? 
-			this.#propsByName.get(name) : 
-			this.#propsBySymbol.get(name);
+	remove (id: number) {
+		const prop = this.#props.get(id);
 		
-		if (!prop) return throw_undefined_prop('removing', name, '', 205);
+		if (!prop) return throw_undefined_prop('removing', id, '', 205);
 
-		this.#propsByName.delete(prop.name);
-		this.#propsBySymbol.delete(prop.symbol);
+		this.#props.delete(id);
 		this.onRemove.trigger(this, prop);
 	}
 
-	createComputed <P extends keyof Props & string> (
-		name: P | symbol, effectedBy: EffectedProp<Props>[] | 'track', fn: () => Props[P]
-	): ReadOnlySignal<Props[P]> {
-		if (effectedBy === 'track') this.addEffect('track', () => this.set(name, fn()));
-		else this.addEffect(effectedBy, () => this.set(name, fn()), [name]);
-		return new ReadOnlySignal(this, typeof(name) === 'symbol' ? name : this.getSymbolFor(name));
-	}
-	
-	#initForUse <P extends keyof Props & string> (name: P | symbol, Default?: Props[P]): symbol {
-		if (this.has(name)) return this.getProp(name).symbol;
-		if (Default !== undefined) {
-			if (typeof(name) === 'string') return this.add(name, { value: Default }).symbol;
-			this.set(name, Default);
-			return this.getProp(name).symbol;
-		}
-		// possibly request to be added
-		if (typeof(name) === 'string') return this.getSymbolFor(name);
-		if (!this.#propsBySymbol.has(name)) throw_undefined_prop('using', name, ' by symbol', 207);
-		return name
-	}
-	createSignal <P extends keyof Props & string> (name: P | symbol, Default?: Props[P])
-	  : Signal<Props[P]> {
-		return new Signal(this, this.#initForUse(name, Default))
-	}
-	createROSignal <P extends keyof Props & string> (name: P | symbol, Default?: Props[P]) 
-	: ReadOnlySignal<Props[P]> {
-		return new ReadOnlySignal(this, this.#initForUse(name, Default));
-	}
-	createWOSignal <P extends keyof Props & string> (name: P | symbol, Default?: Props[P]) 
-	: WriteOnlySignal<Props[P]> {
-		return new WriteOnlySignal(this, this.#initForUse(name, Default));
+	computed <T = any> (fn: () => T): ReadOnlySignal<T>;
+	computed <T = any> (effectedBy: (number | Signal<any>)[], fn: () => T): ReadOnlySignal<T>;
+	computed <T = any> (effectedBy: (number | Signal<any>)[] | (() => T), fn?: () => T) {
+		let id = this.add().id;
+		if (typeof(effectedBy) === 'function') this.effect(() => this.set(id, effectedBy()));
+		else this.effect(effectedBy, [id], () => this.set(id, fn?.()));
+		return new ReadOnlySignal(this, id);
 	}
 
-	addEffect (
-		effectedBy: EffectedProp<Props>[], handler: (this: EffectUnit) => void,
-		effect: EffectedProp<Props>[], from?: Linkable, meta?: object
+	signal <T = any> (value?: T) {
+		let id = this.add({ value }).id;
+		return new Signal<T>(this, id)
+	}
+	ROSignal <T = any> (value?: T) {
+		let id = this.add({ value }).id;
+		return new ReadOnlySignal<T>(this, id)
+	}
+	WOSignal <T = any> (value?: T) {
+		let id = this.add({ value }).id;
+		return new WriteOnlySignal<T>(this, id)
+	}
+
+	effect(
+		handler: (this: EffectUnit) => void, from?: Linkable, meta?: object
 	): void;
-	addEffect(
-		track: 'track', handler: (this: EffectUnit) => void, unused?: undefined, 
-		from?: Linkable, meta?: object
+	effect (
+		effectedBy: (number | Signal<any>)[], effect: (number | Signal<any>)[],
+		handler: (this: EffectUnit) => void, from?: Linkable, meta?: object
 	): void;
-	addEffect(
-		effectedBy: EffectedProp<Props>[] | 'track', handler: (this: EffectUnit) => void,
-		effect: EffectedProp<Props>[] = [], from?: Linkable, meta: object = {}
+	effect(
+		a: (number | Signal<any>)[] | ((this: EffectUnit) => void), 
+		b: (number | Signal<any>)[] | Linkable | undefined = undefined, 
+		c: (this: EffectUnit) => void, from = undefined, meta = {}
 	) {
-		if (effectedBy === 'track') this.startTrack();
+		if (typeof(a) === 'function') {
+			this.startTrack();
+			a.call(undefined as any);
+			var { effected, effecting } = this.endTrack();
+			this.dispatcher.add(effecting, effected, a, b as Linkable, c);
+		} else {
+			function toId (x: number | Signal<any>) {
+				return typeof(x) === 'number' ? x : x.id;
+			}
+			this.dispatcher.add(a.map(toId), (b as any).map(toId), c, from, meta);
+		}
 		
-		// call on define
-		handler.call(undefined as any);
-		
-		// get tracked properties
-		if (effectedBy === 'track')
-			({ effected: effect, effecting: effectedBy } = this.endTrack());
-		
-		// add effect unit
-		const toSymbol = (prop: EffectedProp<Props>) => 
-			typeof(prop) === 'symbol' ? prop 
-		: prop instanceof Signal ? prop.prop
-		: this.getSymbolFor(prop);
-		
-		this.dispatcher.add(effectedBy.map(toSymbol), effect.map(toSymbol), handler, from, meta);
 	}
 
 	#bulkUpdates = 0;
 	get bulkUpdating () { return this.#bulkUpdates > 0 };
-	#updatedProps = new Set<Prop<any>>;
+	#updatedProps = new Set<Prop>;
 	startBulkUpdate () {
 		this.#bulkUpdates++;
 	}
@@ -274,7 +179,7 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 		this.#updatedProps = new Set;
 		this.onChange.trigger(this, props);
 	}
-	#update (prop: Prop<any>, evenStatic = false) {
+	#update (prop: Prop, evenStatic = false) {
 		if (!evenStatic && prop.static) return;
 		if (this.bulkUpdating) {
 			this.#updatedProps.add(prop);
@@ -282,24 +187,26 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 		}
 		this.onChange.trigger(this, [prop])
 	}
-	forceUpdate (name: keyof Props & string | symbol) {
-		const prop = typeof(name) === 'string' ? 
-			this.#propsByName.get(name) : 
-			this.#propsBySymbol.get(name);
+	forceUpdate (id: number) {
+		const prop = this.#props.get(id);
 
-		if (!prop) return throw_undefined_prop('force updating', name, '', 206);
+		if (!prop) return throw_undefined_prop('force updating', id, '', 206);
 		this.#update(prop, true);
 	}
 	updateAll (withStatic = true) {
 		this.startBulkUpdate();
-		for (const [_, prop] of this.#propsByName) if (withStatic || !prop.static) 
+		for (const [_, prop] of this.#props) if (withStatic || !prop.static) 
 			this.#updatedProps.add(prop);
 		this.endBulkUpdate();
 	}
 
 	#isTracking = false;
 	get isTracking () { return this.#isTracking };
-	#trackProps = { effectedBy: new Set<symbol>, effected: new Set<symbol> };
+	#trackProps = { effecting: new Set<number>, effected: new Set<number> };
+	trackHint (id: number, role: 'effected' | 'effecting') {
+		if (!this.#isTracking) return;
+		this.#trackProps[role].add(id);
+	}
 	startTrack () {
 		if (this.#isTracking) throw_track_while_tracking();
 		this.#isTracking = true;
@@ -310,22 +217,24 @@ export class Store <Props extends Record<string, any> = Record<string, any>> {
 		this.#isTracking = false;
 		this.endBulkUpdate();
 		const trackedProps = this.#trackProps ;
-		this.#trackProps = { effectedBy: new Set, effected: new Set };
+		this.#trackProps = { effecting: new Set, effected: new Set };
 		return { 
-			effecting: Array.from(trackedProps.effectedBy), 
+			effecting: Array.from(trackedProps.effecting), 
 			effected: Array.from(trackedProps.effected) 
 		}
 	}
 	
 	*[Symbol.iterator] () {
-		for (const [_, prop] of this.#propsByName) yield prop;
+		for (const [_, prop] of this.#props) yield prop;
 	}
 
-	infoDump (type: 'properties'): Props;
-	infoDump (type: 'propertiesToBeAdded'): string[];
-	infoDump (type: 'properties' | 'propertiesToBeAdded') {
-		if (type === 'properties') return Object.fromEntries(this.#propsByName);
-		if (type === 'propertiesToBeAdded') return Array.from(this.#propsToBeAdded.keys());
+	infoDump (type: 'properties'): Record<number, Prop>;
+	infoDump (type: 'values'): Record<number, any>;
+	infoDump (type: 'properties' | 'values') {
+		if (type === 'properties') return Object.fromEntries(this.#props);
+		if (type === 'values') return Object.fromEntries(
+			this.#props.entries().map(([id, prop]) => [id, prop.value])
+		);
 		throw_undefined_info_dump_type(type);
 	}
 }

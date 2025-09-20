@@ -1,6 +1,6 @@
-// dispatch updates without overcall
-
-// all props are not static
+// dispatch updates without overupdate
+// every effect is granduated to be called once
+// support conditionally updating properties during an update
 
 import { throw_undefined_info_dump_type } from "../core/errors.ts";
 import type { Linkable } from "../core/linkable.ts";
@@ -12,8 +12,8 @@ export interface UDispatcherOptions {
 }
 
 export interface EffectUnit {
-	effect: symbol[],
-	effectedBy: symbol[],
+	effect: number[],
+	effectedBy: number[],
 	handler: () => void,
 	from: Linkable | undefined,
 	meta: object
@@ -21,120 +21,101 @@ export interface EffectUnit {
 
 export class UpdateDispatcher {
 	#base: Linkable;
-	#store: Store<any>;
-	#records = new Map<symbol, EffectUnit[]>();
-	constructor (store: Store<any>, options: Partial<UDispatcherOptions> = {}) {
-		this.options = { 
-			...(this.constructor as typeof UpdateDispatcher).defaults, ...options
-		};
-
-		this.#store = store;
+	#records = new Map<number, EffectUnit[]>();
+	constructor (store: Store) {
 		this.#base = store.base;
-		store.onChange.listen((_, props) => this.update(props.map(prop => prop.symbol)));
+		store.onChange.listen((_, props) => this.update(props.map(prop => prop.id)));
 		this.#base.onUnlink.listen((_, linked) => this.remove(unit => unit.from === linked));
-		store.onRemove.listen((_, prop) => this.remove(unit => unit.effectedBy.includes(prop.symbol)));
-	}
-	options: UDispatcherOptions;
-	static defaults: UDispatcherOptions = {
-		balance: true
+		store.onRemove.listen((_, prop) => this.remove(unit => unit.effectedBy.includes(prop.id)));
 	}
 
 	add (
-		effectedBy: symbol[], effect: symbol[], handler: (this: EffectUnit) => void,
+		effectedBy: number[], effect: number[], handler: (this: EffectUnit) => void,
 		from?: Linkable, meta: object = {}
 	) {
 		const unit: EffectUnit = { effectedBy, effect, handler, from, meta };
+		// add to all effectedBy properties
 		for (const prop of effectedBy) 
 			if (this.#records.has(prop)) this.#records.get(prop)?.push(unit);
 			else this.#records.set(prop, [unit]);
 	}
 
-	update (props: symbol[]) {
-		if (!this.options.balance) {
-			for (const prop of props) {
-				const units = this.#records.get(prop);
-				if (units) for (const unit of units) unit.handler();
-			}
+	isUpdating = false;
+	#currentUnits: EffectUnit[] = [];
+	#curUnitsInd = 0;
+	#unitsInvolved = new Set<EffectUnit>;
+	#propsInvolved =  new Set<number>();
+	update (props: number[]) {
+		// gather units
+		props = props.filter(prop => !this.#propsInvolved.has(prop));
+		const units = this.#gatherUnits(props);
+
+		// if in update, add dirty units to the current list
+		if (this.isUpdating) {
+			this.#currentUnits = units.concat(this.#currentUnits.slice(this.#curUnitsInd));
+			this.#curUnitsInd = 0;
 			return;
 		}
-		// add props to queue
-		for (const prop of props) {
-			if (!this.#records.has(prop)) continue;
-			this.#addProp(prop, true);
+
+		// trigger units
+		this.#currentUnits = units;
+		this.isUpdating = true;
+
+		// not a direct for loop since some units might be added while updating
+		while (this.#curUnitsInd < this.#currentUnits.length) {
+			let unit = this.#currentUnits[this.#curUnitsInd];
+			this.#curUnitsInd++;
+			this.#unitsInvolved.delete(unit);
+			unit.handler.call(unit);
 		}
 
-		// if not dispatching, start it
-		if (this.isDispatching) return;
-		this.isDispatching = true;
-		this.#dispatch();
+		// reset to normal
+		this.isUpdating = false;
+		this.#currentUnits = [];
+		this.#curUnitsInd = 0;
+		this.#propsInvolved.clear();
 	}
+	#gatherUnits (props: number[]) {
+		// sort the units topologically
+		const sorted: EffectUnit[] = [];
+		// parents of the currently visited unit, not all visited
+		const visiting: EffectUnit[] = [];
 
-	isDispatching = false;
-	#currentUnits: EffectUnit[] = [];
-	#nextUnits: EffectUnit[] = [];
-	#unitsInvolved = new Set<EffectUnit>;
-	#propsInvolved = new Set<symbol>();
-	#dependencies = new Map<symbol, number>();
-	#addProp (prop: symbol, force = false) {
-		// skip if already added
-		if (this.#propsInvolved.has(prop) && !force) return;
-		this.#propsInvolved.add(prop);
-		const units = this.#records.get(prop);
-		// skip if not units
-		if (!units) return;
-		for (const unit of units) {
-			// skip if in queue
-			if (this.#unitsInvolved.has(unit)) continue;
-			this.#unitsInvolved.add(unit);
-			this.#currentUnits.push(unit);
-			// add effected props
+		const visit = (unit: EffectUnit) => {
+			// ensure not visited before
+			if (visiting.includes(unit)) throw_circular_dep_update();
+			if (this.#unitsInvolved.has(unit)) return;
+
+			visiting.push(unit);
+
+			// visit effected units
 			for (const prop of unit.effect) {
-				this.#dependencies.set(prop, (this.#dependencies.get(prop) || 0) + 1);
-				this.#addProp(prop);
-			}
-		}	
-	}
-	#dispatch () {
-		let anyCalled = false;
-		// while there are in queue
-		while (this.#currentUnits.length !== 0) {
-			for (let ind = 0; ind < this.#currentUnits.length; ind++) {
-				const curUnit = this.#currentUnits[ind];
-				// if not all dependencies are up to date, someone will update them
-				if (curUnit.effectedBy.some(prop => {
-					const count = this.#dependencies.get(prop);
-					return count !== undefined && count > 0
-				})) {
-					// add to the next patch
-					this.#nextUnits.push(curUnit);
-					continue;
-				}
-				// else can be called safely
-				curUnit.handler();
-				this.#unitsInvolved.delete(curUnit);
-				// dec its effected props dependencies count 
-				for (const prop of curUnit.effect) 
-					this.#dependencies.set(prop, this.#dependencies.get(prop) as number - 1);
-				anyCalled = true;
+				this.#propsInvolved.add(prop);
+				const units = this.#records.get(prop);
+				if (units) for (const unit of units) visit(unit);
 			}
 			
-			// stop if there are circular dependency
-			if (!anyCalled) throw_circular_dep_update();
-			anyCalled = false
-			// swap with next batch
-			this.#currentUnits = this.#nextUnits;
-			this.#nextUnits = [];
+			// add
+			visiting.pop();
+            this.#unitsInvolved.add(unit);
+            sorted.push(unit);
 		}
-		
-		// finished, reset to normal
-		this.isDispatching = false;
-		this.#propsInvolved = new Set;
-		this.#dependencies = new Map();
+
+		// visit every unit of all props
+		for (const prop of props) {
+			this.#propsInvolved.add(prop);
+
+			const units = this.#records.get(prop);
+			if (units) for (const unit of units) visit(unit);
+		}
+
+		// before, all child then their parents
+		return sorted.reverse();
 	}
 
 	remove (unit: EffectUnit): void;
-	remove (fn: (unit: EffectUnit) => boolean, props?: symbol[]): void;
-	remove (toRemove: ((unit: EffectUnit) => boolean) | EffectUnit, props?: symbol[]) {
+	remove (fn: (unit: EffectUnit) => boolean, props?: number[]): void;
+	remove (toRemove: ((unit: EffectUnit) => boolean) | EffectUnit, props?: number[]) {
 		if (typeof(toRemove) === 'function') {
 			if (props) for (const prop of props) {
 				const units = this.#records.get(prop);
@@ -148,12 +129,12 @@ export class UpdateDispatcher {
 		}
 	}
 
-	infoDump (type: 'records'): Record<string, EffectUnit[]>;
+	infoDump (type: 'records'): Record<number, EffectUnit[]>;
 	infoDump (type: 'records') {
 		if (type === 'records') {
-			const records: Record<string, EffectUnit[]> = {};
+			const records: Record<number, EffectUnit[]> = {};
 			for (const [prop, units] of this.#records) 
-				records[this.#store.getProp(prop).name] = units;
+				records[prop] = units;
 			return records
 		}
 		throw_undefined_info_dump_type(type);

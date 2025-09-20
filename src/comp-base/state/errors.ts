@@ -1,9 +1,6 @@
 import { type ErrorCodes, raiseError } from "../core/error.ts";
 
-export function throw_adding_existing_prop (name: string) {
-	raiseError(`store: adding existing property (${name})`, 201)
-}
-export function throw_undefined_prop (verb: string, name: string | symbol, suffix = '', err: ErrorCodes) {
+export function throw_undefined_prop (verb: string, name: number, suffix = '', err: ErrorCodes) {
 	raiseError(`store: ${verb} undefined property${suffix} (${String(name)})`, err)
 }
 export function throw_circular_dep_update () {

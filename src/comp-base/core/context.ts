@@ -1,47 +1,42 @@
 import { Event } from "../../common/event.ts";
-import type { EffectedProp, StoreOptions } from "../state/store.ts";
+import type { ReadOnlySignal, Signal } from "../state/signal.ts";
+import type { PropId, StoreOptions } from "../state/store.ts";
 import { Store } from "../state/store.ts";
 import { throw_linking_linked, throw_undefined_info_dump_type, throw_unlinking_not_linked } from "./errors.ts";
-import { unlink, type Linkable } from "./linkable.ts";
+import { unlink, type DataSource, type Linkable } from "./linkable.ts";
 
-export class Context <Props extends Record<string, any>> implements Linkable {
-	store: Store<Props>;
-	constructor (props: Partial<Props> = {}, storeOptions: Partial<StoreOptions> = {}) {
+export class Context implements DataSource {
+	store: Store;
+	constructor (storeOptions: Partial<StoreOptions> = {}) {
 		this.store = new Store(this, storeOptions);
-		this.store.setMultiple(props);
 	}
 
-	get <P extends keyof Props & string> (name: P | symbol) {
-		return this.store.get(name)
+	get <T = any> (id: PropId<T> | number) {
+		return this.store.get(id);
 	}
-	set <P extends keyof Props & string> (name: P | symbol, value: Props[P]) {
-		this.store.set(name, value)
+	set <T = any> (id: PropId<T> | number, value: T) {
+		this.store.set(id, value);
 	}
-	setMuliple (props: Partial<Props>) {
-		this.store.setMultiple(props)
+	has (id: number) {
+		return this.store.has(id)
 	}
-	has (name: (keyof Props & string) | symbol) {
-		return this.store.has(name)
+	signal <T = any> (value?: T) {
+		return this.store.signal(value);
 	}
-	signal <P extends keyof Props & string> (name: P | symbol, value?: Props[P]) {
-		return this.store.createSignal(name, value);
+	computed <T = any> (fn: () => T): ReadOnlySignal<T>;
+	computed <T = any> (effectedBy: (number | Signal<any>)[], fn: () => T): ReadOnlySignal<T>;
+	computed <T = any> (effectedBy: (number | Signal<any>)[] | (() => T), fn?: () => T) {
+		return this.store.computed(effectedBy as any, fn!);
 	}
-	computed <P extends keyof Props & string> (
-		name: P | symbol, effectedBy: EffectedProp<Props>[] | 'track', fn: () => Props[P]
-	) {
-		return this.store.createComputed(name, effectedBy, fn);
-	}
+	effect (handler: () => void): void;
 	effect (
-		effectedBy: EffectedProp<Props>[], handler: () => void,
-		effect?: EffectedProp<Props>[]
+		effectedBy: (number | Signal<any>)[], effect: (number | Signal<any>)[], handler: () => void
 	): void;
-	effect (track: 'track', handler: () => void): void;
-	effect (
-		effectedBy: EffectedProp<Props>[] | 'track', handler: () => void,
-		effect: EffectedProp<Props>[] = []
+	effect(
+		a: (number | Signal<any>)[] | (() => void), 
+		b: (number | Signal<any>)[] | Linkable | undefined = undefined, c?: () => void,
 	) { 
-		if (effectedBy === 'track') this.store.addEffect('track', handler);
-		else this.store.addEffect(effectedBy, handler, effect);
+		this.store.effect(a as any, b as any, c);
 	}
 
 	onLink = new Event<(context: this, linked: Linkable) => void>();
@@ -65,10 +60,10 @@ export class Context <Props extends Record<string, any>> implements Linkable {
 	}
 
 	infoDump (type: 'links'): Linkable[];
-	infoDump (type: 'properties'): Props;
-	infoDump (type: 'links' | 'properties') {
+	infoDump (type: 'properties'): Record<number, any>;
+	infoDump (type: 'links' | 'properties' | 'values') {
 		if (type === 'links') return Array.from(this.#links);
-		if (type === 'properties') return this.store.infoDump('properties');
+		if (type === 'properties') return this.store.infoDump('values');
 		throw_undefined_info_dump_type(type);
 	}
 }

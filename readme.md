@@ -1,3 +1,8 @@
+# note
+this branch is currently unstable due to a core refactor.
+
+see the old branch for the stable version before the current refactor.
+
 # neocomp
 board of frameworks magic, want a lightweight solution for building scalable web apps and sites.
 

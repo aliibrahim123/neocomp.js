@@ -1,5 +1,5 @@
-import { WriteOnlySignal, type Signal } from "./signal.ts";
-import type { EffectedProp, Store } from "./store.ts";
+import { ReadOnlySignal, WriteOnlySignal, type Signal } from "./signal.ts";
+import type { Store } from "./store.ts";
 
 export interface Query<T, E> {
 	status: 'loading' | 'success' | 'error',
@@ -7,9 +7,10 @@ export interface Query<T, E> {
 	error?: E
 }
 
-export function query <T, E> (signal: Signal<Query<T, E>>, promise: Promise<T>) {
+export function query <T, E> (store: Store, promise: Promise<T>) {
 	const query: Query<T, E> = { status: 'loading' };
-	signal.value = query;
+	const signal = store.signal(query);
+
 	promise.then(
 		value => {
 			query.status = 'success';
@@ -21,8 +22,9 @@ export function query <T, E> (signal: Signal<Query<T, E>>, promise: Promise<T>) 
 			query.error = error;
 			signal.update();
 		}
-	)
-	return query;
+	);
+	
+	return signal.asReadOnly;
 }
 
 export interface ComputedQuery <T, E> {
@@ -33,29 +35,35 @@ export interface ComputedQuery <T, E> {
 	error?: E
 }
 
-export function computedQuery <Props extends Record<string, any>, T, E> (
-	store: Store<Props>, signal: Signal<Query<T, E>>, 
-	effectedBy: EffectedProp<Props>[] | 'track', fn: () => Promise<T>
+export function computedQuery <T, E> (store: Store, fn: () => Promise<T>)
+	: ReadOnlySignal<ComputedQuery<T, E>>;
+export function computedQuery <T, E> (
+	store: Store, effectedBy: (number | Signal<any>)[], fn: () => Promise<T>
+): ReadOnlySignal<ComputedQuery<T, E>>
+export function computedQuery <T, E> (
+	store: Store, effectedBy: (number | Signal<any>)[] | (() => Promise<T>), fn?: () => Promise<T>
 ) {
 	const query: ComputedQuery<T, E> = { status: 'success', isLoading: true, firstTime: true };
-	signal.value = query;
+	const signal = store.signal(query);
 	let firstTime = true, runningQueries = 0;
 
 	const effect = async () => {
+		store.trackHint(signal.id, 'effected');
+
 		query.isLoading = true;
 		runningQueries++;
 		query.firstTime = firstTime;
 		
+		/** update signal after promise resolve */
 		function callback (status: ComputedQuery<T, E>['status'], value?: T, error?: E) {
-			query.status = status;
-			query.value = value;
-			query.error = error;
+			Object.assign(query, { status, value, error });
 			signal.update();
 			runningQueries -= 1;
 			if (runningQueries === 0) query.isLoading = false;
-		} 
+		}
 
-		fn().then(
+		// establish callbacks
+		(typeof(effectedBy) === 'function' ? effectedBy : fn!)().then(
 			value => callback('success', value, undefined),
 			error => callback('error', undefined, error),
 		);
@@ -63,8 +71,9 @@ export function computedQuery <Props extends Record<string, any>, T, E> (
 		firstTime = false;
 	}
 
-	if (effectedBy = 'track') store.addEffect('track', effect)
-	else store.addEffect(effectedBy, effect)
+	// add effect
+	if (typeof(effectedBy) === 'function') store.effect(effect);
+	else store.effect(effectedBy, [signal], effect)
 
-	return query
+	return signal.asReadOnly
 }

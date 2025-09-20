@@ -1,7 +1,7 @@
 // linkable unit for easy dependecies managment
 
 import { Event } from "../../common/event.ts";
-import { throw_linking_linked, throw_unlinking_not_linked } from "./errors.ts";
+import type { Store } from "../state/store.ts";
 
 export interface Linkable {
 	onLink: Event<(self: Linkable, other: Linkable) => void>;
@@ -9,6 +9,10 @@ export interface Linkable {
 	link (other: Linkable): void;
 	unlink (other: Linkable): void;
 	hasLink (other: Linkable): boolean;
+}
+
+export interface DataSource extends Linkable {
+	store: Store
 }
 
 export function link (a: Linkable, b: Linkable) {

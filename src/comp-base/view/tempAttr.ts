@@ -238,7 +238,7 @@ export function evalTAttr (
 		// laterial
 		if (typeof(part) === 'string') return part;
 		// prop
-		if (!part.isExp) return comp.store.get(part.prop);
+		if (!part.isExp) return undefined // FIX-ME comp.store.get(part.prop);
 		// exp
 		return part.fn(comp, el, context, 
 		  ...props.concat(part.statics.concat(part.dynamics).map(prop => comp.store.get(prop)))

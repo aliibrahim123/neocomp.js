@@ -13,10 +13,10 @@ export function addEffectAction () {
 		
 		// case auto track dependencies
 		if (action.props[0] === '...') 
-			comp.store.addEffect('track', () => action.fn(comp, el, context), undefined, undefined, { el });
+			comp.store.effect('track', () => action.fn(comp, el, context), undefined, undefined, { el });
 
 		// case manual dependencies
-		else comp.store.addEffect(action.props, 
+		else comp.store.effect(action.props, 
 			() => action.fn(comp, el, context, ...action.props.map(prop => comp.store.get(prop))),
 		[], undefined, { el });
 	})

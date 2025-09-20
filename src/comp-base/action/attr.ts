@@ -47,7 +47,7 @@ export function addAttrAction () {
 		const action = _action as AttrAction;
 		
 		// case auto track dependencies
-		if (action.autoTrack) comp.store.addEffect('track', 
+		if (action.autoTrack) comp.store.effect('track', 
 			() => setAttr(comp, el, action, context), 
 		undefined, undefined, { el });
 		
@@ -64,7 +64,7 @@ export function addAttrAction () {
 				else if (!part.static) dynamicProps.add(part.prop);
 			  }
 			// add effect
-			comp.store.addEffect(
+			comp.store.effect(
 			  Array.from(dynamicProps), () => setAttr(comp, el, action, context), [], undefined, { el }
 			);
 		}

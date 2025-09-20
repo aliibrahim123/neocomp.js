@@ -19,7 +19,8 @@ export type ErrorCodes =
 	401 | 402 | 403 | 404 | 405 | 406 | 407 | 408 | 409 | 410 | 411 | 412 | 413;
 
 export const errorsLevels: { base: ErrorLevel } & Partial<Record<`err${ErrorCodes}`, ErrorLevel>> = {
-	base: 'error'
+	base: 'error',
+	'err201': 'warn',
 }
 
 export function raiseError (msg: string, errCode: ErrorCodes) {

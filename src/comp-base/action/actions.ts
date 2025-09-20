@@ -3,6 +3,7 @@
 import { LiteNode } from "../../litedom/node.ts";
 import type { PureComp } from "../core/comp.ts";
 import { throw_adding_existing_action, throw_undefined_action } from "./errors.ts";
+/*
 import { addAttrAction } from "./attr.ts";
 import { addChunkAction } from "./chunk.ts";
 import { addCompAction } from "./comp.ts";
@@ -12,6 +13,7 @@ import { addInOutActions } from "./inout.ts";
 import { addOnAction } from "./on.ts";
 import { addRefAction } from "./ref.ts";
 import { addIfAction } from "./if.ts";
+*/
 
 export interface Action {
 	type: string,
@@ -28,7 +30,7 @@ export function addAction (name: string, handler: Handler) {
 	if (registry.has(name)) throw_adding_existing_action(name);
 	registry.set(name, handler);
 }
-
+/*
 addAttrAction();
 addCompAction();
 addRefAction();
@@ -38,8 +40,10 @@ addOnAction();
 addInOutActions();
 addChunkAction();
 addIfAction();
+*/
 
 function doAction (comp: PureComp, el: HTMLElement, action: Action, context: Record<string, any>) {
+	return; // FIX-ME
 	const handler = registry.get(action.type);
 	if (!handler) return throw_undefined_action(action.type);
 	handler(comp, el, action, context);

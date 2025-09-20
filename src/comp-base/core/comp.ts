@@ -3,7 +3,7 @@
 import { Event, OTIEvent } from "../../common/event.ts";
 import { get, type Template } from "../view/templates.ts";
 import { Store } from "../state/store.ts";
-import type { EffectedProp, StoreOptions } from "../state/store.ts";
+import type { PropId, StoreOptions } from "../state/store.ts";
 import { View } from "../view/view.ts";
 import type { ViewOptions } from "../view/view.ts";
 import { 
@@ -13,10 +13,11 @@ import {
 	throw_undefined_info_dump_type
 } from "./errors.ts";
 import { onNew, onRemove } from "./globalEvents.ts";
-import type { Linkable } from "./linkable.ts";
+import type { DataSource, Linkable } from "./linkable.ts";
 import { addToIdMap, registry, removeFromIdMap, removeRoot } from "./registry.ts";
 import type { BaseMap } from "./typemap.ts";
 import { passedArgs } from "../action/attr.ts";
+import type { ReadOnlySignal, Signal } from "../core.ts";
 
 export type Status = 'coreInit' | 'domInit' | 'inited' | 'removing' | 'removed';
 
@@ -30,7 +31,7 @@ export type CompOptions = {
 
 export const attachedComp = Symbol('neocomp:attached-comp');
 
-export class Component <TMap extends BaseMap> implements Linkable {
+export class Component <TMap extends BaseMap> implements DataSource {
 	// extracting a parameter type from a generic requires to use that parameter in the generic
 	// if __tmap is not wraped with this optionals, errors will flood the project
 	// DO NOT TOUCH !!!
@@ -94,35 +95,30 @@ export class Component <TMap extends BaseMap> implements Linkable {
 	onInitInternal = new OTIEvent<(comp: this) => void>();
 	onInit = new OTIEvent<(comp: this) => void>();
 	
-	store: Store<TMap['props']> = undefined as any;
-	get <P extends keyof TMap['props'] & string> (name: P | symbol) {
-		return this.store.get(name)
+	store: Store = undefined as any;
+	get <T = any> (id: PropId<T> | number) {
+		return this.store.get(id);
 	}
-	set <P extends keyof TMap['props'] & string> (name: P | symbol, value: TMap['props'][P]) {
-		this.store.set(name, value)
+	set <T = any> (id: PropId<T> | number, value: T) {
+		this.store.set(id, value);
 	}
-	setMultiple (props: Partial<TMap['props']>) {
-		this.store.setMultiple(props)
+	signal <T = any> (value?: T) {
+		return this.store.signal(value);
 	}
-	signal <P extends keyof TMap['props'] & string> (name: P | symbol, Default?: TMap['props'][P]) {
-		return this.store.createSignal(name, Default);
+	computed <T = any> (fn: () => T): ReadOnlySignal<T>;
+	computed <T = any> (effectedBy: (number | Signal<any>)[], fn: () => T): ReadOnlySignal<T>;
+	computed <T = any> (effectedBy: (number | Signal<any>)[] | (() => T), fn?: () => T) {
+		return this.store.computed(effectedBy as any, fn!);
 	}
-	computed <P extends keyof TMap['props'] & string> (
-		name: P | symbol, effectedBy: EffectedProp<TMap['props']>[] | 'track', fn: () => TMap['props'][P]
-	) {
-		return this.store.createComputed(name, effectedBy, fn);
-	}
+	effect (handler: () => void): void;
 	effect (
-		effectedBy: EffectedProp<TMap['props']>[], handler: () => void,
-		effect?: EffectedProp<TMap['props']>[]
+		effectedBy: (number | Signal<any>)[], effect: (number | Signal<any>)[], handler: () => void
 	): void;
-	effect (track: 'track', handler: () => void): void;
-	effect (
-		effectedBy: EffectedProp<TMap['props']>[] | 'track', handler: () => void,
-		effect: EffectedProp<TMap['props']>[] = []
+	effect(
+		a: (number | Signal<any>)[] | (() => void), 
+		b: (number | Signal<any>)[] | Linkable | undefined = undefined, c?: () => void,
 	) { 
-		if (effectedBy === 'track') this.store.addEffect('track', handler);
-		else this.store.addEffect(effectedBy, handler, effect);
+		this.store.effect(a as any, b as any, c);
 	}
 
 	view: View<TMap['refs'], TMap['chunks']> = undefined as any;
@@ -229,10 +225,10 @@ export class Component <TMap extends BaseMap> implements Linkable {
 	}
 	
 	infoDump (type: 'links'): Linkable[];
-	infoDump (type: 'properties'): TMap['props'];
+	infoDump (type: 'properties'): Record<number, any>;
 	infoDump (type: 'links' | 'properties') {
 		if (type === 'links') return Array.from(this.#links);
-		if (type === 'properties') return this.store.infoDump('properties');
+		if (type === 'properties') return this.store.infoDump('values');
 		throw_undefined_info_dump_type(type);
 	}
 }
