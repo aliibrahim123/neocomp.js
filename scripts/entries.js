@@ -12,8 +12,7 @@ const entryMap = {
     builder: ""
   },
   "comp-base": {
-    core: "comp-base",
-    tempGen: ""
+    core: "comp-base"
   },
   "build": {
     "plugin": "build"

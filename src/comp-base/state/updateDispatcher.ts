@@ -7,37 +7,36 @@ import type { Linkable } from "../core/linkable.ts";
 import { throw_circular_dep_update } from "./errors.ts";
 import { Store } from "./store.ts";
 
-export interface UDispatcherOptions {
-	balance: boolean;
-}
-
 export interface EffectUnit {
 	effect: number[],
 	effectedBy: number[],
 	handler: () => void,
-	from: Linkable | undefined,
+	bindings: any[],
 	meta: object
 }
 
 export class UpdateDispatcher {
-	#base: Linkable;
 	#records = new Map<number, EffectUnit[]>();
+	#bindings = new Map<any, EffectUnit[]>();
 	constructor (store: Store) {
-		this.#base = store.base;
 		store.onChange.listen((_, props) => this.update(props.map(prop => prop.id)));
-		this.#base.onUnlink.listen((_, linked) => this.remove(unit => unit.from === linked));
-		store.onRemove.listen((_, prop) => this.remove(unit => unit.effectedBy.includes(prop.id)));
+		store.base.onUnlink.listen((_, linked) => this.remove([linked]));
+		store.onRemove.listen((_, prop) => this.remove([prop.id]));
 	}
 
 	add (
 		effectedBy: number[], effect: number[], handler: (this: EffectUnit) => void,
-		from?: Linkable, meta: object = {}
+		bindings: any[] = [], meta: object = {}
 	) {
-		const unit: EffectUnit = { effectedBy, effect, handler, from, meta };
+		const unit: EffectUnit = { effectedBy, effect, handler, bindings, meta };
 		// add to all effectedBy properties
 		for (const prop of effectedBy)
 			if (this.#records.has(prop)) this.#records.get(prop)?.push(unit);
 			else this.#records.set(prop, [unit]);
+		for (const binding of bindings)
+			if (this.#bindings.has(binding)) this.#bindings.get(binding)?.push(unit);
+			else this.#bindings.set(binding, [unit]);
+		return unit
 	}
 
 	isUpdating = false;
@@ -113,9 +112,10 @@ export class UpdateDispatcher {
 		return sorted.reverse();
 	}
 
-	remove (unit: EffectUnit): void;
 	remove (fn: (unit: EffectUnit) => boolean, props?: number[]): void;
-	remove (toRemove: ((unit: EffectUnit) => boolean) | EffectUnit, props?: number[]) {
+	remove (props: number[]): void;
+	remove (binding: any[]): void;
+	remove (toRemove: ((unit: EffectUnit) => boolean) | any, props?: number[]) {
 		if (typeof (toRemove) === 'function') {
 			if (props) for (const prop of props) {
 				const units = this.#records.get(prop);
@@ -124,8 +124,32 @@ export class UpdateDispatcher {
 			else for (const [prop, units] of this.#records)
 				this.#records.set(prop, units.filter(unit => !toRemove(unit)));
 		}
-		else for (const prop of toRemove.effectedBy) {
-			this.#records.set(prop, this.#records.get(prop)?.filter(unit => unit !== toRemove) as any);
+		else {
+			let involvedProps = new Set<number>();
+			let involvedUnits = new Set<EffectUnit>();
+			// collect units
+			// case props
+			if (typeof (toRemove[0]) === 'number') {
+				involvedProps = new Set(toRemove);
+				for (const prop of toRemove) for (const unit of this.#records.get(prop) || []) {
+					for (const prop of unit.effectedBy) involvedProps.add(prop);
+					involvedUnits.add(unit);
+				}
+			}
+			// case bindings
+			else for (const binding of toRemove) {
+				let units = this.#bindings.get(binding);
+				if (!units) continue;
+				for (const unit of units)
+					for (const prop of unit.effectedBy) involvedProps.add(prop);
+				for (const unit of units) involvedUnits.add(unit);
+				this.#bindings.delete(binding);
+			}
+			// remove units
+			for (const prop of involvedProps) {
+				const units = this.#records.get(prop);
+				if (units) this.#records.set(prop, units.filter(unit => !involvedUnits.has(unit)));
+			}
 		}
 	}
 

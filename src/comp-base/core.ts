@@ -13,7 +13,7 @@ export { infoDump } from './core/infoDump.ts';
 
 export * from './state/signal.ts';
 export * from './state/store.ts';
-export type { Prop, StoreOptions } from './state/store.ts';
+export type { Prop, StoreOptions, PropId } from './state/store.ts';
 export type * from './state/updateDispatcher.ts';
 export * from './state/updateDispatcher.ts';
 export * from './state/inout.ts';
@@ -23,5 +23,7 @@ export type * from './state/query.ts';
 export * from './view/view.ts';
 export type * from './view/view.ts';
 export { createChunk } from './view/chunk.ts';
+export type { ChunkBuild } from './view/chunk.ts';
+export * from './view/chunkUtilities.ts'
 
 export { Event, OTIEvent, listenUntil } from '../common/event.ts';

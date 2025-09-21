@@ -2,7 +2,7 @@
 
 import { Store, type Prop, type PropId } from "./store.ts";
 
-export class Signal <T> {
+export class Signal<T> {
 	#store: Store;
 	#prop: number;
 	constructor (store: Store, prop: PropId<T> | number) {
@@ -16,7 +16,7 @@ export class Signal <T> {
 		this.#store.set(this.#prop, value)
 	}
 	get id () { return this.#prop as PropId<T> }
-	get prop () {  return this.#store.getProp(this.#prop) }
+	get prop () { return this.#store.getProp(this.#prop) }
 	get store () { return this.#store }
 	update () {
 		this.store.forceUpdate(this.#prop);
@@ -25,7 +25,7 @@ export class Signal <T> {
 	get asWriteOnly () { return new WriteOnlySignal<T>(this.#store, this.#prop) }
 }
 
-export class ReadOnlySignal <T> {
+export class ReadOnlySignal<T> {
 	#store: Store;
 	#prop: number;
 	constructor (store: Store, prop: PropId<T> | number) {
@@ -36,10 +36,10 @@ export class ReadOnlySignal <T> {
 		return this.#store.get(this.#prop)
 	}
 	get id () { return this.#prop as PropId<T> }
-	get prop () {  return this.#store.getProp(this.#prop) }
+	get prop () { return this.#store.getProp(this.#prop) }
 	get store () { return this.#store }
 }
-export class WriteOnlySignal <T> {
+export class WriteOnlySignal<T> {
 	#store: Store;
 	#prop: number;
 	constructor (store: Store, prop: PropId<T> | number) {
@@ -53,6 +53,6 @@ export class WriteOnlySignal <T> {
 		this.store.forceUpdate(this.#prop);
 	}
 	get id () { return this.#prop as PropId<T> }
-	get prop () {  return this.#store.getProp(this.#prop) }
+	get prop () { return this.#store.getProp(this.#prop) }
 	get store () { return this.#store }
 }

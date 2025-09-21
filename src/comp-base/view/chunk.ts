@@ -3,7 +3,7 @@ import type { LiteNode } from "../../litedom/node.ts";
 import type { parseChunk as _parseChunk, Options, ParsedChunk } from "../../litedom/parse.ts";
 import { Event } from "../../common/event.ts";
 import { attachedComp, Component } from "../core/comp.ts";
-import { Signal } from "../state/signal.ts";
+import { ReadOnlySignal, Signal } from "../state/signal.ts";
 import { throw_chunk_cond_not_met } from "./errors.ts";
 
 // import parseChunk if specified
@@ -35,18 +35,22 @@ type Action = {
 
 export let isDefered = Symbol('neocomp:defered-fn');
 
+function apply (el: HTMLElement, comp: Component, value: any, handle: (value: any) => void) {
+	// bind signal
+	if (value instanceof Signal || value instanceof ReadOnlySignal)
+		comp.store.effect([value], [], () => handle(value.value), undefined, { el });
+	// bind computed exp
+	else if (typeof (value) === 'function')
+		comp.store.effect(() => handle(value(el, comp)), undefined, { el });
+	else handle(value);
+}
 function setAttr (el: HTMLElement, attr: string, value: any) {
 	// property
 	if (attr[0] === '.') (el as any)[attr.slice(1)] = value;
 	// style property
 	else if (attr.startsWith('style:')) el.style.setProperty(attr.slice(6), value);
-	// style map
-	else if (attr === 'style') Object.assign(el.style, value);
 	// class
 	else if (attr.startsWith('class:')) el.classList.toggle(attr.slice(6), !!value);
-	// class map
-	else if (attr === 'class')
-		for (const name in value) el.classList.toggle(name, !!value[name]);
 	// boolean attribute
 	else if (typeof (value) === 'boolean') el.toggleAttribute(attr, value);
 	// remove attribute
@@ -58,26 +62,29 @@ function handleAttr (el: HTMLElement, comp: Component, attr: string, value: any)
 	// event listener
 	if (attr.startsWith('on:'))
 		el.addEventListener(attr.slice(3), (event) => value(el, event, comp));
-	// bind signal
-	else if (value instanceof Signal) comp.store.effect([value], [],
-		() => setAttr(el, attr, value.value)
-		, undefined, { el });
-	// bind computed exp
-	else if (typeof (value) === 'function')
-		comp.store.effect(() => setAttr(el, attr, value()), undefined, { el });
-	// static attribute
-	else setAttr(el, attr, value);
+	// class map
+	else if (attr === 'class') for (const name in value)
+		apply(el, comp, value[name], value => el.classList.toggle(name, !!value));
+	// style map
+	else if (attr === 'style') for (const name in value)
+		apply(el, comp, value[name], value => el.style.setProperty(name, value));
+	// normal attribute
+	else apply(el, comp, value, value => setAttr(el, attr, value))
 }
 function setContent (el: HTMLElement, target: ChildNode, comp: Component, value: any) {
 	let newTarget: ChildNode;
 	// component
 	if (value.onInit instanceof Event) {
+		// case inited
 		if (value.status === 'inited') {
 			comp.addChild(value);
 			newTarget = value.el;
-		} else {
+		}
+		// else wait to init, add a placeholder 
+		else {
 			newTarget = document.createElement('span');
 			(value as Component).onInit.listen(child => {
+				// if disconnected before init
 				if (!newTarget.parentElement) return;
 				comp.addChild(child);
 				newTarget.replaceWith(child.el);
@@ -132,20 +139,12 @@ function doActions (
 			// node array
 			else if (arg.length !== undefined && arg[0] instanceof Node)
 				target.replaceWith(...arg);
-			// bind signal 
-			else if (arg instanceof Signal) comp.store.effect([arg], [],
-				() => target = setContent(el, target, comp, arg.value),
-				undefined, { el });
-			// bind computed epx
-			else if (typeof (arg) === 'function') comp.store.effect(
-				() => target = setContent(el, target, comp, arg(el, comp)),
-				undefined, { el });
-			// static content
-			else setContent(el, target, comp, arg);
+			else apply(el, comp, arg, arg => target = setContent(el, target, comp, arg));
 		}
 	}
 }
 
+export type ChunkBuild = ReturnType<typeof createChunk>;
 export function createChunk (
 	comp: Component, el?: HTMLElement, liteConverters: Record<string, (lite: LiteNode) => Node> = {}
 ) {

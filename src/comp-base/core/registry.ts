@@ -6,7 +6,6 @@ import { throw_adding_existing_class, throw_adding_existing_provider, throw_addi
 import { onAdd, onRootAdd, onRootRemove } from "./globalEvents.ts";
 
 const classRegistry = new Map<string, ConstructorFor<Component>>;
-classRegistry.set('base', Component);
 
 const IdMap = new Map<string, Component>();
 

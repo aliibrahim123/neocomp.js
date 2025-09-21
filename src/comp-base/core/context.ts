@@ -1,6 +1,6 @@
 import { Event } from "../../common/event.ts";
 import type { ReadOnlySignal, Signal } from "../state/signal.ts";
-import type { PropId, StoreOptions } from "../state/store.ts";
+import type { EffectedProp, EffectingProp, PropId, StoreOptions } from "../state/store.ts";
 import { Store } from "../state/store.ts";
 import { throw_linking_linked, throw_undefined_info_dump_type, throw_unlinking_not_linked } from "./errors.ts";
 import { unlink, type DataSource, type Linkable } from "./linkable.ts";
@@ -11,31 +11,31 @@ export class Context implements DataSource {
 		this.store = new Store(this, storeOptions);
 	}
 
-	get <T = any> (id: PropId<T> | number) {
+	get<T = any> (id: PropId<T> | number) {
 		return this.store.get(id);
 	}
-	set <T = any> (id: PropId<T> | number, value: T) {
+	set<T = any> (id: PropId<T> | number, value: T) {
 		this.store.set(id, value);
 	}
 	has (id: number) {
 		return this.store.has(id)
 	}
-	signal <T = any> (value?: T) {
+	signal<T = any> (value?: T) {
 		return this.store.signal(value);
 	}
-	computed <T = any> (fn: () => T): ReadOnlySignal<T>;
-	computed <T = any> (effectedBy: (number | Signal<any>)[], fn: () => T): ReadOnlySignal<T>;
-	computed <T = any> (effectedBy: (number | Signal<any>)[] | (() => T), fn?: () => T) {
+	computed<T = any> (fn: () => T): ReadOnlySignal<T>;
+	computed<T = any> (effectedBy: EffectingProp[], fn: () => T): ReadOnlySignal<T>;
+	computed<T = any> (effectedBy: EffectingProp[] | (() => T), fn?: () => T) {
 		return this.store.computed(effectedBy as any, fn!);
 	}
 	effect (handler: () => void): void;
 	effect (
-		effectedBy: (number | Signal<any>)[], effect: (number | Signal<any>)[], handler: () => void
+		effectedBy: EffectingProp[], effect: EffectedProp[], handler: () => void
 	): void;
-	effect(
-		a: (number | Signal<any>)[] | (() => void), 
-		b: (number | Signal<any>)[] | Linkable | undefined = undefined, c?: () => void,
-	) { 
+	effect (
+		a: EffectingProp[] | (() => void),
+		b: EffectedProp[] | undefined = undefined, c?: () => void,
+	) {
 		this.store.effect(a as any, b as any, c);
 	}
 

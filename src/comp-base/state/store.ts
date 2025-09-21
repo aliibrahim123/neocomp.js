@@ -25,6 +25,9 @@ export interface Prop {
 
 export type PropId<T> = number & { type: T };
 
+export type EffectedProp = number | Signal<any> | WriteOnlySignal<any>;
+export type EffectingProp = number | Signal<any> | ReadOnlySignal<any>;
+
 export class Store {
 	#props = new Map<number, Prop>();
 	#curId = 0;
@@ -117,8 +120,8 @@ export class Store {
 	}
 
 	computed<T = any> (fn: () => T): ReadOnlySignal<T>;
-	computed<T = any> (effectedBy: (number | Signal<any>)[], fn: () => T): ReadOnlySignal<T>;
-	computed<T = any> (effectedBy: (number | Signal<any>)[] | (() => T), fn?: () => T) {
+	computed<T = any> (effectedBy: EffectingProp[], fn: () => T): ReadOnlySignal<T>;
+	computed<T = any> (effectedBy: EffectingProp[] | (() => T), fn?: () => T) {
 		let id = this.add().id;
 		if (typeof (effectedBy) === 'function') this.effect(() => this.set(id, effectedBy()));
 		else this.effect(effectedBy, [id], () => this.set(id, fn?.()));
@@ -139,28 +142,28 @@ export class Store {
 	}
 
 	effect (
-		handler: (this: EffectUnit) => void, from?: Linkable, meta?: object
+		handler: (this: EffectUnit) => void, bindings?: any[], meta?: object
 	): void;
 	effect (
-		effectedBy: (number | Signal<any>)[], effect: (number | Signal<any>)[],
-		handler: (this: EffectUnit) => void, from?: Linkable, meta?: object
+		effectedBy: EffectingProp[], effect: EffectedProp[],
+		handler: (this: EffectUnit) => void, bindings?: any[], meta?: object
 	): void;
 	effect (
-		a: (number | Signal<any>)[] | ((this: EffectUnit) => void),
-		b: (number | Signal<any>)[] | Linkable | undefined = undefined,
-		c: (this: EffectUnit) => void, from = undefined, meta = {}
+		a: EffectingProp[] | ((this: EffectUnit) => void),
+		b: EffectedProp[] | any[] | undefined = undefined,
+		c: (this: EffectUnit) => void, bindings = [], meta = {}
 	) {
 		if (typeof (a) === 'function') {
 			this.startTrack();
 			a.call(undefined as any);
 			var { effected, effecting } = this.endTrack();
-			this.dispatcher.add(effecting, effected, a, b as Linkable, c);
+			this.dispatcher.add(effecting, effected, a, b, c);
 		} else {
-			function toId (x: number | Signal<any>) {
+			function toId (x: number | Signal<any> | ReadOnlySignal<any>) {
 				return typeof (x) === 'number' ? x : x.id;
 			}
 			c.call(undefined as any);
-			this.dispatcher.add(a.map(toId), (b as any).map(toId), c, from, meta);
+			this.dispatcher.add(a.map(toId), (b as any).map(toId), c, bindings, meta);
 		}
 
 	}

@@ -2,7 +2,7 @@
 
 import { Event, OTIEvent } from "../../common/event.ts";
 import { Store } from "../state/store.ts";
-import type { PropId, StoreOptions } from "../state/store.ts";
+import type { EffectedProp, EffectingProp, PropId, StoreOptions } from "../state/store.ts";
 import { View } from "../view/view.ts";
 import type { ViewOptions } from "../view/view.ts";
 import {
@@ -14,7 +14,8 @@ import {
 import { onNew, onRemove } from "./globalEvents.ts";
 import type { DataSource, Linkable } from "./linkable.ts";
 import { addToIdMap, registry, removeFromIdMap, removeRoot } from "./registry.ts";
-import type { ReadOnlySignal, Signal } from "../core.ts";
+import type { ReadOnlySignal, Signal } from "../state/signal.ts";
+import type { ChunkBuild } from "../core.ts";
 
 export type Status = 'coreInit' | 'domInit' | 'inited' | 'removing' | 'removed';
 
@@ -95,17 +96,17 @@ export class Component implements DataSource {
 		return this.store.signal(value);
 	}
 	computed<T = any> (fn: () => T): ReadOnlySignal<T>;
-	computed<T = any> (effectedBy: (number | Signal<any>)[], fn: () => T): ReadOnlySignal<T>;
-	computed<T = any> (effectedBy: (number | Signal<any>)[] | (() => T), fn?: () => T) {
+	computed<T = any> (effectedBy: EffectingProp[], fn: () => T): ReadOnlySignal<T>;
+	computed<T = any> (effectedBy: EffectingProp[] | (() => T), fn?: () => T) {
 		return this.store.computed(effectedBy as any, fn!);
 	}
 	effect (handler: () => void): void;
 	effect (
-		effectedBy: (number | Signal<any>)[], effect: (number | Signal<any>)[], handler: () => void
+		effectedBy: EffectingProp[], effect: EffectedProp[], handler: () => void
 	): void;
 	effect (
-		a: (number | Signal<any>)[] | (() => void),
-		b: (number | Signal<any>)[] | Linkable | undefined = undefined, c?: () => void,
+		a: EffectingProp[] | (() => void),
+		b: EffectedProp[] | Linkable | undefined = undefined, c?: () => void,
 	) {
 		this.store.effect(a as any, b as any, c);
 	}
@@ -113,7 +114,14 @@ export class Component implements DataSource {
 	view: View = undefined as any;
 	el: HTMLElement;
 	query<T extends HTMLElement = HTMLElement> (selector: string) { return this.view.query<T>(selector) }
-	chunk (el?: HTMLElement) { return this.view.createChunk(el) }
+	chunk (el?: HTMLElement | ((build: ChunkBuild) => void)) {
+		if (typeof (el) === 'function') {
+			let build = this.view.createChunk();
+			el(build);
+			return build.end();
+		}
+		return this.view.createChunk(el)
+	}
 
 	onLink = new Event<(comp: this, linked: Linkable) => void>();
 	onUnlink = new Event<(comp: this, unlinked: Linkable) => void>();
