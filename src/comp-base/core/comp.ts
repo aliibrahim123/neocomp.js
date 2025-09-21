@@ -1,7 +1,6 @@
 // the component class
 
 import { Event, OTIEvent } from "../../common/event.ts";
-import { get, type Template } from "../view/templates.ts";
 import { Store } from "../state/store.ts";
 import type { PropId, StoreOptions } from "../state/store.ts";
 import { View } from "../view/view.ts";
@@ -15,15 +14,13 @@ import {
 import { onNew, onRemove } from "./globalEvents.ts";
 import type { DataSource, Linkable } from "./linkable.ts";
 import { addToIdMap, registry, removeFromIdMap, removeRoot } from "./registry.ts";
-import type { BaseMap } from "./typemap.ts";
-import { passedArgs } from "../action/attr.ts";
 import type { ReadOnlySignal, Signal } from "../core.ts";
 
 export type Status = 'coreInit' | 'domInit' | 'inited' | 'removing' | 'removed';
 
 export type CompOptions = {
 	anonymous: boolean;
-	defaultId: (comp: PureComp) => string;
+	defaultId: (comp: Component) => string;
 	removeChildren: boolean;
 	store: Partial<StoreOptions>;
 	view: Partial<ViewOptions>;
@@ -31,13 +28,7 @@ export type CompOptions = {
 
 export const attachedComp = Symbol('neocomp:attached-comp');
 
-export class Component<TMap extends BaseMap> implements DataSource {
-	// extracting a parameter type from a generic requires to use that parameter in the generic
-	// if __tmap is not wraped with this optionals, errors will flood the project
-	// DO NOT TOUCH !!!
-	// hours spent: NaN
-	#__tmap: Partial<TMap> | undefined;
-
+export class Component implements DataSource {
 	constructor (el?: HTMLElement) {
 		this.options = (this.constructor as typeof Component).defaults;
 		this.el = el as HTMLElement;
@@ -119,11 +110,8 @@ export class Component<TMap extends BaseMap> implements DataSource {
 		this.store.effect(a as any, b as any, c);
 	}
 
-	view: View<TMap['refs'], TMap['chunks']> = undefined as any;
+	view: View = undefined as any;
 	el: HTMLElement;
-	static template = get('empty');
-	static chunks: Record<string, Template> = {};
-	refs: TMap['refs'] = undefined as any;
 	query<T extends HTMLElement = HTMLElement> (selector: string) { return this.view.query<T>(selector) }
 	chunk (el?: HTMLElement) { return this.view.createChunk(el) }
 
@@ -144,26 +132,24 @@ export class Component<TMap extends BaseMap> implements DataSource {
 		return this.#links.has(other);
 	}
 
-	onChildAdded = new Event<(comp: this, child: PureComp) => void>();
-	onAddedToParent = new Event<(comp: this, parent: PureComp) => void>();
-	onUnlinkedFromParent = new Event<(comp: this, parent: PureComp) => void>();
-	onChildUnlink = new Event<(comp: this, child: PureComp) => void>();
-	parent: PureComp = undefined as any;
-	children: PureComp[] = [];
-	childmap: TMap['childmap'] = {};
-	addChild (child: PureComp, ind = -1) {
+	onChildAdded = new Event<(comp: this, child: Component) => void>();
+	onAddedToParent = new Event<(comp: this, parent: Component) => void>();
+	onUnlinkedFromParent = new Event<(comp: this, parent: Component) => void>();
+	onChildUnlink = new Event<(comp: this, child: Component) => void>();
+	parent: Component = undefined as any;
+	children: Component[] = [];
+	addChild (child: Component, ind = -1) {
 		// add
 		if ((ind < 0 ? -ind - 1 : ind) > this.children.length)
 			throw_adding_child_out_of_range(this, child, ind);
 		if (ind === -1) this.children.push(child);
 		else this.children.splice(ind, 0, child);
-		if (child.name) (this.childmap[child.name] as any) = child;
 
 		// trigger events
 		this.onChildAdded.trigger(this, child);
 		child.linkParent(this);
 	}
-	linkParent (parent: PureComp) {
+	linkParent (parent: Component) {
 		if (this.parent) throw_link_Parent_while_has(this, this.parent);
 		this.parent = parent;
 		this.onAddedToParent.trigger(this, parent);
@@ -174,10 +160,9 @@ export class Component<TMap extends BaseMap> implements DataSource {
 		this.onUnlinkedFromParent.trigger(this, this.parent);
 		this.parent = undefined as any;
 	}
-	unlinkChild (child: PureComp) {
+	unlinkChild (child: Component) {
 		let childCount = this.children.length;
 		this.children = this.children.filter(_child => _child !== child);
-		if (child.name) (this.childmap[child.name] as any) = undefined;
 		if (childCount === this.children.length) throw_unlink_unowned_child(this, child);
 		this.onChildUnlink.trigger(this, child);
 	}
@@ -229,6 +214,3 @@ export class Component<TMap extends BaseMap> implements DataSource {
 		throw_undefined_info_dump_type(type);
 	}
 }
-
-// why not Component<BaseMap>, i dont know, but it works
-export type PureComp = Component<BaseMap & { props: any }>

@@ -1,6 +1,6 @@
 import type { LiteNode } from "../../litedom/node.ts";
 import { compInfo } from "../core/errors.ts";
-import type { PureComp } from '../core/comp.ts'
+import { Component } from '../core/comp.ts'
 import { errorsLevels, raiseError } from '../core/error.ts'
 
 // template registry
@@ -12,16 +12,16 @@ export function throw_getting_undefined_template (name: string) {
 }
 
 // view
-export function throw_multiple_roots (comp: PureComp) {
+export function throw_multiple_roots (comp: Component) {
 	raiseError(`view: multiple elements at root in template (${compInfo(comp)})`, 301);
 }
-export function throw_not_into_query (comp: PureComp) {
+export function throw_not_into_query (comp: Component) {
 	raiseError(`view: no into query while insertMode is into (${compInfo(comp)})`, 303);
 }
-export function throw_into_query_no_match (comp: PureComp, query: string) {
+export function throw_into_query_no_match (comp: Component, query: string) {
 	raiseError(`view: into query has not match (query: ${query}, ${compInfo(comp)})`, 304);
 }
-export function throw_undefined_chunk (comp: PureComp, name: string) {
+export function throw_undefined_chunk (comp: Component, name: string) {
 	raiseError(`view: using undefined chunk (name: ${name}, ${compInfo(comp)})`, 307);
 }
 

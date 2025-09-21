@@ -1,4 +1,4 @@
-import { Component, type PureComp, type Status } from "./comp";
+import { Component, type Status } from "./comp";
 import { errorsLevels, raiseError } from "./error";
 import type { Linkable } from "./linkable.ts";
 
@@ -15,7 +15,7 @@ export function throw_using_undefined_provider (name: string) {
 export function throw_adding_existing_provider (name: string) {
 	raiseError(`registry: adding exsisitng provider (${name})`, 104);
 }
-export function throw_adding_root_while_there (root: PureComp, adding: PureComp) {
+export function throw_adding_root_while_there (root: Component, adding: Component) {
 	raiseError(
 		`registry: adding root while there is another (${compInfo(root, 'root')}, ${compInfo(adding, 'adding')})`,
 		105
@@ -26,48 +26,48 @@ export function throw_remove_unexisting_root () {
 }
 
 // init
-export function compInfo (comp: PureComp, name = 'comp') {
+export function compInfo (comp: Component, name = 'comp') {
 	return `${name}: ${comp.constructor.name}#${comp.id}`;
 }
 
-export function throw_incorrect_init_sequence (comp: PureComp, calling: Status, at: Status) {
+export function throw_incorrect_init_sequence (comp: Component, calling: Status, at: Status) {
 	raiseError(`init: incorrect init sequence (calling ${calling} at ${at}, ${compInfo(comp)})`, 107);
 }
 
 // hierarchy
-export function throw_adding_child_out_of_range (comp: PureComp, child: PureComp, ind: number) {
+export function throw_adding_child_out_of_range (comp: Component, child: Component, ind: number) {
 	raiseError(
 		`hierarchy: adding child out of range (index: ${ind} / ${comp.children.length}, ${compInfo(comp)}, ${compInfo(child, 'child')})`,
 		108
 	);
 }
-export function throw_link_Parent_while_has (comp: PureComp, parent: PureComp) {
+export function throw_link_Parent_while_has (comp: Component, parent: Component) {
 	raiseError(
 		`hierarchy: linking parent while already having one (${compInfo(comp)}, ${compInfo(parent, 'parent')})`,
 		109
 	);
 }
-export function throw_unlink_no_parent (comp: PureComp) {
+export function throw_unlink_no_parent (comp: Component) {
 	raiseError(`hierarchy: unlinking unexisting parent (${compInfo(comp)})`, 110);
 }
-export function throw_unlink_unowned_child (comp: PureComp, child: PureComp) {
+export function throw_unlink_unowned_child (comp: Component, child: Component) {
 	raiseError(
 		`hierarchy: unlinking unowned child (${compInfo(comp)}, ${compInfo(child, 'child')})`,
 		111
 	);
 }
-export function throw_removing_removed_comp (comp: PureComp) {
+export function throw_removing_removed_comp (comp: Component) {
 	raiseError(`hierarchy: removing removed component (${compInfo(comp)})`, 112);
 }
 
 // linking
-export function throw_linking_linked (self: PureComp | Linkable, other: Linkable) {
+export function throw_linking_linked (self: Component | Linkable, other: Linkable) {
 	raiseError(
 		`linking: linking linkable that is linked (linking: ${other.constructor.name}, ${self instanceof Component ? compInfo(self) : ('to: ' + self.constructor.name)})`,
 		113
 	);
 }
-export function throw_unlinking_not_linked (self: PureComp | Linkable, other: Linkable) {
+export function throw_unlinking_not_linked (self: Component | Linkable, other: Linkable) {
 	raiseError(
 		`linking: unlinking linkable that is not linked (linking: ${other.constructor.name}, ${self instanceof Component ? compInfo(self, 'to') : ('to: ' + self.constructor.name)})`,
 		114

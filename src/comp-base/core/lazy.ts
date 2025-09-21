@@ -1,7 +1,7 @@
 // lazy component
 
 import { OTIEvent, type ListenerOf } from "../../common/event.ts";
-import { attachedComp, type PureComp } from "./comp.ts";
+import { attachedComp, Component } from "./comp.ts";
 import { onAdd } from "./globalEvents.ts";
 import { addProvider, get, has, registry } from "./registry.ts";
 
@@ -21,7 +21,7 @@ export class LazyComp {
 		}
 		onAdd.listen(listener);
 	}
-	onInit = new OTIEvent<(comp: PureComp) => void>();
+	onInit = new OTIEvent<(comp: Component) => void>();
 }
 
 addProvider('lazy', (name) => {

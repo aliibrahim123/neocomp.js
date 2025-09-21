@@ -1,21 +1,20 @@
 // component registry
 
 import type { ConstructorFor } from "../../common/types.ts";
-import type { PureComp } from "./comp.ts";
 import { Component } from "./comp.ts";
 import { throw_adding_existing_class, throw_adding_existing_provider, throw_adding_root_while_there, throw_getting_undefined_class, throw_remove_unexisting_root, throw_undefined_info_dump_type, throw_using_undefined_provider } from "./errors.ts";
 import { onAdd, onRootAdd, onRootRemove } from "./globalEvents.ts";
 
-const classRegistry = new Map<string, ConstructorFor<PureComp>>;
+const classRegistry = new Map<string, ConstructorFor<Component>>;
 classRegistry.set('base', Component);
 
-const IdMap = new Map<string, PureComp>();
+const IdMap = new Map<string, Component>();
 
-export type CompProvider = (name: string) => ConstructorFor<PureComp>;
+export type CompProvider = (name: string) => ConstructorFor<Component>;
 
 const providers = new Map<string, CompProvider>();
 
-export function add (name: string, Class: ConstructorFor<PureComp>) {
+export function add (name: string, Class: ConstructorFor<Component>) {
 	if (classRegistry.has(name)) throw_adding_existing_class(name);
 	classRegistry.set(name, Class);
 	onAdd.trigger(name, Class as any);
@@ -26,12 +25,12 @@ export function has (name: string) {
 export function get (name: string) {
 	if (name[0] === '@') {
 		const separatorInd = name.indexOf(':');
-		const provider = providers.get(name.slice(1, separatorInd)) 
+		const provider = providers.get(name.slice(1, separatorInd))
 		if (!provider) throw_using_undefined_provider(name.slice(1, separatorInd));
-		return provider?.(name.slice(separatorInd + 1)) as ConstructorFor<PureComp>;
+		return provider?.(name.slice(separatorInd + 1)) as ConstructorFor<Component>;
 	}
 	if (!classRegistry.has(name)) throw_getting_undefined_class(name);
-	return classRegistry.get(name) as ConstructorFor<PureComp>
+	return classRegistry.get(name) as ConstructorFor<Component>
 }
 
 export function addProvider (name: string, provider: CompProvider) {
@@ -39,7 +38,7 @@ export function addProvider (name: string, provider: CompProvider) {
 	providers.set(name, provider)
 }
 
-export function addToIdMap (id: string, comp: PureComp) {
+export function addToIdMap (id: string, comp: Component) {
 	IdMap.set(id, comp);
 }
 export function getById (id: string) {
@@ -50,7 +49,7 @@ export function removeFromIdMap (id: string) {
 }
 
 
-export function setRoot (comp: PureComp) {
+export function setRoot (comp: Component) {
 	if (registry.root) throw_adding_root_while_there(registry.root, comp);
 	registry.root = comp;
 	onRootAdd.trigger(comp);
@@ -68,6 +67,6 @@ export function infoDump (type: 'classes' | 'providers' | 'idMap') {
 }
 
 export const registry = {
-	root: undefined as any as PureComp,
+	root: undefined as any as Component,
 	add, has, get, addProvider, addToIdMap, getById, removeFromIdMap, setRoot, removeRoot
 }

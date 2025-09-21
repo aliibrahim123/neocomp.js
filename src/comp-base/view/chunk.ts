@@ -2,7 +2,7 @@ import { builder } from "../../litedom/builder.ts";
 import type { LiteNode } from "../../litedom/node.ts";
 import type { parseChunk as _parseChunk, Options, ParsedChunk } from "../../litedom/parse.ts";
 import { Event } from "../../common/event.ts";
-import { attachedComp, Component, type PureComp } from "../core/comp.ts";
+import { attachedComp, Component } from "../core/comp.ts";
 import { Signal } from "../state/signal.ts";
 import { throw_chunk_cond_not_met } from "./errors.ts";
 
@@ -54,7 +54,7 @@ function setAttr (el: HTMLElement, attr: string, value: any) {
 	// normal attribute
 	else el.setAttribute(attr, String(value));
 }
-function handleAttr (el: HTMLElement, comp: PureComp, attr: string, value: any) {
+function handleAttr (el: HTMLElement, comp: Component, attr: string, value: any) {
 	// event listener
 	if (attr.startsWith('on:'))
 		el.addEventListener(attr.slice(3), (event) => value(el, event, comp));
@@ -68,7 +68,7 @@ function handleAttr (el: HTMLElement, comp: PureComp, attr: string, value: any) 
 	// static attribute
 	else setAttr(el, attr, value);
 }
-function setContent (el: HTMLElement, target: ChildNode, comp: PureComp, value: any) {
+function setContent (el: HTMLElement, target: ChildNode, comp: Component, value: any) {
 	let newTarget: ChildNode;
 	// component
 	if (value.onInit instanceof Event) {
@@ -77,7 +77,7 @@ function setContent (el: HTMLElement, target: ChildNode, comp: PureComp, value: 
 			newTarget = value.el;
 		} else {
 			newTarget = document.createElement('span');
-			(value as PureComp).onInit.listen(child => {
+			(value as Component).onInit.listen(child => {
 				if (!newTarget.parentElement) return;
 				comp.addChild(child);
 				newTarget.replaceWith(child.el);
@@ -100,8 +100,8 @@ function setContent (el: HTMLElement, target: ChildNode, comp: PureComp, value: 
 	return newTarget
 }
 function doActions (
-	el: HTMLElement, comp: PureComp, actions: Action[],
-	args: any[], deferedFns: ((el: HTMLElement, comp: PureComp) => void)[]
+	el: HTMLElement, comp: Component, actions: Action[],
+	args: any[], deferedFns: ((el: HTMLElement, comp: Component) => void)[]
 ) {
 	for (const action of actions) {
 		let arg = args[action.argInd];
@@ -147,9 +147,9 @@ function doActions (
 }
 
 export function createChunk (
-	comp: PureComp, el?: HTMLElement, liteConverters: Record<string, (lite: LiteNode) => Node> = {}
+	comp: Component, el?: HTMLElement, liteConverters: Record<string, (lite: LiteNode) => Node> = {}
 ) {
-	let deferedFns: ((el: HTMLElement, comp: PureComp) => void)[] = [];
+	let deferedFns: ((el: HTMLElement, comp: Component) => void)[] = [];
 	let lastEl: HTMLElement;
 
 	let [addPart, build] = builder(el || 'neo:template', (lite, el) => {

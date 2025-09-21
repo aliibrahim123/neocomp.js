@@ -1,4 +1,4 @@
-type EntryMap = { [key: string]: EntryMap | string | string[]};
+type EntryMap = { [key: string]: EntryMap | string | string[] };
 const entryMap: EntryMap = {
 	'rawdom': {
 		index: 'rawdom',
@@ -14,7 +14,6 @@ const entryMap: EntryMap = {
 	},
 	'comp-base': {
 		core: 'comp-base',
-		tempGen: ''
 	},
 	'build': {
 		'plugin': 'build'
@@ -30,10 +29,10 @@ function flatternEntry (entry: EntryMap, path: string = '') {
 	path = path === '' ? '' : path + '/';
 	for (const name in entry) {
 		const subEntry = entry[name];
-		if (typeof(subEntry) === 'string') {
+		if (typeof (subEntry) === 'string') {
 			entries.push(path + name);
 			exportedEntries.push(subEntry === '' ? path + name : subEntry);
-		} else if (Array.isArray(subEntry)) 
+		} else if (Array.isArray(subEntry))
 			subEntry.forEach(postfix => {
 				entries.push(path + name + '.' + postfix);
 				exportedEntries.push(path + name + '.' + postfix);
