@@ -23,16 +23,16 @@ export interface Prop {
 	comparator: (old: any, New: any, store: Store) => boolean;
 }
 
-export type PropId <T> = number & { type: T };
+export type PropId<T> = number & { type: T };
 
 export class Store {
 	#props = new Map<number, Prop>();
 	#curId = 0;
-	
+
 	dispatcher: UpdateDispatcher;
 	base: DataSource;
 	constructor (base: DataSource, options: Partial<StoreOptions> = {}) {
-		this.options = { ...(this.constructor as typeof Store).defaults, ...options};
+		this.options = { ...(this.constructor as typeof Store).defaults, ...options };
 		this.base = base;
 		this.dispatcher = new UpdateDispatcher(this);
 	}
@@ -59,7 +59,7 @@ export class Store {
 		}
 		// without all the properties share the same default meta
 		if (prop.meta) prop.meta = { ...prop.meta };
-		
+
 		// add
 		this.#props.set(prop.id, prop);
 		// trigger events
@@ -69,9 +69,9 @@ export class Store {
 		return prop
 	}
 
-	get <T = any> (id: PropId<T> | number): T {
+	get<T = any> (id: PropId<T> | number): T {
 		const prop = this.#props.get(id);
-		
+
 		if (!prop) throw_undefined_prop('getting', id, '', 204);
 
 		// track
@@ -81,20 +81,20 @@ export class Store {
 	}
 	getProp (id: number): Prop {
 		const prop = this.#props.get(id)!;
-		
+
 		// track
 		if (this.#isTracking && !prop.static) this.#trackProps.effecting.add(id);
 
 		return prop
 	}
 
-	set <T = any> (id: PropId<T> | number, value: T) {
+	set<T = any> (id: PropId<T> | number, value: T) {
 		let prop = this.#props.get(id);
-		
+
 		if (!prop) return throw_undefined_prop('setting', id, '', 203);
 		const old = prop.value;
 		prop.value = value;
-	
+
 		// update
 		if (!prop.static && !prop.comparator(old, prop.value, this))
 			this.#update(prop);
@@ -109,59 +109,60 @@ export class Store {
 
 	remove (id: number) {
 		const prop = this.#props.get(id);
-		
+
 		if (!prop) return throw_undefined_prop('removing', id, '', 205);
 
 		this.#props.delete(id);
 		this.onRemove.trigger(this, prop);
 	}
 
-	computed <T = any> (fn: () => T): ReadOnlySignal<T>;
-	computed <T = any> (effectedBy: (number | Signal<any>)[], fn: () => T): ReadOnlySignal<T>;
-	computed <T = any> (effectedBy: (number | Signal<any>)[] | (() => T), fn?: () => T) {
+	computed<T = any> (fn: () => T): ReadOnlySignal<T>;
+	computed<T = any> (effectedBy: (number | Signal<any>)[], fn: () => T): ReadOnlySignal<T>;
+	computed<T = any> (effectedBy: (number | Signal<any>)[] | (() => T), fn?: () => T) {
 		let id = this.add().id;
-		if (typeof(effectedBy) === 'function') this.effect(() => this.set(id, effectedBy()));
+		if (typeof (effectedBy) === 'function') this.effect(() => this.set(id, effectedBy()));
 		else this.effect(effectedBy, [id], () => this.set(id, fn?.()));
 		return new ReadOnlySignal(this, id);
 	}
 
-	signal <T = any> (value?: T) {
+	signal<T = any> (value?: T) {
 		let id = this.add({ value }).id;
 		return new Signal<T>(this, id)
 	}
-	ROSignal <T = any> (value?: T) {
+	ROSignal<T = any> (value?: T) {
 		let id = this.add({ value }).id;
 		return new ReadOnlySignal<T>(this, id)
 	}
-	WOSignal <T = any> (value?: T) {
+	WOSignal<T = any> (value?: T) {
 		let id = this.add({ value }).id;
 		return new WriteOnlySignal<T>(this, id)
 	}
 
-	effect(
+	effect (
 		handler: (this: EffectUnit) => void, from?: Linkable, meta?: object
 	): void;
 	effect (
 		effectedBy: (number | Signal<any>)[], effect: (number | Signal<any>)[],
 		handler: (this: EffectUnit) => void, from?: Linkable, meta?: object
 	): void;
-	effect(
-		a: (number | Signal<any>)[] | ((this: EffectUnit) => void), 
-		b: (number | Signal<any>)[] | Linkable | undefined = undefined, 
+	effect (
+		a: (number | Signal<any>)[] | ((this: EffectUnit) => void),
+		b: (number | Signal<any>)[] | Linkable | undefined = undefined,
 		c: (this: EffectUnit) => void, from = undefined, meta = {}
 	) {
-		if (typeof(a) === 'function') {
+		if (typeof (a) === 'function') {
 			this.startTrack();
 			a.call(undefined as any);
 			var { effected, effecting } = this.endTrack();
 			this.dispatcher.add(effecting, effected, a, b as Linkable, c);
 		} else {
 			function toId (x: number | Signal<any>) {
-				return typeof(x) === 'number' ? x : x.id;
+				return typeof (x) === 'number' ? x : x.id;
 			}
+			c.call(undefined as any);
 			this.dispatcher.add(a.map(toId), (b as any).map(toId), c, from, meta);
 		}
-		
+
 	}
 
 	#bulkUpdates = 0;
@@ -173,7 +174,7 @@ export class Store {
 	endBulkUpdate () {
 		this.#bulkUpdates--;
 		if (this.#bulkUpdates > 0) return;
-		
+
 		if (this.#updatedProps.size === 0) return;
 		const props = Array.from(this.#updatedProps);
 		this.#updatedProps = new Set;
@@ -195,7 +196,7 @@ export class Store {
 	}
 	updateAll (withStatic = true) {
 		this.startBulkUpdate();
-		for (const [_, prop] of this.#props) if (withStatic || !prop.static) 
+		for (const [_, prop] of this.#props) if (withStatic || !prop.static)
 			this.#updatedProps.add(prop);
 		this.endBulkUpdate();
 	}
@@ -216,14 +217,14 @@ export class Store {
 		if (!this.#isTracking) throw_end_track_while_not_tracking();
 		this.#isTracking = false;
 		this.endBulkUpdate();
-		const trackedProps = this.#trackProps ;
+		const trackedProps = this.#trackProps;
 		this.#trackProps = { effecting: new Set, effected: new Set };
-		return { 
-			effecting: Array.from(trackedProps.effecting), 
-			effected: Array.from(trackedProps.effected) 
+		return {
+			effecting: Array.from(trackedProps.effecting),
+			effected: Array.from(trackedProps.effected)
 		}
 	}
-	
+
 	*[Symbol.iterator] () {
 		for (const [_, prop] of this.#props) yield prop;
 	}

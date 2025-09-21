@@ -1,6 +1,6 @@
 import { LiteNode, nativeToLite } from "../../litedom/core.ts";
 import type { Template } from "./templates.ts";
-import { parse, type Options as ParseOptions } from "../../litedom/parse.ts";
+import { parse, parseChunk, type ParsedChunk, type Options as ParseOptions } from "../../litedom/parse.ts";
 import { throw_top_node_no_id, throw_text_in_root, throw_undefined_supplement_type } from "./errors.ts";
 import { walk, type WalkOptions } from "./walker.ts";
 
@@ -9,7 +9,8 @@ export interface Supplement {
 	type: symbol
 }
 export interface Plugin {
-	onSource?: (source: string, options: Partial<ParseOptions>, meta: Map<string, any>) => void;
+	onSource?: (source: string[], args: any[], options: Partial<ParseOptions>, meta: Map<string, any>) => void;
+	onChunk?: (chunk: ParsedChunk, meta: Map<string, any>) => void;
 	onDom?: (root: HTMLElement, meta: Map<string, any>) => void;
 	onRoot?: (root: LiteNode, meta: Map<string, any>) => void;
 	onTemplate?: (template: Template, meta: Map<string, any>) => void;
@@ -40,7 +41,7 @@ function fromLite (
 	// init root
 	initLiteNode(root);
 	for (const plugin of plugins) if (plugin.onRoot) plugin.onRoot(root, meta);
-	
+
 	// collect actions
 	const actions = walk(root, walkOptions);
 
@@ -61,7 +62,7 @@ export function generateFromString (
 	const meta = new Map();
 	// get parse options
 	const parseOptions = { ...defaultParseOptions };
-	for (const plugin of plugins) if (plugin.onSource) plugin.onSource(source, parseOptions, meta);
+	//for (const plugin of plugins) if (plugin.onSource) plugin.onSource(source, parseOptions, meta);
 
 	// parse
 	let root = parse(source, parseOptions);
@@ -77,16 +78,16 @@ export function generateFromSource (
 	const meta = new Map();
 	// get parse options
 	const parseOptions = { ...defaultParseOptions };
-	for (const plugin of plugins) if (plugin.onSource) plugin.onSource(source, parseOptions, meta);
+	//for (const plugin of plugins) if (plugin.onSource) plugin.onSource([source], parseOptions, meta);
 
 	// parse
 	const root = parse(source, parseOptions);
-	
+
 	const content: Record<string, FileContent> = {};
 	let ind = 0;
 	for (const child of root.children) {
 		// check id and no text in root
-		if (typeof(child) === 'string') return throw_text_in_root() as any;
+		if (typeof (child) === 'string') return throw_text_in_root() as any;
 		const id = child.attrs.get('id') as string;
 		if (!id) throw_top_node_no_id(child, ind);
 
@@ -111,14 +112,14 @@ export function generateFromSource (
 	return content
 }
 export function generateFromDom (
-  root: HTMLElement, plugins: Plugin[] = [], walkOptions: Partial<WalkOptions> = {}
+	root: HTMLElement, plugins: Plugin[] = [], walkOptions: Partial<WalkOptions> = {}
 ): Template {
 	const meta = new Map();
 	// trigger onDom
 	for (const plugin of plugins) if (plugin.onDom) plugin.onDom(root, meta);
-	
+
 	// convert to lite
 	const liteRoot = nativeToLite(root);
-	
+
 	return fromLite(liteRoot, plugins, walkOptions, meta);
 }

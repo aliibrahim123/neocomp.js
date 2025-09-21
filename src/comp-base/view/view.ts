@@ -3,12 +3,13 @@
 import { Event } from "../../common/event.ts";
 import { query } from "../../rawdom/index.ts";
 import { attachedComp, Component, type PureComp } from "../core/comp.ts";
-import { throw_into_query_no_match, throw_not_into_query, throw_undefined_chunk } from "./errors.ts";
+import { throw_into_query_no_match, throw_multiple_roots, throw_not_into_query, throw_undefined_chunk } from "./errors.ts";
 import type { Template } from "./templates.ts";
 import { doActionsFromDom, doActionsOfTemplate, type Action } from "../action/actions.ts";
 import { toDom } from "./toDom.ts";
 import { LiteNode } from "../../litedom/node.ts";
 import { throw_undefined_info_dump_type } from "../core/errors.ts";
+import { createChunk } from "./chunk.ts";
 
 export interface ViewOptions {
 	defaultEl: (comp: PureComp) => HTMLElement;
@@ -18,12 +19,12 @@ export interface ViewOptions {
 	removeEl: boolean;
 }
 
-type InsertMode = 
+type InsertMode =
 	'asDefault' | 'replace' | 'atTop' | 'atBottom' | 'none' | { type: 'into', target: string };
 
-export class View <
-  Refs extends Record<string, HTMLElement | HTMLElement[]> = Record<string, HTMLElement>, 
-  Chunks extends string = string
+export class View<
+	Refs extends Record<string, HTMLElement | HTMLElement[]> = Record<string, HTMLElement>,
+	Chunks extends string = string
 > {
 	comp: PureComp;
 	el: HTMLElement;
@@ -33,10 +34,10 @@ export class View <
 	constructor (comp: PureComp, el?: HTMLElement, options: Partial<ViewOptions> = {}) {
 		this.comp = comp;
 		this.options = { ...(this.constructor as typeof View).defaults, ...options };
-		this.el = el || this.options.defaultEl(comp);
+		this.el = el!;
 
 		this.comp.el = this.el;
-		(this.el as any)[attachedComp] = comp;
+		if (el) (el as any)[attachedComp] = comp;
 		this.comp.refs = this.refs;
 		this.#chunks = (comp.constructor as typeof Component).chunks;
 
@@ -51,7 +52,26 @@ export class View <
 		removeEl: true
 	}
 
-	initDom () {
+	createTop () {
+		const chunk = createChunk(this.comp, undefined, this.options.liteConverters);
+
+		const end = () => {
+			let el = chunk.end();
+			if (el.tagName === 'NEO:TEMPLATE') throw_multiple_roots(this.comp);
+			if (this.el) {
+				for (const attr of el.attributes) this.el.setAttribute(attr.name, attr.value);
+				this.el.replaceChildren(...el.childNodes);
+			}
+			else {
+				this.el = el;
+				(this.el as any)[attachedComp] = this.comp;
+				this.comp.el = el;
+			}
+		}
+
+		return { ...chunk, end }
+	}
+	/*initDom () {
 		const el = this.el, options = this.options;
 		const template = (this.comp.constructor as typeof Component).template;
 
@@ -88,12 +108,15 @@ export class View <
 			if (into.length === 0) throw_into_query_no_match(this.comp, insertMode.target);
 			into[0].replaceChildren(...templateEl.childNodes);
 		}
-	}
+	}*/
 
-	query <T extends HTMLElement = HTMLElement> (selector: string) {
+	query<T extends HTMLElement = HTMLElement> (selector: string) {
 		return query<T>(selector, this.el);
 	}
 
+	createChunk (el?: HTMLElement) {
+		return createChunk(this.comp, el, this.options.liteConverters);
+	}
 	constructChunk (name: Chunks | Template, context: Record<string, any> = {}) {
 		const template = typeof name === 'string' ? this.#chunks[name] : name;
 		if (!template) throw_undefined_chunk(this.comp, name as string);
@@ -108,18 +131,18 @@ export class View <
 	}
 
 	onAction = new Event<
-	  (view: this, top: HTMLElement, actions: Action[], context: Record<string, any>) => void
+		(view: this, top: HTMLElement, actions: Action[], context: Record<string, any>) => void
 	>();
 	doActions (
-	  actions: Action[],  context: Record<string, any> = {},
-	  top: HTMLElement = this.el, lite?: LiteNode
+		actions: Action[], context: Record<string, any> = {},
+		top: HTMLElement = this.el, lite?: LiteNode
 	) {
 		this.onAction.trigger(this, top, actions, context);
 		if (lite) doActionsOfTemplate(this.comp, top, lite, actions, context);
 		else doActionsFromDom(this.comp, actions, context);
 	}
 
-	addRef <R extends keyof Refs> (name: R, el: Refs[R]) {
+	addRef<R extends keyof Refs> (name: R, el: Refs[R]) {
 		if (name in this.refs) {
 			if (Array.isArray(this.refs[name])) this.refs[name].push(...el as HTMLElement[]);
 			else this.refs[name] = el;
@@ -130,12 +153,12 @@ export class View <
 	onCleanUp = new Event<(view: this) => void>();
 	cleanup () {
 		// clean up effects for deattached elements
-		this.comp.store.dispatcher.remove((unit) => 
+		this.comp.store.dispatcher.remove((unit) =>
 			!!(unit.meta as any).el && !document.body.contains((unit.meta as any).el));
 		this.onCleanUp.trigger(this);
 	}
 
-	infoDump (type: 'chunks'): Record<Chunks, Template>; 
+	infoDump (type: 'chunks'): Record<Chunks, Template>;
 	infoDump (type: 'chunks') {
 		if (type === 'chunks') return { ...this.#chunks };
 		throw_undefined_info_dump_type(type);

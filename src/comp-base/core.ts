@@ -31,5 +31,6 @@ export { templates } from './view/templates.ts';
 export { toDom as templateToDom } from './view/toDom.ts';
 export { evalTAttr } from './view/tempAttr.ts';
 export type { TAttr, TAttrExp, TAttrPart, TAttrProp } from './view/tempAttr.ts';
+export { createChunk } from './view/chunk.ts';
 
 export { Event, OTIEvent, listenUntil } from '../common/event.ts';

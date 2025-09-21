@@ -1,3 +1,4 @@
+import { parseChunk, type ParsedChunk } from '../litedom/parse.ts';
 import { generateFromString } from './view/generation.ts';
 
 export * from './view/generation.ts';

@@ -6,8 +6,8 @@ import { Store } from "../state/store.ts";
 import type { PropId, StoreOptions } from "../state/store.ts";
 import { View } from "../view/view.ts";
 import type { ViewOptions } from "../view/view.ts";
-import { 
-	throw_link_Parent_while_has, throw_unlink_unowned_child, throw_unlink_no_parent, 
+import {
+	throw_link_Parent_while_has, throw_unlink_unowned_child, throw_unlink_no_parent,
 	throw_removing_removed_comp, throw_incorrect_init_sequence, throw_linking_linked,
 	throw_unlinking_not_linked, throw_adding_child_out_of_range,
 	throw_undefined_info_dump_type
@@ -31,14 +31,14 @@ export type CompOptions = {
 
 export const attachedComp = Symbol('neocomp:attached-comp');
 
-export class Component <TMap extends BaseMap> implements DataSource {
+export class Component<TMap extends BaseMap> implements DataSource {
 	// extracting a parameter type from a generic requires to use that parameter in the generic
 	// if __tmap is not wraped with this optionals, errors will flood the project
 	// DO NOT TOUCH !!!
 	// hours spent: NaN
 	#__tmap: Partial<TMap> | undefined;
 
-	constructor (el?: HTMLElement, initMode: 'core' | 'dom' | 'full' = 'core') {
+	constructor (el?: HTMLElement) {
 		this.options = (this.constructor as typeof Component).defaults;
 		this.el = el as HTMLElement;
 		this.name = el?.getAttribute('neo:name') || '';
@@ -46,42 +46,41 @@ export class Component <TMap extends BaseMap> implements DataSource {
 
 		this.store = new Store(this, this.options.store);
 		this.view = new View(this, this.el, this.options.view);
-
-		if (initMode !== 'core') this.initDom();
-		if (initMode === 'full') this.fireInit();
 	}
-	
+
 	id: string = '';
 	name: string = '';
 	status: Status = 'coreInit';
 	options: CompOptions;
 	static defaults: CompOptions = {
 		anonymous: false,
-		defaultId: (comp) => comp.name ? 
-			`${comp.name}-${Math.round(Math.random() * 1000)}` 
+		defaultId: (comp) => comp.name ?
+			`${comp.name}-${Math.round(Math.random() * 1000)}`
 			: String(Math.round(Math.random() * 1000000000)),
 		removeChildren: true,
 		store: {},
 		view: {}
 	}
-	
-	elementArgs () {
-		const args: Record<string, any> = (this.el as any)[passedArgs];
-		delete (this.el as any)[passedArgs];
-		return args;
 
-	}
-	initDom () {
-		if (this.status !== 'coreInit') 
+	#endTop?: () => void;
+	createTop () {
+		if (this.status !== 'coreInit')
 			throw_incorrect_init_sequence(this, 'domInit', this.status);
 		this.status = 'domInit';
 
-		this.view.initDom();
-		this.onDomInit.trigger(this);
+		const chunk = this.view.createTop();
+		this.#endTop = () => {
+			chunk.end();
+			this.#endTop = undefined;
+		}
+		return chunk;
 	}
 	fireInit () {
-		if (this.status !== 'domInit') 
+		if (this.status !== 'domInit')
 			throw_incorrect_init_sequence(this, 'inited', this.status);
+
+		if (this.#endTop) this.#endTop();
+
 		this.status = 'inited';
 
 		this.onInitInternal.trigger(this);
@@ -91,33 +90,32 @@ export class Component <TMap extends BaseMap> implements DataSource {
 			onNew.trigger(this as any);
 		}
 	}
-	onDomInit = new OTIEvent<(comp: this) => void>();
 	onInitInternal = new OTIEvent<(comp: this) => void>();
 	onInit = new OTIEvent<(comp: this) => void>();
-	
+
 	store: Store = undefined as any;
-	get <T = any> (id: PropId<T> | number) {
+	get<T = any> (id: PropId<T> | number) {
 		return this.store.get(id);
 	}
-	set <T = any> (id: PropId<T> | number, value: T) {
+	set<T = any> (id: PropId<T> | number, value: T) {
 		this.store.set(id, value);
 	}
-	signal <T = any> (value?: T) {
+	signal<T = any> (value?: T) {
 		return this.store.signal(value);
 	}
-	computed <T = any> (fn: () => T): ReadOnlySignal<T>;
-	computed <T = any> (effectedBy: (number | Signal<any>)[], fn: () => T): ReadOnlySignal<T>;
-	computed <T = any> (effectedBy: (number | Signal<any>)[] | (() => T), fn?: () => T) {
+	computed<T = any> (fn: () => T): ReadOnlySignal<T>;
+	computed<T = any> (effectedBy: (number | Signal<any>)[], fn: () => T): ReadOnlySignal<T>;
+	computed<T = any> (effectedBy: (number | Signal<any>)[] | (() => T), fn?: () => T) {
 		return this.store.computed(effectedBy as any, fn!);
 	}
 	effect (handler: () => void): void;
 	effect (
 		effectedBy: (number | Signal<any>)[], effect: (number | Signal<any>)[], handler: () => void
 	): void;
-	effect(
-		a: (number | Signal<any>)[] | (() => void), 
+	effect (
+		a: (number | Signal<any>)[] | (() => void),
 		b: (number | Signal<any>)[] | Linkable | undefined = undefined, c?: () => void,
-	) { 
+	) {
 		this.store.effect(a as any, b as any, c);
 	}
 
@@ -126,9 +124,8 @@ export class Component <TMap extends BaseMap> implements DataSource {
 	static template = get('empty');
 	static chunks: Record<string, Template> = {};
 	refs: TMap['refs'] = undefined as any;
-	query <T extends HTMLElement = HTMLElement> (selector: string) { return this.view.query<T>(selector) }
-	chunk (chunk: TMap['chunks'] | Template, context?: Record<string, any>) 
-	  { return this.view.constructChunk(chunk, context) }
+	query<T extends HTMLElement = HTMLElement> (selector: string) { return this.view.query<T>(selector) }
+	chunk (el?: HTMLElement) { return this.view.createChunk(el) }
 
 	onLink = new Event<(comp: this, linked: Linkable) => void>();
 	onUnlink = new Event<(comp: this, unlinked: Linkable) => void>();
@@ -156,7 +153,7 @@ export class Component <TMap extends BaseMap> implements DataSource {
 	childmap: TMap['childmap'] = {};
 	addChild (child: PureComp, ind = -1) {
 		// add
-		if ((ind < 0 ? -ind-1 : ind ) > this.children.length) 
+		if ((ind < 0 ? -ind - 1 : ind) > this.children.length)
 			throw_adding_child_out_of_range(this, child, ind);
 		if (ind === -1) this.children.push(child);
 		else this.children.splice(ind, 0, child);
@@ -220,10 +217,10 @@ export class Component <TMap extends BaseMap> implements DataSource {
 
 		// root
 		if (registry.root === this) removeRoot();
-		
+
 		this.status = 'removed';
 	}
-	
+
 	infoDump (type: 'links'): Linkable[];
 	infoDump (type: 'properties'): Record<number, any>;
 	infoDump (type: 'links' | 'properties') {

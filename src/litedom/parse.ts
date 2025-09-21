@@ -69,7 +69,7 @@ type Ctx = {
 }
 
 /** parse html source into litedom node */
-export function parse(source: string, opts: Partial<Options> = {}): LiteNode {
+export function parse (source: string, opts: Partial<Options> = {}): LiteNode {
 	const options = { ...defaultOptions, ...opts };
 	const {
 		keepWhiteSpace, tagStart, tagRest, lowerTag, attrStart, attrRest, lowerAttr, attrUnquoted,
@@ -117,10 +117,10 @@ export function parse(source: string, opts: Partial<Options> = {}): LiteNode {
 			ind = ctx.ind;
 		}
 		// tag start
-		else if (tagStart.test(afterBracket)) 
+		else if (tagStart.test(afterBracket))
 			parseStartTag(curNode);
 		// tag end
-		else if (afterBracket === '/' && tagStart.test(source[ind + 2] as string)) 
+		else if (afterBracket === '/' && tagStart.test(source[ind + 2] as string))
 			parseEndTag(curNode);
 		else {
 			// else '<' is just a text, join else append
@@ -134,7 +134,7 @@ export function parse(source: string, opts: Partial<Options> = {}): LiteNode {
 		SyntaxError(`litedom.parse: ended input with ${stack.length - 1} unclosed tags`);
 	return root;
 
-	function parseStartTag(parentNode: LiteNode) {
+	function parseStartTag (parentNode: LiteNode) {
 		// extract tag
 		const startInd = ind;
 		let tag = source.slice(ind + 1).match(tagRest)?.[0] as string;
@@ -212,7 +212,7 @@ export function parse(source: string, opts: Partial<Options> = {}): LiteNode {
 
 		ind += source[ind] === '/' ? 2 : 1; // skip '>'
 	}
-	function parseEndTag(curNode: LiteNode) {
+	function parseEndTag (curNode: LiteNode) {
 		// extract tag
 		let tag = source.slice(ind + 2).match(tagRest)?.[0] as string;
 		tag = lowerTag ? tag.toLowerCase() : tag;
@@ -235,7 +235,7 @@ export function parse(source: string, opts: Partial<Options> = {}): LiteNode {
 		stack.pop();
 		ind += 3 + tag.length; // skip '</...>'
 	}
-	function skipWhiteSpace() {
+	function skipWhiteSpace () {
 		const match = source.slice(ind).match(/^\s*/)?.[0] as string;
 		ind += match.length;
 		return match.length === 0
@@ -247,7 +247,7 @@ export interface ParsedChunk {
 	state: ParseState,
 	parents: LiteNode[],
 	curNode: LiteNode,
-	stops: ({ node: LiteNode} & ({ at: 'content' | 'attrs' } | { at: 'attr_value', attr: string })) []
+	stops: ({ node: LiteNode } & ({ at: 'content' | 'attrs' } | { at: 'attr', attr: string }))[]
 }
 /** state passed between chunk parsing instances */
 interface ParseState {
@@ -256,7 +256,7 @@ interface ParseState {
 };
 /** parse a chunk of an html source */
 export function parseChunk (
-	parts: string[], opts: Partial<Options> = {}, 
+	parts: string[], opts: Partial<Options> = {},
 	lastState: ParseState = { inside: 'content', parentWSTags: 0 }
 ) {
 	const options = { ...defaultOptions, ...opts };
@@ -267,7 +267,7 @@ export function parseChunk (
 	let curRoot = new LiteNode(options.rootTag), stack = [curRoot], parents = [curRoot];
 	let stops: ParsedChunk['stops'] = [];
 	let parentWSTags = 0; // parents with whitespace preserve tags
-	let inside = lastState.inside, part: string, ind = 0, partStart = 0;
+	let inside = lastState.inside, part: string, ind = 0, partInd = 0, partStart = 0;
 
 	for (part of parts) {
 		ind = 0;
@@ -277,18 +277,19 @@ export function parseChunk (
 			case 'attrs': parseAttrs(stack.at(-1)!, false); break;
 		}
 		// allow successes stops without content separating them
-		if (part.length === 0) switch (inside) {
-			case 'content': stops.push({ node: stack.at(-1)!, at: 'content' }); break;
+		if (part.length === 0 && partInd !== parts.length - 1) switch (inside) {
+			case 'content': {
+				stack.at(-1)?.append(new LiteNode('stop-target'));
+				stops.push({ node: stack.at(-1)!, at: 'content' });
+			}; break
 			case 'attrs': stops.push({ node: stack.at(-1)!, at: 'attrs' }); break;
 		}
-		
+
 		partStart += part.length;
+		partInd += 1;
 	}
 
-	// remove last stop since there is no content after it
-	stops.pop();
-
-	return { 
+	return {
 		state: { inside, parentWSTags }, parents, stops, curNode: stack.at(-1)!
 	} satisfies ParsedChunk;
 
@@ -299,7 +300,7 @@ export function parseChunk (
 		// next '<', if curNode is raw text, next end tag of it
 		const nextBracket = part.indexOf(
 			rawTextTags.has(curNode.tag) ? `</${curNode.tag}>` : '<',
-		ind);
+			ind);
 
 		// slice text, if not '<' found, take till end of input
 		let text = part.slice(ind, nextBracket === -1 ? part.length : nextBracket);
@@ -316,7 +317,10 @@ export function parseChunk (
 		// if '<' not found in part, there is a stop
 		if (nextBracket === -1) {
 			ind = part.length;
-			stops.push({ node: curNode, at: 'content' });
+			if (partInd !== parts.length - 1) {
+				stops.push({ node: curNode, at: 'content' });
+				curNode.append(new LiteNode('stop-target'));
+			}
 			return
 		};
 
@@ -335,10 +339,10 @@ export function parseChunk (
 			ind = ctx.ind;
 		}
 		// tag start
-		else if (tagStart.test(afterBracket)) 
+		else if (tagStart.test(afterBracket))
 			parseStartTag();
 		// tag end
-		else if (afterBracket === '/' && tagStart.test(part[ind + 2] as string)) 
+		else if (afterBracket === '/' && tagStart.test(part[ind + 2] as string))
 			parseEndTag(curNode);
 		else {
 			// else '<' is just a text, join else append
@@ -347,7 +351,7 @@ export function parseChunk (
 			ind = ind + 1;
 		}
 	}
-	function parseStartTag() {
+	function parseStartTag () {
 		// extract tag
 		let tag = part.slice(ind + 1).match(tagRest)?.[0] as string;
 		tag = lowerTag ? tag.toLowerCase() : tag;
@@ -403,7 +407,8 @@ export function parseChunk (
 
 			// case stop in attribute value
 			if (ind >= part.length) {
-				stops.push({ node, at: 'attr_value', attr });
+				if (partInd !== parts.length - 1)
+					stops.push({ node, at: 'attr', attr });
 				return
 			}
 
@@ -430,7 +435,8 @@ export function parseChunk (
 
 		// case stop between attributes
 		if (ind >= part.length) {
-			stops.push({ node, at: 'attrs' });
+			if (partInd !== parts.length - 1)
+				stops.push({ node, at: 'attrs' });
 			return
 		};
 
@@ -449,17 +455,20 @@ export function parseChunk (
 		ind += part[ind] === '/' ? 2 : 1; // skip '>'
 
 		// case stop after start tag
-		if (ind >= part.length) stops.push({ node: stack.at(-1)!, at: 'content' });
+		if (ind >= part.length && partInd !== parts.length - 1) {
+			node.append(new LiteNode('stop-target'));
+			stops.push({ node: stack.at(-1)!, at: 'content' });
+		}
 	}
-	function parseEndTag(curNode: LiteNode) {
+	function parseEndTag (curNode: LiteNode) {
 		// extract tag
 		let tag = part.slice(ind + 2).match(tagRest)?.[0] as string;
 		tag = lowerTag ? tag.toLowerCase() : tag;
 		const nextBracket = part.slice(ind + 2).indexOf('>');
 
-		if (nextBracket === -1) throw new 
+		if (nextBracket === -1) throw new
 			SyntaxError(`litedom.parse: unended end tag at (${ind + partStart})`);
-		
+
 		// other than whitespace between tag and '>'
 		if (!part.slice(ind + 2 + tag.length, nextBracket + ind + 2).match(/^\s*$/))
 			throw new SyntaxError(`litedom.parse: invalid end tag at (${ind})`);
@@ -483,14 +492,14 @@ export function parseChunk (
 
 		ind += 3 + tag.length; // skip '</...>'
 	}
-	function skipWhiteSpace() {
+	function skipWhiteSpace () {
 		const match = part.slice(ind).match(/^\s*/)?.[0] as string;
 		ind += match.length;
 		return match.length === 0
 	}
 }
 
-function parseComment(curNode: LiteNode, ctx: Ctx) {
+function parseComment (curNode: LiteNode, ctx: Ctx) {
 	const { source, ind, options } = ctx;
 	const commentEnd = source.indexOf('-->', ind + 4);
 	if (commentEnd === -1) throw new
@@ -498,7 +507,7 @@ function parseComment(curNode: LiteNode, ctx: Ctx) {
 	options.onComment(curNode, source.slice(ind + 4, commentEnd));
 	ctx.ind = commentEnd + 3;
 }
-function parseCData(curNode: LiteNode, ctx: Ctx) {
+function parseCData (curNode: LiteNode, ctx: Ctx) {
 	const { source, ind, options } = ctx;
 	const cdataEnd = source.indexOf(']]>', ind + 9);
 	if (cdataEnd === -1) throw new

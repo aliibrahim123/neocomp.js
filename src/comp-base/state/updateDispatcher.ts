@@ -35,7 +35,7 @@ export class UpdateDispatcher {
 	) {
 		const unit: EffectUnit = { effectedBy, effect, handler, from, meta };
 		// add to all effectedBy properties
-		for (const prop of effectedBy) 
+		for (const prop of effectedBy)
 			if (this.#records.has(prop)) this.#records.get(prop)?.push(unit);
 			else this.#records.set(prop, [unit]);
 	}
@@ -44,7 +44,7 @@ export class UpdateDispatcher {
 	#currentUnits: EffectUnit[] = [];
 	#curUnitsInd = 0;
 	#unitsInvolved = new Set<EffectUnit>;
-	#propsInvolved =  new Set<number>();
+	#propsInvolved = new Set<number>();
 	update (props: number[]) {
 		// gather units
 		props = props.filter(prop => !this.#propsInvolved.has(prop));
@@ -94,11 +94,11 @@ export class UpdateDispatcher {
 				const units = this.#records.get(prop);
 				if (units) for (const unit of units) visit(unit);
 			}
-			
+
 			// add
 			visiting.pop();
-            this.#unitsInvolved.add(unit);
-            sorted.push(unit);
+			this.#unitsInvolved.add(unit);
+			sorted.push(unit);
 		}
 
 		// visit every unit of all props
@@ -116,7 +116,7 @@ export class UpdateDispatcher {
 	remove (unit: EffectUnit): void;
 	remove (fn: (unit: EffectUnit) => boolean, props?: number[]): void;
 	remove (toRemove: ((unit: EffectUnit) => boolean) | EffectUnit, props?: number[]) {
-		if (typeof(toRemove) === 'function') {
+		if (typeof (toRemove) === 'function') {
 			if (props) for (const prop of props) {
 				const units = this.#records.get(prop);
 				if (units) this.#records.set(prop, units.filter(unit => !toRemove(unit)));
@@ -133,7 +133,7 @@ export class UpdateDispatcher {
 	infoDump (type: 'records') {
 		if (type === 'records') {
 			const records: Record<number, EffectUnit[]> = {};
-			for (const [prop, units] of this.#records) 
+			for (const [prop, units] of this.#records)
 				records[prop] = units;
 			return records
 		}

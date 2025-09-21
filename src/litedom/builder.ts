@@ -3,15 +3,15 @@ import type { ParsedChunk } from "./parse.ts";
 
 /** create a dom struture from source chunks */
 export function builder (
-	el: HTMLElement | undefined = undefined, 
-	refiner: (lite: LiteNode, native: HTMLElement) => void = () => {},
+	el: HTMLElement | string = 'div',
+	refiner: (lite: LiteNode, native: HTMLElement) => void = () => { },
 	converters: Record<string, (lite: LiteNode) => Node> = {}
 ) {
-	let rootEl = el || document.createElement('div');
-	let curEl = rootEl, stack = [rootEl]; 
+	let rootEl = el instanceof HTMLElement ? el : document.createElement(el);
+	let curEl = rootEl, stack = [rootEl];
 	let builded = false;
 
-	return [add, build];
+	return [add, build] as const;
 
 	/** add a parsed chunk to the structure */
 	function add (chunk: ParsedChunk) {
@@ -19,16 +19,16 @@ export function builder (
 		for (const [ind, node] of chunk.parents.entries()) {
 			// pop element when finished
 			if (ind !== 0) {
-				if (stack.length === 1) 
+				if (stack.length === 1)
 					throw new TypeError(`litedom.builder: closing root with tag ${node.tag}`);
-
-				stack.pop();
-				curEl = stack.at(-1)!;
 
 				let elTag = curEl.tagName.toLowerCase();
 				if (elTag !== node.tag) throw new SyntaxError(
 					`litedom.builder: end tag (${node.tag}) is different from start tag (${elTag})`
 				);
+
+				stack.pop();
+				curEl = stack.at(-1)!;
 			}
 			updateEl(node, curEl);
 		}
@@ -48,12 +48,12 @@ export function builder (
 		// child
 		for (const child of lite.children)
 			// text
-			if (typeof(child) === 'string') native.append(child);
+			if (typeof (child) === 'string') native.append(child);
 			// handled by a converter
 			else if (converters[child.tag]) native.append(converters[child.tag](child));
 			// normal element
 			else native.append(updateEl(child, document.createElement(child.tag)));
-		
+
 		refiner(lite, native);
 		return native
 	}

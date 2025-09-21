@@ -12,6 +12,9 @@ export function throw_getting_undefined_template (name: string) {
 }
 
 // view
+export function throw_multiple_roots (comp: PureComp) {
+	raiseError(`view: multiple elements at root in template (${compInfo(comp)})`, 301);
+}
 export function throw_not_into_query (comp: PureComp) {
 	raiseError(`view: no into query while insertMode is into (${compInfo(comp)})`, 303);
 }
@@ -81,4 +84,9 @@ export function throw_chunk_attr_no_name () {
 }
 export function throw_attr_no_props (attr: string) {
 	raiseError(`@${attr} attr: no property arguments`, 413);
+}
+
+// chunk
+export function throw_chunk_cond_not_met (cond: string) {
+	raiseError(`chunk: expetced condition not met (cond: ${cond})`, 413);
 }
