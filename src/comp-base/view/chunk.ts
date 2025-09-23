@@ -1,15 +1,16 @@
 import { builder } from "../../litedom/builder.ts";
 import type { LiteNode } from "../../litedom/node.ts";
-import type { parseChunk as _parseChunk, Options, ParsedChunk } from "../../litedom/parse.ts";
+import type { parseChunk as t_parseChunk, Options, ParsedChunk, ParseState } from "../../litedom/parse.ts";
 import { Event } from "../../common/event.ts";
 import { attachedComp, Component } from "../core/comp.ts";
 import { ReadOnlySignal, Signal } from "../state/signal.ts";
 import { throw_chunk_cond_not_met } from "./errors.ts";
+import { throw_undefined_info_dump_type } from "../core/errors.ts";
 
 // import parseChunk if specified
-let parseChunk = undefined as any as typeof _parseChunk;
-if ((globalThis as any).__neocomp_enable_chunk_parsing === true)
-	parseChunk = (await import("../../litedom/parse.ts")).parseChunk;
+let _parseChunk = undefined as any as typeof t_parseChunk;
+if (!(globalThis as any).__neocomp_disable_chunk_parsing === true)
+	_parseChunk = (await import("../../litedom/parse.ts")).parseChunk;
 
 const chunkRegistry = new Map<string[], ParsedChunk>();
 
@@ -22,6 +23,22 @@ const parseOptions: Partial<Options> = {
 	lowerAttr: false,
 	rawTextTags: new Set(['script', 'style', 'svg']),
 	lowerTag: false
+}
+
+export function parseChunk (parts: string[], state?: ParseState) {
+	var chunk = _parseChunk(parts, parseOptions, state);
+	// gather actions at stops
+	for (const [ind, stop] of chunk.stops.entries()) {
+		var action: Action = stop.at === 'attr' ?
+			{ type: 'attr', attr: stop.attr, argInd: ind } :
+			{ type: stop.at, argInd: ind };
+
+		if (stop.node.meta.has('actions'))
+			stop.node.meta.get('actions').push(action);
+		else stop.node.meta.set('actions', [action]);
+	}
+
+	return chunk
 }
 
 type Action = {
@@ -74,7 +91,7 @@ function handleAttr (el: HTMLElement, comp: Component, attr: string, value: any)
 function setContent (el: HTMLElement, target: ChildNode, comp: Component, value: any) {
 	let newTarget: ChildNode;
 	// component
-	if (value.onInit instanceof Event) {
+	if (value?.onInit instanceof Event) {
 		// case inited
 		if (value.status === 'inited') {
 			comp.addChild(value);
@@ -121,7 +138,7 @@ function doActions (
 			// action function
 			if (typeof (arg) === 'function') {
 				if (arg[isDefered]) deferedFns.push(() => arg(el, comp));
-				arg(el, comp);
+				else arg(el, comp);
 			}
 			// atribute map
 			else for (const attr in arg) handleAttr(el, comp, attr, arg[attr]);
@@ -144,6 +161,14 @@ function doActions (
 	}
 }
 
+type ChunkPrimValue = string | number | boolean | undefined | null;
+type ChunkInpValue<T, E extends HTMLElement> =
+	((el: E, comp: Component) => T) | Signal<T> | ReadOnlySignal<T> | T
+export type ChunkInp<E extends HTMLElement = HTMLElement> =
+	((el: E, comp: Component) => void)
+	| ChunkInpValue<Node | Component | ChunkPrimValue, E> | ArrayLike<Node>
+	| Record<string, ChunkInpValue<ChunkPrimValue, E>>;
+
 export type ChunkBuild = ReturnType<typeof createChunk>;
 export function createChunk (
 	comp: Component, el?: HTMLElement, liteConverters: Record<string, (lite: LiteNode) => Node> = {}
@@ -154,6 +179,7 @@ export function createChunk (
 	let [addPart, build] = builder(el || 'neo:template', (lite, el) => {
 		// deferred actions
 		if (lastEl !== el) for (const fn of deferedFns) fn(lastEl, comp);
+		deferedFns = [];
 		lastEl = el;
 
 		// actions
@@ -166,27 +192,20 @@ export function createChunk (
 
 	return { add, $temp, $ensure, end }
 
-	function add (chunk: ParsedChunk, args: any[]) {
+	function add<E extends HTMLElement = HTMLElement> (chunk: ParsedChunk, args: ChunkInp<E>[]) {
 		parseState = chunk.state;
 		curArgs = args;
 		addPart(chunk);
 	}
-	function $temp (parts: string[], ...args: any[]) {
+	function $temp<E extends HTMLElement = HTMLElement> (
+		parts: TemplateStringsArray, ...args: ChunkInp<E>[]
+	) {
+		let _parts = parts as any as string[];
 		// check registry
-		if (chunkRegistry.has(parts)) return add(chunkRegistry.get(parts)!, args);
+		if (chunkRegistry.has(_parts)) return add(chunkRegistry.get(_parts)!, args);
 
-		// build
-		var chunk = parseChunk(parts, parseOptions, parseState);
-		// gather actions at stops
-		for (const [ind, stop] of chunk.stops.entries()) {
-			var action: Action = stop.at === 'attr' ?
-				{ type: 'attr', attr: stop.attr, argInd: ind } :
-				{ type: stop.at, argInd: ind };
-
-			if (stop.node.meta.has('actions'))
-				stop.node.meta.get('actions').push(action);
-			else stop.node.meta.set('actions', [action]);
-		}
+		let chunk = parseChunk(_parts, parseState);
+		chunkRegistry.set(_parts, chunk);
 
 		add(chunk, args);
 	}
@@ -203,10 +222,19 @@ export function createChunk (
 	function end () {
 		// do deferred actions if any
 		for (const fn of deferedFns) fn(lastEl, comp);
+		deferedFns = [];
 		let chunk = build();
 
 		// case one root element, return as root
 		if (!el && chunk.children.length === 1) return chunk.children[0] as HTMLElement;
 		return chunk;
 	}
+}
+
+export function infoDump (type: 'chunks'): Record<string, ParsedChunk>;
+export function infoDump (type: 'chunks') {
+	if (type === 'chunks') return Object.fromEntries(
+		chunkRegistry.entries().map(([parts, chunk]) => [parts.join('${}'), chunk])
+	);
+	throw_undefined_info_dump_type(type);
 }

@@ -4,16 +4,16 @@ import type { Plugin as VitePlugin } from 'vite';
 import { readFile } from 'node:fs/promises';
 import { serialize, type Serializer } from './serialize.ts';
 import { resolve, dirname } from 'node:path';
+import { type ParsedChunk, type ParseState } from '../litedom/parse.ts';
+import { parseChunk } from '../comp-base/view/chunk.ts';
 
 export interface Options {
 	libPath: string,
-	macro: boolean,
 	include: string[]
 }
 
 const defaultOptions: Options = {
 	libPath: '@neocomp/full/',
-	macro: false,
 	include: ['./src/']
 }
 
@@ -24,123 +24,115 @@ export interface GenData {
 
 const virtmodNS = 'virtual:neo-template';
 export function neoTempPlugin (options: Partial<Options> = {}): VitePlugin {
-	const opts = { ...defaultOptions, ...options };
+	let opts = { ...defaultOptions, ...options };
 	opts.include = opts.include.map(dir => resolve(dir));
 
 	return {
 		enforce: 'pre',
 		name: 'neo-template',
-		resolveId (id, importer) {
-			// convert .neo.html module to virtual module with .js extention to make as normal module
-			if (!id.endsWith('.neo.html') || !importer) return;
-			return `${virtmodNS}/${resolve(dirname(importer), id + '.js')}`
-		},
 		async load (id) {
-			// case .neo.html module
-			if (id.startsWith(virtmodNS)) {
-				let file: string, path = id.slice(virtmodNS.length + 1, -3);
-				try { file = await readFile(path, { encoding: 'utf-8' }) }
-				catch (error) {
-					throw new Error(`neotemp: no file at path ${path}`);
-				}
-
-				return { code: '' }
-			}
-
 			// module with $template macro
-			const path = resolve(id);
-			if (opts.macro && opts.include.some(dir => path.startsWith(dir))) {
+			let path = resolve(id);
+			if (opts.include.some(dir => path.startsWith(dir))) {
 				try { var file = await readFile(path, { encoding: 'utf-8' }) }
 				catch (error) {
 					throw new Error(`neotemp: no file at path ${path}`);
 				}
 
-				return { code: '' }
+				return { code: transformMacroMod(file, opts) }
 			}
 		},
-		handleHotUpdate ({ file, server, timestamp }) {
-			if (!file.endsWith('.neo.html')) return;
-
-			// hot reload
-			const id = `${virtmodNS}/${file}.js`;
-			const mod = server.moduleGraph.getModuleById(id);
-			if (!mod) return;
-			server.moduleGraph.invalidateModule(mod);
-			server.ws.send({
-				type: 'full-reload',
-				path: id
-			});
-		},
 	}
-}
-
-/*
-function transformNeoTemp (source: string, options: Options) {
-	// generate contents
-	const contents = generateFromSource(source, options.plugins, options.walk);
-
-	const data: GenData = {
-		consts: {},
-		imports: {
-			[options.libPath + 'litedom']: new Set(['LiteNode as _LiteNode'])
-		},
-	}
-
-	const serialized = serialize(contents, data, options);
-
-	const chunks = ['// auto generated from .neo.template'];
-
-	// imports
-	for (const path in data.imports)
-		chunks.push(`import { ${Array.from(data.imports[path]).join(', ')} } from '${path}';`);
-
-	// const
-	for (const name in data.consts)
-		chunks.push(`const ${name} = ${data.consts[name]};`);
-
-	chunks.push('export default ' + serialized);
-
-	return chunks.join('\n');
 }
 
 function transformMacroMod (source: string, options: Options) {
-	if (!source.slice(0, 1000).includes('$template')) return source;
+	let sample = source.slice(0, 1000);
+	if (!(sample.includes('$temp') || sample.includes('$chunk'))) return source;
 
-	const data: GenData = {
+	let data: GenData = {
 		consts: {},
 		imports: {
 			[options.libPath + 'litedom']: new Set(['LiteNode as _LiteNode'])
 		},
 	};
 
-	const chunks = ['// auto generated from $template macro enabled module'];
+	let chunks = ['// auto generated from $temp macro enabled module'];
 
-	// substitute $template with reference to the serialized template
-	const serializedTemplates: { name: string, source: string }[] = [];
-	let curNameInd = 0;
-	const substituted = source.replaceAll(/\$template\s*\(\s*(?:\/[^/]+\/)?\s*`([^`]+)`\s*\)/g, (_, source) => {
-		source = source.replaceAll('\\$', '$');
+	// substitute $temp with reference to the serialized chunk
+	let serializedChunks: { name: string, source: string }[] = [];
+	let lastState: ParseState;
+	let curNameInd = 0, ind = 0;
+	// $temp, $chunk, $ensure
+	const pattern =
+		/(?:(?:\$temp|\$chunk)\s*`([^`]+)`)|(?:\$ensure\s*\(\s*["']([^"']+)["']\))/g;
+	let substituted = source.replaceAll(pattern, (match, src: string, cond: string, startInd: number) => {
+		// $ensure, set parse state and remove from source
+		if (match.startsWith('$ensure')) {
+			lastState = cond === 'in_attrs'
+				? { inside: 'attrs', parentWSTags: 0 }
+				: { inside: 'content', parentWSTags: 0 };
 
-		const name = `$__temp${curNameInd++}`;
+			return ''
+		}
 
-		// generate content
-		const template = generateFromString(source, options.plugins, options.walk);
-		const serialized = serialize(template, data, options);
+		let name = `$__chunk${curNameInd++}`;
 
-		serializedTemplates.push({ name, source: serialized });
-		return name;
-	});
+		// split src into parts and args
+		let parts: string[] = [], args: string[] = [];
+		let ind = 0;
+		while (ind < src.length) {
+			let nextArg = src.indexOf('${', ind);
+			// add part from last arg to next
+			parts.push(src.slice(ind, nextArg === -1 ? src.length : nextArg));
+
+			if (nextArg === -1) break;
+			ind = nextArg + 2;
+
+			// extract arg by counting braces
+			let argStart = ind;
+			let braceCount = 1;
+			while (braceCount !== 0) {
+				let nextOpen = src.indexOf('{', ind);
+				let nextClose = src.indexOf('}', ind);
+				if (nextClose === -1) throw new SyntaxError(
+					`neotemp: unclosed argument at (${startInd + argStart})`
+				);
+				// close brace is nearest
+				if (nextOpen === -1 || nextClose < nextOpen) {
+					braceCount--;
+					ind = nextClose + 1;
+				}
+				// open one is nearest
+				else {
+					braceCount++;
+					ind = nextOpen + 1;
+				}
+			}
+			args.push(src.slice(argStart, ind - 1));
+		}
+
+		// parse chunk
+		let chunk = parseChunk(parts, lastState);
+		lastState = chunk.state;
+		chunk.stops = [];
+		// serialize and add
+		serializedChunks.push({ name, source: serialize(chunk, data, options) });
+
+		// substitute it with call to build.add
+		if (match.startsWith('$chunk')) return `chunk(build => build.add(${name}, [${args.join(', ')}]))`;
+		return `add(${name}, [${args.join(', ')}])`;
+	})
 
 	// imports
-	for (const path in data.imports)
+	for (let path in data.imports)
 		chunks.push(`import { ${Array.from(data.imports[path]).join(', ')} } from '${path}';`);
 
-	// const
-	for (const name in data.consts)
+	// consts
+	for (let name in data.consts)
 		chunks.push(`const ${name} = ${data.consts[name]};`);
 
-	// templates
-	for (const { name, source } of serializedTemplates)
+	// chunks
+	for (let { name, source } of serializedChunks)
 		chunks.push(`const ${name} = ${source};`);
 
 	// the rest
@@ -148,7 +140,7 @@ function transformMacroMod (source: string, options: Options) {
 
 	return chunks.join('\n');
 }
-*/
+
 
 export * from './serialize.ts';
 export type * from './serialize.ts';

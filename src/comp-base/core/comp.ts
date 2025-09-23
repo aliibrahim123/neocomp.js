@@ -16,6 +16,7 @@ import type { DataSource, Linkable } from "./linkable.ts";
 import { addToIdMap, registry, removeFromIdMap, removeRoot } from "./registry.ts";
 import type { ReadOnlySignal, Signal } from "../state/signal.ts";
 import type { ChunkBuild } from "../core.ts";
+import type { ChunkInp } from "../view/chunk.ts";
 
 export type Status = 'coreInit' | 'domInit' | 'inited' | 'removing' | 'removed';
 
@@ -114,6 +115,8 @@ export class Component implements DataSource {
 	view: View = undefined as any;
 	el: HTMLElement;
 	query<T extends HTMLElement = HTMLElement> (selector: string) { return this.view.query<T>(selector) }
+	chunk (el?: HTMLElement): ChunkBuild;
+	chunk (builder: (build: ChunkBuild) => void): HTMLElement;
 	chunk (el?: HTMLElement | ((build: ChunkBuild) => void)) {
 		if (typeof (el) === 'function') {
 			let build = this.view.createChunk();
@@ -121,6 +124,11 @@ export class Component implements DataSource {
 			return build.end();
 		}
 		return this.view.createChunk(el)
+	}
+	$chunk<E extends HTMLElement = HTMLElement> (parts: TemplateStringsArray, ...args: ChunkInp<E>[]) {
+		let build = this.view.createChunk();
+		build.$temp(parts, ...args);
+		return build.end();
 	}
 
 	onLink = new Event<(comp: this, linked: Linkable) => void>();

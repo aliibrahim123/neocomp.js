@@ -246,11 +246,11 @@ export function parse (source: string, opts: Partial<Options> = {}): LiteNode {
 export interface ParsedChunk {
 	state: ParseState,
 	parents: LiteNode[],
-	curNode: LiteNode,
+	curNodeDepth: number,
 	stops: ({ node: LiteNode } & ({ at: 'content' | 'attrs' } | { at: 'attr', attr: string }))[]
 }
 /** state passed between chunk parsing instances */
-interface ParseState {
+export interface ParseState {
 	inside: 'content' | 'attrs',
 	parentWSTags: number
 };
@@ -290,7 +290,7 @@ export function parseChunk (
 	}
 
 	return {
-		state: { inside, parentWSTags }, parents, stops, curNode: stack.at(-1)!
+		state: { inside, parentWSTags }, parents, stops, curNodeDepth: stack.length - 1
 	} satisfies ParsedChunk;
 
 	/** parse content of an element */

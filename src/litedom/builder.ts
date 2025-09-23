@@ -35,7 +35,7 @@ export function builder (
 
 		// get element the chunk stoped in
 		let curLite = chunk.parents.at(-1)!;
-		while (curLite !== chunk.curNode) {
+		for (let i = 0; i < chunk.curNodeDepth; i++) {
 			curLite = curLite.children.at(-1)! as LiteNode;
 			stack.push(curEl = curEl.children[curEl.children.length - 1] as HTMLElement)
 		}
