@@ -8,6 +8,10 @@ export interface Linkable {
 	hasLink (other: Linkable): boolean;
 }
 
+export interface DataSource extends Linkable {
+	store: Store
+}
+
 export function link (a: Linkable, b: Linkable): void; 
 export function unlink (a: Linkable, b: Linkable): void;
 
@@ -17,6 +21,8 @@ export function tryUnlink (a: Linkable, b: Linkable): void;
 a `Linkable` is an interface that represent a unit that can be link to another `Linkable`.
 
 it simplifies dependecies management by standardizing and automating it.
+
+`DataSource`: a `Linkable` that has a `Store` associated to it.
 
 ### `Linkable` methods
 `link`: add a linkable to the links.
@@ -163,5 +169,5 @@ breaked by another way.
 
 #### example
 ```typescript
-errorsLevels.Err112 = 'debug'; //add breakpoint at error of removing removed component
+errorsLevels.Err112 = 'debug'; // add breakpoint at error of removing removed component
 ```

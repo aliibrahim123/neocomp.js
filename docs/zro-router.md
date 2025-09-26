@@ -92,13 +92,13 @@ if not specified use the default error page.
 
 #### example
 ```typescript
-//add custom headers
+// add custom headers
 const router = new ZRORouter({ fetcher: url => fetch(url, { headers: { 'custom-header': 'value' } }) });
 
-//save state for each page
+// save state for each page
 const router = new ZRORouter({ stateProvider: url => root.state });
 
-//custom error page
+// custom error page
 const router = new ZRORouter({ errorPage: (router, url, error) => {
 	registry.removeRoot();
 	registry.setRoot(new ErrorComponent(document.getElementById('root'), url, error));
@@ -126,15 +126,15 @@ change the url or to reject the request if called with `false`, `false` win then
 
 #### example
 ```typescript
-//in page 1
+// in page 1
 router.go('/page2.html'); // navigate to page2
-router.back(); //return to page1
+router.back(); // return to page1
 
 router.onRoute.listen((router, url, set) => {
-	//redirect page2 to page3
+	// redirect page2 to page3
 	if (url.pathname === '/page2.html') set('/page3.html');
 
-	//block from page1 to page4
+	// block from page1 to page4
 	if (url.pathname === '/page4.html' && router.lastURL.pathname === '/page1.html') set(false);	
 });
 ```
@@ -158,7 +158,7 @@ router.attachToDom();
 
 someElement.append(newAnchor);
 
-//required for normal function
+// required for normal function
 router.attachToDom();
 ```	
 
@@ -188,17 +188,17 @@ error page.
 #### example 
 ```typescript
 router.onBeforeFetch.listen((router, url, set) => {
-	//redirect page1 to page2
+	// redirect page1 to page2
 	if (url.pathname === '/page1.html') set('/page2.html');
 });
 
 router.onBeforeUpdate.listen((router, url, page) => {
-	//in case some preparation is needed before update
+	// in case some preparation is needed before update
 	preparePageToUpdate(page);
 });
 
 router.onAfterUpdate.listen((router, url) => {
-	//case using neocomp, root must be updated
+	// case using neocomp, root must be updated
 	resigtry.removeRoot();
 	registry.setRoot(new RootComponent(document.getElementById('root')));
 })

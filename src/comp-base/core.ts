@@ -22,7 +22,7 @@ export type * from './state/query.ts';
 
 export * from './view/view.ts';
 export type * from './view/view.ts';
-export { createChunk } from './view/chunk.ts';
+export { createChunk, parseChunk } from './view/chunk.ts';
 export type { ChunkBuild } from './view/chunk.ts';
 export * from './view/chunkUtilities.ts'
 

@@ -3,8 +3,8 @@
 import type { Plugin as VitePlugin } from 'vite';
 import { readFile } from 'node:fs/promises';
 import { serialize, type Serializer } from './serialize.ts';
-import { resolve, dirname } from 'node:path';
-import { type ParsedChunk, type ParseState } from '../litedom/parse.ts';
+import { resolve } from 'node:path';
+import { type ParseState } from '../litedom/parse.ts';
 import { parseChunk } from '../comp-base/view/chunk.ts';
 
 export interface Options {

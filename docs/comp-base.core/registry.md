@@ -12,14 +12,14 @@ export const registry: {
 
 export const onAdd: Event<(name: string, comp: CompConstructor) => void>;
 
-type CompClass = new (...args: any[]) => PureComp;
+type CompClass = new (...args: any[]) => Component;
 type CompProvider = (name: string) => CompClass;
 ```
 class registry stores the classes of the components and the providers to be used by other systems.
 
 `CompClass`: a class extending `Component`.
 
-builtin components: `base: PureComp`.
+builtin components: `base: Component`.
 
 `add`: register component class as `name` to the registry.
 
@@ -43,23 +43,23 @@ built in providers: [`lazy`](#lazy-provider).
 ```typescript
 onAdd.listen((name) => console.log('registered', name));
 
-class ExampleComp extends Component { }
-registry.add('example', ExampleComp); // => registered example
+class Example extends Component { }
+registry.add('example', Example); // => registered example
 
-registry.get('example'); // => ExampleComp
+registry.get('example'); // => Example
 
 registry.has('example'); // => true
 registry.has('unknown'); // => false
 
-registry.addProvider('of-tag', (name) => () => new ExampleComp(create(name)));
-new (registry.get('@of-tag:span'))(); //ExampleComp { el: <span> }
+registry.addProvider('of-tag', (name) => () => new Example(name));
+new (registry.get('@of-tag:span'))(); // Example { el: <span> }
 ```
 
 ## idmap
 ```typescript
 export const registry: {
-	addToIdMap (id: string, comp: PureComp): void
-	getById (id: string): PureComp;
+	addToIdMap (id: string, comp: Component): void
+	getById (id: string): Component;
 	removeFromIdMap (id: string): boolean;
 }
 ```
@@ -88,8 +88,8 @@ registry.getById('id'); // => undefined
 
 ## global component events
 ```typescript
-export const onNew: Event<(comp: PureComp) => void>;
-export const onRemove: Event<(comp: PureComp) => void>;
+export const onNew: Event<(comp: Component) => void>;
+export const onRemove: Event<(comp: Component) => void>;
 ```
 `onNew`: an event triggered after a component is inited.
 
@@ -110,13 +110,13 @@ comp.remove(); // => removed ExampleComp
 ## root
 ```typescript
 export const registry: {
-	root: PureComp | undefined;
-	setRoot (comp: PureComp): void;
+	root: Component | undefined;
+	setRoot (comp: Component): void;
 	removeRoot (): void;
 }
 
-export const onRootAdd: Event<(comp: PureComp) => void>;
-export const onRootRemove: Event<(comp: PureComp) => void>;
+export const onRootAdd: Event<(comp: Component) => void>;
+export const onRootRemove: Event<(comp: Component) => void>;
 ```
 `root` is the root component that contains all the components in the page.
 
@@ -150,7 +150,7 @@ registry.root.remove(); // => root removed ExampleComp
 ```typescript
 export class LazyComp { 
 	constructor (name: string, el?: HTMLElement, ...args: any[]);
-	onInit: OTIEvent<(comp: PureComp) => void>;
+	onInit: OTIEvent<(comp: Component) => void>;
 }
 ```
 the `lazy` provider allow lazy loading for components.
@@ -167,9 +167,9 @@ the new component.
 
 #### example
 ```typescript
-const lazy = new (registry.get('@lazy:example'))(); //LazyComp
+const lazy = new (registry.get('@lazy:example'))(); // LazyComp
 parent.onChildAdded.listen((comp) => console.log('child added', comp));
 lazy.onInit.listen((comp) => parent.addChild(comp));
 
-registry.add('example', ExampleComp); //child added ExampleComp
+registry.add('example', ExampleComp); // child added ExampleComp
 ```

@@ -20,7 +20,7 @@ export interface Prop {
 	id: number,
 	static: boolean;
 	meta: Record<keyof any, any>;
-	comparator: (old: any, New: any, store: Store) => boolean;
+	comparator: (this: Prop, old: any, New: any, store: Store) => boolean;
 }
 
 export type PropId<T> = number & { type: T };
@@ -55,10 +55,10 @@ export class Store {
 	onRemove = new Event<(store: this, prop: Prop) => void>();
 	onChange = new Event<(store: this, props: Prop[]) => void>();
 
-	add (propObj: Partial<Omit<Prop, 'id'>> = {}): Prop {
+	create (def: Partial<Omit<Prop, 'id'>> = {}): Prop {
 		// define prop
 		const prop: Prop = {
-			...this.options.baseProp, id: this.#curId++, static: this.options.static, ...propObj,
+			...this.options.baseProp, id: this.#curId++, static: this.options.static, ...def,
 		}
 		// without all the properties share the same default meta
 		if (prop.meta) prop.meta = { ...prop.meta };
@@ -72,13 +72,13 @@ export class Store {
 		return prop
 	}
 
-	get<T = any> (id: PropId<T> | number): T {
+	get<T = any> (id: PropId<T> | number, peak = false): T {
 		const prop = this.#props.get(id);
 
 		if (!prop) throw_undefined_prop('getting', id, '', 204);
 
 		// track
-		if (this.#isTracking && !prop?.static) this.#trackProps?.effecting.add(id);
+		if (this.#isTracking && !peak && !prop?.static) this.#trackProps?.effecting.add(id);
 
 		return prop?.value
 	}
@@ -122,22 +122,22 @@ export class Store {
 	computed<T = any> (fn: () => T): ReadOnlySignal<T>;
 	computed<T = any> (effectedBy: EffectingProp[], fn: () => T): ReadOnlySignal<T>;
 	computed<T = any> (effectedBy: EffectingProp[] | (() => T), fn?: () => T) {
-		let id = this.add().id;
+		let id = this.create().id;
 		if (typeof (effectedBy) === 'function') this.effect(() => this.set(id, effectedBy()));
 		else this.effect(effectedBy, [id], () => this.set(id, fn?.()));
 		return new ReadOnlySignal(this, id);
 	}
 
 	signal<T = any> (value?: T) {
-		let id = this.add({ value }).id;
+		let id = this.create({ value }).id;
 		return new Signal<T>(this, id)
 	}
 	ROSignal<T = any> (value?: T) {
-		let id = this.add({ value }).id;
+		let id = this.create({ value }).id;
 		return new ReadOnlySignal<T>(this, id)
 	}
 	WOSignal<T = any> (value?: T) {
-		let id = this.add({ value }).id;
+		let id = this.create({ value }).id;
 		return new WriteOnlySignal<T>(this, id)
 	}
 

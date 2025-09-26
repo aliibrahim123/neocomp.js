@@ -15,6 +15,9 @@ export class Signal<T> {
 	set value (value: T) {
 		this.#store.set(this.#prop, value)
 	}
+	peek () {
+		return this.#store.get(this.#prop, true);
+	}
 	get id () { return this.#prop as PropId<T> }
 	get prop () { return this.#store.getProp(this.#prop) }
 	get store () { return this.#store }
@@ -34,6 +37,9 @@ export class ReadOnlySignal<T> {
 	}
 	get value (): T {
 		return this.#store.get(this.#prop)
+	}
+	peek () {
+		return this.#store.get(this.#prop, true);
 	}
 	get id () { return this.#prop as PropId<T> }
 	get prop () { return this.#store.getProp(this.#prop) }

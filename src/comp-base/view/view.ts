@@ -67,9 +67,9 @@ export class View {
 		return query<T>(selector, this.el);
 	}
 
+	#chunksInRemoving = 0;
 	createChunk (el?: HTMLElement, destroyable?: false): ChunkBuild;
-	createChunk (el?: HTMLElement, destroyable?: true)
-		: ChunkBuild & { remove: () => void };
+	createChunk (el?: HTMLElement, destroyable?: true): ChunkBuild & { remove: () => void };
 	createChunk (el?: HTMLElement, destroyable = false) {
 		let build = createChunk(this.comp, el, this.options.liteConverters);
 		if (!destroyable) return build;
@@ -104,6 +104,8 @@ export class View {
 			return chunkEl
 		}
 		const remove = () => {
+			this.#chunksInRemoving++;
+
 			chunkEl.remove();
 			// remove associated items
 			if (chunk.props.length > 0) this.comp.store.dispatcher.remove(chunk.props);
@@ -112,6 +114,9 @@ export class View {
 			for (const link of chunk.links) unlink(this.comp, link);
 			for (const child of chunk.childs) child.remove();
 			for (const childChunk of chunk.chunks) childChunk.remove();
+
+			this.#chunksInRemoving--;
+			if (this.#chunksInRemoving === 0) this.cleanup();
 		}
 		chunk.remove = remove;
 		return { ...build, end, remove };

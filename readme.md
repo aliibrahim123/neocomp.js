@@ -1,11 +1,4 @@
-# note
-
-after a big refactor to the entire framework, rethinking the templating system, the documentation becamed outdated.
-
-see the old branch for the stable documentation before the refactor.
-
 # neocomp
-
 board of frameworks magic, want a lightweight solution for building scalable web apps and sites.
 
 introducing **neocomp**, a lightweight, fast, flexible and modern javascript web framework simplifing
@@ -15,13 +8,11 @@ it achieves this goal by being close to the root, favoring direct DOM interactio
 internals depth.
 
 # quick start
-
 - [first steps](./docs/quick-guide/first-steps.md)
 - [basic state management](./docs/quick-guide/basic-state.md)
 - [templates](./docs/quick-guide/templates.md)
 
 # docs
-
 this is the index of the documentation.
 
 - [rawdom](./docs/rawdom.md)
@@ -40,9 +31,11 @@ this is the index of the documentation.
     - [state utilities](./docs/comp-base.state/utilities.md)
   - **view:**
     - [`View`](./docs/comp-base.view/view.md)
-    - [template generation](./docs/comp-base.view/template-api.md)
-    - [template reference](./docs/comp-base.view/template.md)
+    - [chunk reference](./docs/comp-base.view/chunk.md)
 - [vite plugin](./docs/plugin.md)
+
+# blogpost
+check out the latest blogposts about neocomp at [recomputed](https://aliibrahim123.github.io/recomputed/web-dev).
 
 ---
 

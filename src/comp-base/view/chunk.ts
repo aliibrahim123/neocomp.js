@@ -176,7 +176,7 @@ export function createChunk (
 	let deferedFns: ((el: HTMLElement, comp: Component) => void)[] = [];
 	let lastEl: HTMLElement;
 
-	let [addPart, build] = builder(el || 'neo:template', (lite, el) => {
+	let { add: addPart, end: build } = builder(el || 'neo:template', (lite, el) => {
 		// deferred actions
 		if (lastEl !== el) for (const fn of deferedFns) fn(lastEl, comp);
 		deferedFns = [];

@@ -5,8 +5,8 @@ it is responsible for state storage and updating.
 
 ## constructor and options
 ```typescript
-export class Store <Props extends Record<string, any>> {
-	base: Linkable;
+export class Store {
+	base: DataSource;
 	constructor (base: Linkable, options?: Partial<StoreOptions>): void;
 	options: StoreOptions;
 	static defaults: StoreOptions;
@@ -14,11 +14,7 @@ export class Store <Props extends Record<string, any>> {
 
 export interface StoreOptions {
 	static: boolean = false;
-	addUndefined: boolean = false;
-	baseProp: Prop<any>;
-	updateOnDefine: boolean = true;
-	updateOnSet: boolean = true;
-	updateDispatcher: Partial<UDispatcherOptions>
+	baseProp: Prop;
 }
 ```
 `constructor`: take a linkable as a `base` and optional `StoreOptions`.
@@ -32,30 +28,30 @@ export interface StoreOptions {
 ### `StoreOptions`
 - `static`: all properties are static by default, doesnt trigger updates. default, all 
 properties are reactive.
-- `addUndefined`: allow the addition of undefined properties, through `set` not by 
-`add`, default is to disallow.
 - `baseProp`: the base definition for all properties.
-- `updateOnDefine`: enable initial update dispatch on property definition, default `true`.
-- `updateOnSet`: trigger update on property setting, default `true`.
-- `updateDispatcher`: the options passed to the update dispatcher.
 
 ## state management
 ```typescript
 export class Store {
-	add <P extends keyof Props> (name: P, propObj?: Partial<Prop<Props[P]>>): Prop<Props[P]>;
-	has (name: keyof Props | symbol): boolean;
-	remove (name: keyof Props | symbol): void;
+	get<T = any> (id: PropId<T> | number, peek?: boolean): T;
+	set <T = any> (id: PropId<T> | number, value: T): void;
 
-	getProp <P extends keyof Props> (name: P | symbol): Prop<Props[P]>;
-	getSymbolFor (name: keyof Props): symbol;
+	create (def?: Partial<Prop>): Prop;
+	has (id: number): boolean;
+	remove (id: number): void;
 
-	onAdd: Event<(store: this, prop: Prop<any>) => void>;
-	onRemove: Event<(store: this, prop: Prop<any>) => void>;
+	getProp (id: number): Prop;
+
+	onAdd: Event<(store: this, prop: Prop => void>;
+	onRemove: Event<(store: this, prop: Prop) => void>;
 }
 ```
-see also [fundamentals](./fundamentals.md)
+`get`: returns the value of an property by its id.     
+accept optional `peek` parameter to return the value without being tracked.
 
-`add`: add a given property, optionally take a property definition.
+`set`: sets the value of an property by its id.
+
+`create`: creates a new property, optionally take a property definition.
 
 `has`: whether the store has the given property defined.
 
@@ -63,89 +59,69 @@ see also [fundamentals](./fundamentals.md)
 
 `getProp`: get the definition of a given property.
 
-`getSymbolFor`: get the symbol of a given property. if not defined, returns a future valid
-property symbol.
-
-if `options.addUndefined` is `false`, after using `getSymbolFor`, setting the property doesnt 
-throw errors.
-
-`onAdd`: an event triggered when adding a property.
+`onAdd`: an event triggered when creating a new property.
 
 `onRemove`: an event triggered when removing a property.
 
 #### example
 ```typescript
-store.onAdd.listen((store, prop) => console.log('added: ', prop.name));
-store.onRemove.listen((store, prop) => console.log('removed: ', prop.name));
+store.onAdd.listen((store, prop) => console.log('added: ', prop.id));
+store.onRemove.listen((store, prop) => console.log('removed: ', prop.id));
 
-store.has('a') // => false
-store.add('a', { value: 1 }) // => addded: a
-store.has('a') // => true
+let a = store.create({ value: 1 }).id; // => added: a
+store.get(a); // => 1;
+store.set(a, 2);
+store.get(a) // => 2;
 
-store.getProp('a').value // => 1
+store.has(a); // => true
+store.has(0xffff) // => false
 
-store.getSymbolFor('a') // => Symbol(neocomp:prop(a))
-store.has('b') // => false
-store.getSymbolFor('b') // => Symbol(neocomp:prop(b))
+store.getProp(a).value // => 1
 
-store.remove('a') // => removed: a
+store.remove(a) // => removed: a
 ```
 
 ### `Prop`
 ```typescript
-export interface Prop <T> {
-	value: T;
-	name: string;
-	symbol: symbol;
-	isStatic: boolean;
+export interface Prop {
+	value: any;
+	id: number,
+	static: boolean;
 	meta: Record<keyof any, any>;
-	setter?: (this: this, value: T, store: Store<any>) => void;
-	getter?: (this: this, store: Store<any>) => T;
-	comparator: (old: T, New: T, store: Store<any>) => boolean;
+	comparator: (old: any, New: any, store: Store) => boolean;
 }
 ```
 the definition of the property, it contains:
-- `name`: the property name.
-- `symbol`: the property symbol.
+- `id`: the property identifier.
 - `value`: the property value.
-- `isStatic`: whether the property is static or reactive. if static, doesnt trigger updates.
+- `static`: whether the property is static or reactive. if static, doesnt trigger updates.
 - `meta`: user defined metadata.
-- `getter`: a function called to get the value of the property.
-- `setter`: a function called to set the value of the property.
 - `comparator`: a function that compares the old and new values of the property, default is strict 
 equality.
 
 #### example
 ```typescript
-// getter and setter
-store.add('a', { value: 1, 
-	getter () { return this.value * 2 }, setter (value) { this.value = value / 2 } 
-});
-
-store.get('a') // => 2
-store.set('a', 4) // => a.value: 2
-
 // static
-store.add('b', { value: 1, isStatic: true });
-store.addEffect('track', () => console.log('b: ', store.get('b')));
-store.set('b', 2) // => nothing
+let a = store.create({ value: 1, static: true }).id;
+store.effect(() => console.log('a: ', store.get(a)));
+store.set(a, 2) // => nothing
 
 // comparator
-store.add('c', { 
+let b = store.add({ 
 	value: { v: 1 }, meta: { prop: 'v' }, 
 	comparator (old, New) { return old[this.meta.prop] === New[this.meta.prop] } 
-});
-store.addEffect('track', () => console.log('c.v: ', store.get('c').v));
-store.set('c', { v: 2 }) // => c.v: 2
+}).id;
+store.effect(() => console.log('b.v: ', store.get(b).v));
+store.set(b, { v: 2 }) // => b.v: 2
 ```
 
 ## updating
 ```typescript
 export class Store {
-	forceUpdate (name: keyof Props | symbol): void;
+	forceUpdate (id: number): void;
 	updateAll (withStatic: boolean = true): void;
 
-	onChange: Event<(store: this, props: Prop<any>[]) => void>;
+	onChange: Event<(store: this, props: Prop[]) => void>;
 }
 ```
 a property is updated on changes to its value and on definition, or by force.
@@ -163,25 +139,23 @@ this event is triggered on each property change, not once per batch like effects
 
 #### example
 ```typescript
-store.onChange.listen((store, props) => console.log('updated: ', props.map(prop => prop.name)));
+store.onChange.listen((store, props) => console.log('updated: ', props.map(prop => prop.id)));
 
-store.add('a', { value: 1 }) // => updated: a
-store.set('a', 2) // => updated: a
-store.set('a', 2) // => nothing
+let a = store.signal(1); // => updated: a
+a.value = 2; // => updated: a
+a.value = 2 // => nothing
 
-store.forceUpdate('a') // => updated: a
+store.forceUpdate(a.id) // => updated: a
 
-store.set('b', 1) // => updated: b
+let b = store.signal(1); // => updated: b
 store.updateAll() // => updated: a, b
 
-store.effect('track', () => store.set('c', store.get('a')));
-store.effect('track', () => store.set('c', store.get('b')));
-store.effect('track', () => console.log('c updated');
-store.setMultiple({ a: 2, b: 3 }) 
-	// => updated: a, b
+store.effect(() => b.value = a.value);
+let c = this.computed(() => b.value);
+a.value = 3;
+	// => updated: a
+	// => updated: b
 	// => updated: c
-	// => updated: c
-	// => c updated
 ```
 
 ### bulk updating
@@ -207,28 +181,28 @@ collected and triggered once as a big update.
 
 `endBulkUpdate`: ends bulk updating.
 
-these methods inc/dec internal counter and only triggers the update when the 
-counter returns to zero.   
-this is implemented to make overlapping batches a single batch.
-
-`setMultiple` triggers a bulk update internally.
+these methods inc/dec internal counter and only triggers the update when the counter returns to zero. this is implemented to make overlapping batches a single batch.
 
 #### example
 ```typescript
-//a, b: signals initially 0
-store.addEffect('track', () => console.log('result: ', a.value + b.value));
+let a = store.signal(0), b = store.signal(0);
+store.addEffect(() => console.log('result: ', a.value + b.value));
 
 a.value = 1; // => result: 1
-b.value = 2; // => result: 3
+b.value = 2; // => result: 2
 
 store.startsBulkUpdate();
 a.value = 2;
 b.value = 3;
 store.endBulkUpdate(); // => result: 5
 
-startBulkUpdate();
+store.startBulkUpdate();
 a.value = 3;
-store.setMultiple({ a: 4, b: 5 }); // a bulk update starts and ends here, but there is no effect
+{
+	store.startBulkUpdate();
+	a.value = 4;
+	store.endBulkUpdate();
+}
 b.value = 6;
 store.endBulkUpdate(); // => result: 10 
 ```
@@ -238,7 +212,7 @@ store.endBulkUpdate(); // => result: 10
 export class Store {
 	get isTracking (): boolean;
 	startTrack (): void;
-	endTrack (): { effecting: symbol[], effected: symbol[] };
+	endTrack (): { effecting: number[], effected: number[] };
 }
 ```
 manually defining dependencies is not a funny task, and it can be a source of bugs.
@@ -256,10 +230,11 @@ the tracking tracks the effected (through `set`) and the effecting (through `get
 
 #### example
 ```typescript
+let a = store.signal(0), b = store.signal(0);
 store.startTrack();
 
-const a = store.get('a'); // effecting
-store.set('b', a + 1); // effected
+a.value; // effecting
+b.value = a + 1; // effected
 
 store.endTrack(); // effecting: [a], effected: [b]
 ```
@@ -267,7 +242,7 @@ store.endTrack(); // effecting: [a], effected: [b]
 ## utilities
 ```typescript
 export class Store {
-	*[Symbol.iterator] (): Iterator<Prop<any>>;
+	*[Symbol.iterator] (): Iterator<Prop>;
 }
 ```
 `*[Symbol.iterator]`: allows iteration through the properties in `for ... of` loops.

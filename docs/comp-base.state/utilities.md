@@ -3,71 +3,56 @@ neocomp provide several utilities to simplify state management.
 
 ## components 2 way binding
 ```typescript
-export function $in<From extends PureComp, To extends PureComp> (
-	from: From, fromProp: EffectedProp<getProps<From>>,	to: To, toProp: EffectedProp<getProps<To>>
-): void
-export function inout<A extends PureComp, B extends PureComp, T> (
-	a: A, aProp: EffectedProp<getProps<A>>, b: B, bProp: EffectedProp<getProps<B>>,
-	comparator = (a: T, b: T) => a === b
-): void
+export function $in<T> (from: Signal<T>, to: Signal<T>): void;
+export function inout<T> (a: Signal<T>, b: Signal<T>, comparator = (a: T, b: T) => a === b): boid;
 ```
-`$in`: one way binds `fromProp` property in `from` component to `toProp` property in `to` 
-component.
+`$in`: one way binds `from` property to `to` property in different data sources.
 
-`$inout`: two way binds the `aProp` property in `a` and the `bProp` property in `b`.    
+`$inout`: two way binds the `a` property and the `b` property in different data sources.    
 take optionally a `comparator` that compares the value of the two properties.
 
 these methods link the components with each other.    
-the properties can be property name, symbol or signal wrapping it.
 
 #### example
 ```typescript
-// a, b: Components<{ props: { a: number; b: number } }>
-$in(a, 'a', b, b.signal('b')); //binds a.a -> b.b
+// A, B: components
+let a = A.signal(), b = B.signal();
+$in(a, b); // binds A.a -> B.b
 
-inout(a, 'a', b, b.signal('b')); //binds a.a <-> b.b
+inout(a, b); // binds A.a <-> B.b
 ```
 
 ## `Context`
 ```typescript
-export class Context <Props extends Record<string, any>> implements Linkable {
-	store: Store<Props>;
-	constructor (props: Partial<Props>, storeOptions?: Partial<StoreOptions>);
+export class Context implements DataSource {
+	store: Store;
+	constructor (storeOptions?: Partial<StoreOptions>);
 
-	get <P extends keyof Props> (name: P | symbol): Props[P]
-	set <P extends keyof Props> (name: P | symbol, value: Props[P]): void;
-	setMuliple (props: Partial<Props>): void;
-	has (name: keyof Props | symbol): boolean;
-	signal <P extends keyof Props> (name: P | symbol, Default?: Props[P]): Signal<Props[P]>;
-	computed <P extends keyof Props> (
-		name: P | symbol, effectedBy: EffectedProp<Props>[] | 'track', fn: () => Props[P]
-	): ReadOnlySignal<Prop<P>>;
+	get<T = any> (id: PropId<T> | number): T;
+	set<T = any> (id: PropId<T> | number, value: T): void;
+	has (id: number): boolean;
+	signal<T = any> (value?: T): Signal<T>;
+	computed<T = any> (fn: () => T): ReadOnlySignal<T>;
+	computed<T = any> (effectedBy: EffectingProp[], fn: () => T): ReadOnlySignal<T>;
+	effect (handler: () => void): void;
 	effect (
-		effectedBy: EffectedProp<Props>[], handler: () => void,
-		effect?: EffectedProp<Props>[]
+		effectedBy: EffectingProp[], effect: EffectedProp[], handler: () => void
 	): void;
-	effect (track: 'track', handler: () => void): void;
 
 	unlinkAll (): void;
 }
 ```
-`Context`: is a linkable unit that encapsulates independent state.
-
-it is used in local and global state management.
-
-it is constructed from an optional properties and `StoreOptions`.
+`Context`: is a linkable unit that encapsulates independent state. it is used in local and global state management.
 
 `get` and `set`: get and set a given property.
 
 `has`: check if the given property is defined.
 
-`setMultiple`: set multiple properties at once.
-
-`signal`: creates a `Signal` of a given property.
+`signal`: creates a `Signal` for a new property.
 
 `computed`: creates a computed property and returns a `ReadOnlySignal` of it.
 
-`effect`: add an effect effected by and effecting a given properties.
+`effect`: add an effect.
 
 `unlinkAll`: unlink all the links with it.
 
@@ -75,30 +60,27 @@ for more details read [fundamentals fundamentals](../comp-base.state/fundamental
 
 #### example
 ```typescript
-comp.set('a', 1);
-comp.get('a') // => 1
+let a = ctx.signal(1);
+a.value // => 1
 
-comp.has('a') // => true
-comp.has('unknown') // => false
+ctx.has(a.id) // => true
+ctx.has(0xffff) // => false
 
-comp.setMultiple({ b: 2, c: 3 });
+let c = ctx.computed(() => a.value + 1); // => 2
 
-const a = comp.signal('a');
-
-const d = comp.computed('d', 'track', () => a.value + 1); // => 2
-
-comp.effect('track', () => console.log(a.value, d.value));
+ctx.effect(() => console.log(a.value, c.value));
 
 a.value = 2; // => 2, 3
 ```
 
 ## queries
 ```typescript
-export function query <T, E> (signal: Signal<Query<T, E>>, promise: Promise<T>): Query<T, E>;
-export function computedQuery <Props extends Record<string, any>, T, E> (
-	store: Store<Props>, signal: Signal<Query<T, E>>, 
-	effectedBy: EffectedProp<Props>[] | 'track', fn: () => Promise<T>
-): ComputedQuery<T, E>;
+export function query <T, E> (store: Store, promise: Promise<T>): ReadOnlySignal<Query<T, E>>;
+export function computedQuery <T, E> (store: Store, fn: () => Promise<T>)
+	: ReadOnlySignal<ComputedQuery<T, E>>;
+export function computedQuery <T, E> (
+	store: Store, effectedBy: (number | Signal<any>)[], fn: () => Promise<T>
+): ReadOnlySignal<ComputedQuery<T, E>>
 
 export interface Query<T, E> {
 	status: 'loading' | 'success' | 'error',
@@ -115,16 +97,17 @@ export interface ComputedQuery <T, E> {
 ```
 these utilities simplify async states.
 
-`query`: creates and updates a `Query` based on a given promise, takes the signal that holds the 
-query.
+`query`: creates and updates a `Query` based on a given promise, returns a readonly signal that holds the query.
 
 `Query`: is a simple object that reflect the status of a promise, it can be of state:
 - `loading`: the promise has not resolved yet.
 - `success`: the promise has resolved, its resolved value is in `value`.
 - ``error`: the promise has rejected, its rejected value is in `error`.
 
-`computedQuery`: creates and updates a `ComputedQuery` based on a given handler, takes the signal
-holding the query and the store holding it.
+`computedQuery`: creates and updates a `ComputedQuery` based on a given handler, returns a readonly signal that holds the query.      
+can be given the properties that effect the query manually.
+
+takes the signal holding the query and the store holding it.
 
 `ComputedQuery`: is a simple object that reflect the status of an async computed value provided by a handler, it consists of:
 - `status`: the status of the last resolved value.
@@ -136,29 +119,29 @@ there might be multiple instances of handler running at the same time in a compu
 
 #### example
 ```typescript
-//a, b, c: signals
 const { promise, resolve } = Promise.withResolver<number>();
-const query = query(a, promise); // a => { status: 'loading' }
-resolve(1); // a => { status: 'success', value: 1 }
+const query = query(store, promise); // query => { status: 'loading' }
+resolve(1); // query => { status: 'success', value: 1 }
 
 const { promise, reject } = Promise.withResolver<number>();
-const query = query(a, promise); // a => { status: 'loading' }
-reject('error'); // a => { status: 'error', error: 'error' }
+const query = query(store, promise); // query => { status: 'loading' }
+reject('error'); // query => { status: 'error', error: 'error' }
 
-b.value = 1;
-const computedQuery = computedQuery(store, c, [b], 
-	() => new Promise((resolve, reject) => setTimeout(() => {
-		if (b > 0) resolve(b.value);
+const b = store.signal(1);
+const query = computedQuery(store, () => { 
+	let b = b.value; 
+	return new Promise((resolve, reject) => setTimeout(() => {
+		if (b > 0) resolve(b);
 		else reject('error');
 	}, 1000))
-);
+});
 
 setTimeout(() => b.value = -1, 500);
 setTimeout(() => b.value = 2, 1500);
 
-// 0s => c: { isLoading: true, firstTime: true }
-// 0.5s => c: { isLoading: true, firstTime: false }
-// 1s => c: { isLoading: true, firstTime: false, status: 'success', value: 1 }
-// 1.5s => c: { isLoading: true, firstTime: false, status: 'error', error: 'error' }
-// 2.5s => c: { isLoading: false, firstTime: false, status: 'success', value: 2 }
+// 0s => query: { isLoading: true, firstTime: true }
+// 0.5s => query: { isLoading: true, firstTime: false }
+// 1s => query: { isLoading: true, firstTime: false, status: 'success', value: 1 }
+// 1.5s => query: { isLoading: true, firstTime: false, status: 'error', error: 'error' }
+// 2.5s => query: { isLoading: false, firstTime: false, status: 'success', value: 2 }
 ```

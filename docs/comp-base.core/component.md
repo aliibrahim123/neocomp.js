@@ -1,13 +1,12 @@
 # `Component` class
 neocomp is a component oriented framework, this means that it is build on the idea of components.
 
-a component is a buillding unit that represet a chunk of the user interface, it wraps a 
-`HTMLElement` and define logic and state associated to it.
+a component is a buillding unit that represet a chunk of the user interface, it creates or wraps a `HTMLElement` and define logic and state associated to it.
 
 components are typesafe, reactive, oraganizable, flixible and lightweight.
 
 a component is a class that contains: 
-- a `HTMLElement` that it wraps and owns.
+- a `HTMLElement` that it owns.
 - states contains in a specific unit called `Store`.
 - a `View` that manage the DOM interactions and bindings.
 - logic in methods that alter the states.
@@ -22,127 +21,50 @@ events (DOM / external)
     --(effect)-> DOM (static bindings)
 ```
 
-### why not a function
-being a function requires you to construct the element synchronously, also it has inflixible 
-organazation (only one function).    
-
-classes on the other hand can create the base synchronously and then perform asyncronous updates.    
-also logic can be organized into methods with shared states in properties.  
-
-functions are good in factory paradigm, but classes are the best for logicfull organized 
-components, components that contains logic other than construction and simple binding.
-
-## `TypeMap`
-```typescript
-export interface BaseMap {
-	props: Record<string, any>,
-	refs: Record<string, HTMLElement | HTMLElement[]>,
-	childmap: Record<string, PureComp>,
-	chunks: string
-}
-
-export type getTypeMap <Comp> = BaseMap;
-export type getProps <Comp> = BaseMap['props'];
-export type getRefs <Comp> = BaseMap['refs'];
-export type getChildMap <Comp> = BaseMap['childmap'];
-export type getChunks <Comp> = BaseMap['chunks'];
-```
-`TypeMap`: is an abstracted type that groups the types used in `Component`.
-
-it must extends from `BaseMap`, the base of all `TypeMap`, and it can contains any other types.
-
-`TypeMap` can contain
-- `props`: a record of properties and their respectfull types.
-- `refs`: a record of element references and their respectfull types, see `Component.refs`.    
-can be single `HTMLElement` for single reference or `HTMLElement[]` for multiple element per 
-reference.
-- `childmap`: a record of children names and their respectfull types, see `Component.childmap`.
-- `chunks`: a union of `string` literials of the chunk names.
-
-`getTypeMap`: extract the typemap of a given `Component`.
-
-`getProps`, `getRefs`, `getChildMap` and `getChunks`: extracts the respectfull typemap field from
-a given `Component`.
-
-#### example
-```typescript
-interface TypeMap extends BaseMap {
-	props: {
-		title: string, count: number
-	},
-	refs: {
-		input: HTMLElement, sections: HTMLElement[]
-	}
-}
-
-interface TypeMap extends BaseMap {
-	childmap: {
-		sectionA: SectionA, sectionB: SectionB
-	},
-	chunks: 'item' | 'title' | 'minititle'
-}
-```
-
 ## constructor and options
 ```typescript
-export class Component <TypeMap extends BaseMap> implements Linkable {
-	constructor (el?: HTMLElement, initMode: 'core' | 'dom' | 'full' = 'core');
+export class Component implements DataSource {
+	constructor (el?: HTMLElement);
 	options: CompOptions;
 	static defaults: CompOptions;
-	static template: Template;
-	static chunks: Record<string, Template> = {};
 }
 
 export type CompOptions = {
 	anonymous: boolean;
-	defaultId: (comp: PureComp) => string;
+	defaultId: (comp: Component) => string;
 	removeChildren: boolean;
 	store: Partial<StoreOptions>;
 	view: Partial<ViewOptions>;
 }
 ```
-`constructor`: take an optional `HTMLElement` and `initMode`, and construct a `Component`.    
+`constructor`: take an optional `HTMLElement`, and construct a `Component`.    
 see initialization for more info.
 
 `options`: is the `CompOptions` defined for this component.
 
 `defaults`: is the default options defined for all instances of this component class.
 
-`template`: is the default template for this component, defaults to empty `<div>`.
-
-`chunks`: optional static property that defines the chunks used in this component.
-
 ### `CompOptions`
-- `defaultId`: a function that returns an id for the component if the passed element has no id or 
-it is not given.
-- `anonymous`: if `true`, the component doesnt notify the global systems, like idmap and
-onNew global event, default `false`.
+- `defaultId`: a function that returns an id for the component if the passed element has no id or it is not given.
+- `anonymous`: if `true`, the component doesnt notify the global systems, like idmap and onNew global event, default `false`.
 - `removeChildren`: if `true`, remove its children with its removal, default `true`.
 - `store`: options passed to the store of the component.
 - `view`: options passed to the view of the component.
 
 #### example
 ```typescript
-class Example extends Component<TypeMap> {
-	//overide default template
-	static template = $template(`<div>hallo world</div>`);
-
-	//define custom chunks
-	static chunks = {
-		item: $template(`<div class=item .text>item @(){context.index}</div>`),
-	}
-
+class Example extends Component {
 	static defaults = {
 		// important
 		...Component.defaults,
 
-		//default id is 6 digit hexadecimal number
+		// default id is 6 digit hexadecimal number
 		defaultId: (comp) => Math.round(Math.random() * (16**6)).toString(16),
 
-		//this component is a placeholder, dont notify the global systems
+		// this component is a placeholder, dont notify the global systems
 		anonymous: true,
 
-		//preserve children
+		// preserve children
 		removeChildren: false
 	}
 }
@@ -161,18 +83,15 @@ export type Status = 'coreInit' | 'domInit' | 'inited' | 'removing' | 'removed';
 
 `id`: the identifier of the component, it is globaly unique, so it can be used as a key.
 
-by default, it is the id of the element given at construction, else the result of 
-`options.defaultId`, as a fallback, a 9 digit random number or `name-xxx` if `name` is given. 
+by default, it is the id of the element given at construction, else the result of `options.defaultId`, as a fallback, a 9 digit random number or `name-xxx` if `name` is given. 
 
-`name`: the human readable name of the component, can be used as a unique key at the local scale 
-(near parent and children).
+`name`: the human readable name of the component, can be used as a unique key at the local scale (near parent and children).
 
-it is given by the `neo:name` attribute of the element given at construction, else empty string
-unless changed by the user at initialization.
+it is given by the `neo:name` attribute of the element given at construction, else empty string unless changed by the user at initialization.
 
 `status`: the status of the component, it can be one of the following:
 - `'coreInit'`: the core of the component has been inited.
-- `'domInit'`: the full initial structure and bindings of DOM has been established.
+- `'domInit'`: the initial dom structure is being built.
 - `inited`: component has been initialized completly.
 - `removing`: component is in the removing phase, triggering remove events.
 - `removed`: component has been fully removed, if you see this there is memory leak.
@@ -187,99 +106,78 @@ new Component(constructOne(`<div id=id neo:name=name></div>`)) // id: id, name: 
 ## initialization
 ```typescript
 export class Component {
-	elementArgs (): Record<string, any>;
-
-	initDom (): void;
+	createTop (): ChunkBuild;
 	fireInit (): void;
 }
 ```
-initialization is a very important step in component lifecycle, it defines the inital state, DOM 
-structure and bindings, and interactions with the world.
+initialization is a very important step in component lifecycle, it defines the inital state, DOM structure and bindings, and interactions with the world.
 
 it is done in the constructor of the derived `Component` classes, which have the following signature: 
 ```typescript
 constructor (el?: HTMLElement, ...args: any[])
 ```
 
-#### arguments
-arguments can be passed through the constructor, or in template through `.arg:name` attributes, these are accesed through `elementArgs` method, callable only once.
-
-```typescript
-constructor (el?: HTMLElement, a?: number, b?: string) {
-	//...
-	({ a, b } = { a: a || 0, b: b || '', ...this.elementArgs() });
-}
-new Comp(ConstructOne('<div .arg:b="b"></div>'), 1) // a: 1, b: 'b'
-```
-
 ### initialization sequence
 a normal intialization sequence consitis of:
-- `super(el)`: initialize the core of the component, the DOM is not touched yet.
-- code that set the initial state and metadata, can be done in later stages but here it avoid 
-dual updates.
-- `initDom()`: initialize the initial DOM structure and establish the bindings for the component.
-- code that require the DOM.
-- `fireInit()`: trigger the initialization events and notify the outside world, the component is
-fully initialized.
+- `super(el)`: initialize the core of the component.
+- `createTop()`: return a chunk build to create the intial DOM structure.
+- most init logic goes here.
+- `fireInit()`: trigger the initialization events and notify the outside world, the component is fully initialized.
 - post init code and interactions (async code / heirarchy) is run afterward.
 
-#### skips
-certain initialization phases can be skipped after `super(el)` throught `initMode` parameter of 
-the `Component` contructor, its values: 
-- `core`: the default and the standared, just initialize the core, rest are manual.
-- `dom`: continue after DOM initialization, for component that state is managed directly in DOM.
-- `full`: initialize everything and continue, for no init logic components.
+#### `createTop()` notes
+the root chunk build with `createTop` must contains one root element.
+
+in case an element is not given, the root is used.
+
+in case an element is given, it is used as the top element with the content of the chunk replacing its content and the attributes of the chunk merging with its ones.
+
+the root chunk is ended implicitly with `fireInit`, it can be ended manually through `end` function of the chunk build.
 
 #### example
 ```typescript
 constructor (el?: HTMLElement, ...args) {
 	super(el);
-	// set initial state
-	this.initDom(); //dom ready
-	// code that use the dom
-	this.fireInit(); //fully inited
+	const { $temp } = this.createTop(); 
+	// most init code
+	this.fireInit(); // fully inited
 	// async code / external system if required
 }
 
-constructor (el?: HTMLElement, ...args) {
-	super(el, 'dom');
-	// init code
-	this.fireInit(); //fully inited
-}
-
-constructor (el?: HTMLElement, ...args) {
-	super(el, 'full'); //no init code
+// wraps an element
+constructor (el?: HTMLElement) {
+	const { $temp } = this.createTop();
+	$temp`<div always-attr=some ${el ? attrsCaseGiven : attrsForDefault}>`;
+	// ...
+	$temp`${el?.childNodes}`; // transfer elements
+	$temp`</div>`;
+	this.fireInit();
 }
 ```
 
 ### initialization events
 ```typescript
 export class Component {
-	onDomInit: OTIEvent<(comp: this) => void>;
 	onInitInternal: OTIEvent<(comp: this) => void>;
 	onInit: OTIEvent<(comp: this) => void>;
 }
 ```
 these events are for system use cases.
 
-`onDomInit`: triggered when the initial DOM strucutre is constructed and before post `initDom` 
-code.
-
 `onInitInternal`: triggered when the component is fully inited, for internal systems before
 external notifying.
 
 `onInit`: triggered when the component is fully init, for external use (hierarchy). 
 
-by convention, all external interaction with the component must be called within `onInit`.
-because, the initial component may be a placeholder for the true component, like in lazy loading.    
+by convention, all external interaction with the component must be called within `onInit`.because, the initial component may be a placeholder for the true component, like in lazy loading.    
 for this, use the component passed by the event not the listened one.
 
 #### example
 ```typescript
-const lazy = new (registry.get('@lazy:example'))(); //LazyComp
-lazy.set('prop', value); //error
-lazy.onInit.listen((comp) => { //ExampleComp
-	comp.set('prop', value);
+const lazy = new (registry.get('@lazy:example'))(); // LazyComp
+lazy.prop.value = value; // error
+lazy.onInit.listen((comp) => { // ExampleComp
+	comp.prop.value = value;
 });
 
 const comp = new ExampleComp();
@@ -308,7 +206,7 @@ there are other events specialized for external systems / hierarchy.
 comp.onRemove.listen((comp) => {
 	someInternals.remove(comp);
 
-	comp.remove(); //noop, since status = 'removing'
+	comp.remove(); // noop, since status = 'removing'
 });
 
 comp.remove();
@@ -317,9 +215,8 @@ comp.remove();
 ## hierarchy
 ```typescript
 export class Component {
-	parent?: PureComp;
-	children: PureComp[];
-	childmap: TypeMap['childmap'];
+	parent?: Component;
+	children: Component[];
 }
 ```
 components has an optional parent children hierarchy.
@@ -332,15 +229,13 @@ all hierarchy interactions are done after init.
 
 `children`: the children of the component.
 
-`childmap`: a record that maps component children by their names.
-
 ### linking
 ```typescript
 export class Component {
-	addChild (child: PureComp, ind: number = -1): void;
-	linkParent (parent: PureComp): void;
-	onChildAdded: Event<(comp: this, child: PureComp) => void>;
-	onAddedToParent: Event<(comp: this, parent: PureComp) => void>;
+	addChild (child: Component, ind: number = -1): void;
+	linkParent (parent: Component): void;
+	onChildAdded: Event<(comp: this, child: Component) => void>;
+	onAddedToParent: Event<(comp: this, parent: Component) => void>;
 }
 ```
 `addChild`: add a child to a component at a given index, by default at the end.    
@@ -357,23 +252,23 @@ in normal cases use `addChild`.
 
 #### example
 ```typescript
-const parent = new Component(); //chilren: [], childmap: {}
+const parent = new Component(); // chilren: []
 
 parent.addChild(new Component(constructOne('<div neo:name=child1></div>'))); 
-	//children: [child1], childmap: { child1: child1 }
+	// children: [child1]
 
 parent.addChild(new Component(constructOne('<div neo:name=child2></div>')), 0); 
-	//children: [child2, child1], childmap: { child1: child1, child2: child2 }
+	// children: [child2, child1]
 ```
 
 ### unlinking
 ```typescript
 export class Component {
 	unlinkParent (): void;
-	unlinkChild (child: PureComp) :void;
+	unlinkChild (child: Component) :void;
 
-	onChildUnlink: Event<(comp: this, child: PureComp) => void>;
-	onUnlinkedFromParent: Event<(comp: this, parent: PureComp) => void>;
+	onChildUnlink: Event<(comp: this, child: Component) => void>;
+	onUnlinkedFromParent: Event<(comp: this, parent: Component) => void>;
 }
 ```
 `unlinkParent`: unlink the parent of the component.   
@@ -394,11 +289,11 @@ use these events for cleanup instead of `onRemove`, they are called on component
 
 #### example
 ```typescript
-const parent = /* */; //chilren: [child1, child2], childmap: { child1: child1, child2: child2 }
+const parent = /* */; // chilren: [child1, child2]
 
-parent.childmap.child1.unlinkParent(); //chilren: [child2], childmap: { child2: child2 }
+parent.child1.unlinkParent(); // chilren: [child2]
 
-parent.childmap.child2.remove(); //chilren: [], childmap: {}
+parent.child2.remove(); // chilren: []
 ```
 
 
@@ -428,37 +323,30 @@ const context2 = new Context();
 link(comp, context1);
 link(comp, context2);
 
-unlink(comp, context1); //unlinked manually
+unlink(comp, context1); // unlinked manually
 
-comp.remove(); //context2 unlinked automatically
+comp.remove(); // context2 unlinked automatically
 ```
 
 ## store
 ```typescript
 export class Component {
-	store: Store<TypeMap['props']>;
-	get <P extends keyof TypeMap['props']> (name: P | symbol): TypeMap['props'][P]
-	set <P extends keyof TypeMap['props']> (name: P | symbol, value: TypeMap['props'][P]): void;
-	setMultiple (props: Partial<TMap['props']>): void;
-	signal <P extends keyof TypeMap['props']> (name: P | symbol, Default?: TypeMap['props'][P]):
-	  Signal<TypeMap['props'][P]>;
-	computed <P extends keyof TMap['props']> (
-		name: P | symbol, effectedBy: EffectedProp<TMap['props']>[] | 'track', fn: () => TMap['props'][P]
-	): ReadOnlySignal<Prop<P>>;
+	get<T = any> (id: PropId<T> | number): T;
+	set<T = any> (id: PropId<T> | number, value: T): void;
+	signal<T = any> (value?: T): Signal<T>;
+	computed<T = any> (fn: () => T): ReadOnlySignal<T>;
+	computed<T = any> (effectedBy: EffectingProp[], fn: () => T): ReadOnlySignal<T>;
+	effect (handler: () => void): void;
 	effect (
-		effectedBy: EffectedProp<TMap['props']>[], handler: () => void,
-		effect?: EffectedProp<TMap['props']>[]
+		effectedBy: EffectingProp[], effect: EffectedProp[], handler: () => void
 	): void;
-	effect (track: 'track', handler: () => void): void;
 }
 ```
-every `Component` has a `Store` that contains the state.
+every component has a `Store` that contains the state.
 
 `get` and `set`: get and set a given property.
 
-`setMultiple`: set multiple properties at once.
-
-`signal`: creates a `Signal` of a given property.
+`signal`: creates a signal for a new property.
 
 `computed`: creates a computed property and returns a `ReadOnlySignal` of it.
 
@@ -468,16 +356,12 @@ for more details read [state fundamentals](../comp-base.state/fundamentals.md)
 
 #### example
 ```typescript
-comp.set('a', 1);
-comp.get('a') // => 1
+let a = comp.signal(1);
+a.value // => 1
 
-comp.setMultiple({ b: 2, c: 3 });
+let c = comp.computed(() => a.value + 1); // => 2
 
-const a = comp.signal('a');
-
-const d = comp.computed('d', 'track', () => a.value + 1); // => 2
-
-comp.effect('track', () => console.log(a.value, d.value));
+comp.effect(() => console.log(a.value, c.value));
 
 a.value = 2; // => 2, 3
 ```
@@ -485,51 +369,51 @@ a.value = 2; // => 2, 3
 ## view
 ```typescript
 export class Component {
-	view: View<TypeMap['refs'], TypeMap['chunks']>;
+	view: View;
 	el: HTMLElement;
-	refs: Record<keyof TypeMap['refs'], HTMLElement[]>;
 	query <T extends HTMLElement = HTMLElement> (selector: string): T[];
-	chunk (chunk: TMap['chunks'] | Template, context?: Record<string, any>): HTMLElement; 
+	chunk (el?: HTMLElement): ChunkBuild;
+	chunk (builder: (build: ChunkBuild) => void): HTMLElement;
+	$chunk (parts: TemplateStringsArray, ...args: ChunkInp[]): HTMLElement
 }
 
 export const attachedComp: symbol;
 ```
-every `Component` has a `View` responsible for managing the DOM.
+every component has a `View` responsible for managing the DOM.
 
-`el`: represents the top element that the component wraps.
-
-can be the element passed to the component on construction, else an element created by 
-`view.options.defaultEl`
-
-`refs`: the references to elements created by [`@ref`](../comp-base.view/template.md#ref)
-action attribute.
+`el`: represents the top element that the component owns.
 
 `query`: return all elements in the top element that match the given selector.
 
-`chunk`: construct a given chunk optional passed with `context`.
+`chunk`: create a new chunk, take optionally a root element and return a chunk build, or take a function that builds the chunk and return the constructed element.
+
+`$chunk`: construct a chunk in a tagged template syntax, can be optimized at build time.
 
 `attachedComp`: a symbol added to top element where its value refers to the attached component.
 
 #### example
 ```typescript
-class ExampleComponent extends Component<TypeMap> {
-	static template = $template(`<span @ref=hello>hello</span> <span>world</span>`)
-	static chunk = { hello: $template(`<span .text>hello @(){context.to}</span>`) }
+class Example extends Component {
+	constructor () {
+		super();
+		this.createTop().$temp`<div id=comp>
+			<span>hallo</span><span>world</span>
+		</div>`;
+		this.fireInit();
+	}
 }
-const comp = new ExampleComponent(constructOne(`<div id=comp></div>`));
+const comp = new Example();
 
-comp.el; // => <div id=comp></div>
+comp.el; // => <div id=comp>
 comp.el[attachedComp] // => comp
 
 comp.query('span'); // => [<span>hello</span>, <span>world</span>]
 
-comp.refs.hello; // => <span>hello</span>
+let { $temp, end } = comp.chunk();
+$temp`<div>hallo</div>`;
+end(); // => <div>hallo</div>
 
-comp.chunk('hello', { to: 'world' }); // => <span>hello world</span>
-```
+comp.chunk(({ $temp }) => $temp`<div>hallo</div>` }); // => <div>hallo</div>
 
-## component variants
-```typescript
-export type PureComp = Component<BaseMap>;
+comp.$chunk`<div>hallo</div>`; // => <div>hallo</div>
 ```
-`PureComp`: is any `Component`, it is used to interact with components of any kind.

@@ -11,7 +11,7 @@ export function builder (
 	let curEl = rootEl, stack = [rootEl];
 	let builded = false;
 
-	return [add, build] as const;
+	return { add, end };
 
 	/** add a parsed chunk to the structure */
 	function add (chunk: ParsedChunk) {
@@ -58,7 +58,7 @@ export function builder (
 		return native
 	}
 	/** build the structure */
-	function build () {
+	function end () {
 		if (builded) throw new TypeError('litedom.builder: calling build twice');
 		builded = true;
 

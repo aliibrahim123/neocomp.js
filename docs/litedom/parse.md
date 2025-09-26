@@ -21,6 +21,46 @@ parse('<div>hello <span id=child>world</span></div>');
 	// => new LiteNode('div', {}, ['hello ', new LiteNode('span', { id: 'child' }, ['world'])])
 ```
 
+## `parseChunk`
+```typescript
+export function parseChunk (
+	parts: string[], opts?: Partial<Options>, lastState?: ParseState
+): ParsedChunk;
+export interface ParsedChunk {
+	state: ParseState,
+	parents: LiteNode[],
+	curNodeDepth: number,
+	stops: { 
+		node: LiteNode, 
+		at: 'content' | 'attrs' | 'attr', 
+		attr?: string 
+	}[]
+}
+export interface ParseState {/* privites */};
+```
+`parseChunk`: parse a chunk of html source, takes a list of parts and return a `ParsedChunk`.     
+accept optionally parse options and the last parse state.
+
+the chunk can cut off at attributes or in content, and the structure can be incomplete (some elements are not closed).
+
+if a chunk part cut off inside content, an element of tag `stop-target` is inserted at that location.
+
+`ParsedChunk`: represent a chunk of an html source.
+- `state`: the parse state at the end.
+- `parents`: the encountered parents, these parents are started before the chunk and closed inside it, from deepest to shallowest, include at least one.
+- `curNodeDepth`: the depth of the last unclosed node encountered, inside the last parent.
+- `stops`: the locations in the structure where the parts are separated.
+
+#### example
+```typescript
+let chunk = parseChunk(['<div id=', '>hallo', ' world</div>']) 
+	// => <div>hallo world</div> (stops at attr(id), content)
+
+parseChunk(['some content</div>other</section><div>incomplete'], {}, chunk.state) 
+	// => parents: [<div>some content</div>, <section>other</section>, <html><div>incomplete</div></html>]
+	// => curNodeDepth: 1
+```
+
 ## `Options`
 ```typescript
 export interface Options {
@@ -141,7 +181,7 @@ parse('<div @Attr.prop="value">hello</div>',
 
 ### other sections handlers
 - `onComment`: a function called on every comment.
-- `onCData`: a function called on every CDATA section.
+- `onCData`: a function called on every CDATA section.    
 **note:** comments and CDATA are ignored by default.
 
 #### example
