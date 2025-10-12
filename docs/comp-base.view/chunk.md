@@ -142,6 +142,11 @@ export function wrapWith (comp: ConstructorFor<Component>, ...args: any): Action
 export function $async (comp: Component, builder:
 	(build: ChunkBuild, fallback: (el: HTMLElement) => void) => Promise<void>
 ): HTMLElement;
+export function renderList<T> (
+	signal: Signal<T[]>,
+	builder: (build: ChunkBuild, item: T, index: number | Signal<number>) => void,
+	dynIndex?: boolean
+): ActionFn;
 ```
 utitlies for creating chunks.
 
@@ -152,6 +157,12 @@ utitlies for creating chunks.
 `$async`: creates an async chunk, it initially return a fallback and waits to the async builder to finish, then it replace the fallback with the result.
 
 fallback must be called before any async stuff.
+
+`renderList`: render a dynamic list, it accepts a signal of the list and a `builder` that gets called for each item of the list.
+
+if `dynIndex` is `true`, `builder` is given a signal that relfect the index of the item.
+
+every item associated with the items chunks will be removed when the item is removed.
 
 #### example
 ```typescript
@@ -171,6 +182,13 @@ $temp`${async ({ $temp }, fallback) => {
 	$temp`<span>content 2</span>`; 
 	// fallback get replaced by <div><span>content 1</span><span>content 2</span></div>
 }}`;
+
+let items = comp.signal([1, 2, 3]);
+$temp`<div ${renderList(items, ({ $temp }, item, index) => {
+	$temp`<div>${item} at ${index}`;
+	$temp`${new SomeComp(item)}`; // removed when item is removed
+	$temp`</div>`;
+}, true)}/>`;
 ```
 
 ## chunks build

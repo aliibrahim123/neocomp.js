@@ -111,7 +111,7 @@ function setContent (el: HTMLElement, target: ChildNode, comp: Component, value:
 	// node
 	else if (value instanceof Node) newTarget = value as ChildNode;
 	// falsy value, empty string as placeholder
-	else if (!value) newTarget = new Text('');
+	else if (value === undefined || value === null || value === false) newTarget = new Text('');
 	// text, doesnt support whitespace
 	else {
 		newTarget = document.createElement('span');
@@ -154,7 +154,7 @@ function doActions (
 				target.replaceWith(...el.childNodes)
 			}
 			// node array
-			else if (arg.length !== undefined && arg[0] instanceof Node)
+			else if (arg?.length !== undefined && arg[0] instanceof Node)
 				target.replaceWith(...arg);
 			else apply(el, comp, arg, arg => target = setContent(el, target, comp, arg));
 		}
