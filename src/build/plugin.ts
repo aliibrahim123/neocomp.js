@@ -120,7 +120,7 @@ function transformMacroMod (source: string, options: Options) {
 
 		// substitute it with call to build.add
 		if (match.startsWith('$chunk')) return `chunk(build => build.add(${name}, [${args.join(', ')}]))`;
-		return `add(${name}, [${args.join(', ')}])`;
+		return `$temp.add(${name}, [${args.join(', ')}])`;
 	})
 
 	// imports
