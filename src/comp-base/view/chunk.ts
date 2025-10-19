@@ -190,6 +190,7 @@ export function createChunk (
 	let parseState: ParsedChunk['state'] = undefined as any;
 	let curArgs: any[] = [];
 
+	$temp.add = add;
 	return { add, $temp, $ensure, end }
 
 	function add<E extends HTMLElement = HTMLElement> (chunk: ParsedChunk, args: ChunkInp<E>[]) {
@@ -209,7 +210,6 @@ export function createChunk (
 
 		add(chunk, args);
 	}
-	$temp.add = add;
 	function $ensure (cond: 'in_attrs' | 'in_content') {
 		function check (res: boolean) {
 			if (!res) throw_chunk_cond_not_met(cond);
