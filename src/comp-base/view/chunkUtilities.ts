@@ -1,14 +1,16 @@
 import type { ConstructorFor } from "../../common/types.ts";
-import type { Signal } from "../state/signal.ts";
+import { Signal } from "../state/signal.ts";
 import type { Component } from "../core/comp.ts";
 import { createChunk, isDefered, type ChunkBuild } from "./chunk.ts";
 import { diff } from "../state/arr.ts";
 
+/** defer an action */
 export function defer (fn: (el: HTMLElement, comp: Component) => void) {
 	(fn as any)[isDefered] = true;
 	return fn;
 }
 
+/** wrap the element with a component */
 export function wrapWith (comp: ConstructorFor<Component>, ...args: any) {
 	return defer((el, parent) => {
 		let child = new comp(el, ...args);
@@ -16,6 +18,7 @@ export function wrapWith (comp: ConstructorFor<Component>, ...args: any) {
 	});
 }
 
+/** asyncrounesly build a chunk */
 export function $async (comp: Component, builder:
 	(build: Omit<ChunkBuild, 'end'>, fallback: (el: HTMLElement) => void) => Promise<void>
 ) {
@@ -28,11 +31,24 @@ export function $async (comp: Component, builder:
 	return el;
 }
 
+/** show an element based on a reactive value */
+export function showIf (inp: Signal<boolean> | ((el: HTMLElement, comp: Component) => boolean)) {
+	return (el: HTMLElement, comp: Component) => {
+		if (inp instanceof Signal) comp.store.effect( 
+			() => el.style.display = inp.value ? '' : 'none'
+		);
+		else comp.store.effect(
+			() => el.style.display = inp(el, comp) ? '' : 'none'
+		);
+	}
+}
+
 interface ItemData<T> {
 	index: number
 	indexSignal?: Signal<number>
 	remove: () => void
 }
+/** dynamicaly render a reactive list */
 export function renderList<T> (
 	signal: Signal<T[]>,
 	builder: (build: Omit<ChunkBuild, 'end'>, item: T, index: number) => void,

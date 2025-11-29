@@ -3,6 +3,7 @@
 import { link } from "../core/linkable.ts";
 import { Signal } from "./signal.ts";
 
+/** creates one way binding between 2 signals */
 export function $in<T> (from: Signal<T>, to: Signal<T>) {
 	const From = from.store.base, To = to.store.base;
 
@@ -12,6 +13,7 @@ export function $in<T> (from: Signal<T>, to: Signal<T>) {
 	From.store.effect([from], [], () => to.value = from.value, [To]);
 }
 
+/** creates two way binding between 2 signals */
 export function inout<T> (a: Signal<T>, b: Signal<T>, comparator = (a: T, b: T) => a === b) {
 	const A = a.store.base, B = b.store.base;
 

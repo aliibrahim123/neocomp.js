@@ -138,6 +138,7 @@ $temp`<div>${() => text.value || 'no content'}</div>`;
 ```typescript
 type ActionFn = (el: HTMLElement, comp: Component) => void;
 export function defer (fn: ActionFn): ActionFn;
+export function showIf (value: Signal<boolean> | (el: HTMLElement, comp: Component) => boolean): ActionFn;
 export function wrapWith (comp: ConstructorFor<Component>, ...args: any): ActionFn;
 export function $async (comp: Component, builder:
 	(build: ChunkBuild, fallback: (el: HTMLElement) => void) => Promise<void>
@@ -151,6 +152,8 @@ export function renderList<T> (
 utitlies for creating chunks.
 
 `defer`: add a function that gets called when the target element is fully created.
+
+`showIf`: show an element based on a reactive value (a signal or a computed expression).
 
 `wrapWith`: add a component that gets mounted into the target element, accept the component class and its arguments.
 
@@ -171,6 +174,8 @@ $temp`<span>content 1</span>`;
 $temp`<span>content 2</span>`;
 $temp`<span>content 3</span>`;
 $temp`</div>`; // => element fully created
+
+$temp`<div ${showIf(active)}>`;
 
 $temp`<div ${wrapWith(Comp, 'someValue')}>`;
 

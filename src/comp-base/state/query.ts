@@ -1,12 +1,14 @@
 import { ReadOnlySignal, WriteOnlySignal, type Signal } from "./signal.ts";
 import type { Store } from "./store.ts";
 
+/** reactive result of a promise */
 export interface Query<T, E> {
 	status: 'loading' | 'success' | 'error',
 	value?: T,
 	error?: E
 }
 
+/** create a signal from a promise */
 export function query <T, E> (store: Store, promise: Promise<T>) {
 	const query: Query<T, E> = { status: 'loading' };
 	const signal = store.signal(query);
@@ -27,6 +29,7 @@ export function query <T, E> (store: Store, promise: Promise<T>) {
 	return signal.asReadOnly;
 }
 
+/** async computed property result */
 export interface ComputedQuery <T, E> {
 	status: 'success' | 'error',
 	isLoading: boolean,
@@ -35,6 +38,7 @@ export interface ComputedQuery <T, E> {
 	error?: E
 }
 
+/** create an async computed property */
 export function computedQuery <T, E> (store: Store, fn: () => Promise<T>)
 	: ReadOnlySignal<ComputedQuery<T, E>>;
 export function computedQuery <T, E> (

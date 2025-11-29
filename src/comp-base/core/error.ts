@@ -1,3 +1,4 @@
+/** error thrown by neocomp */
 export class CompError extends Error {
 	constructor (message: string) {
 		const semiColonInd = message.replaceAll('\\:', '  ').indexOf(':');
@@ -7,6 +8,7 @@ export class CompError extends Error {
 	}
 }
 
+/** severity of the error */
 type ErrorLevel = 'ignore' | 'warn' | 'error' | 'debug';
 export type ErrorCodes = 
 	// general functionality
@@ -18,11 +20,13 @@ export type ErrorCodes =
 	// template
 	401 | 402 | 403 | 404 | 405 | 406 | 407 | 408 | 409 | 410 | 411 | 412 | 413;
 
+/** error levels of errors */
 export const errorsLevels: { base: ErrorLevel } & Partial<Record<`err${ErrorCodes}`, ErrorLevel>> = {
 	base: 'error',
 	'err201': 'warn',
 }
 
+/** raise an error */
 export function raiseError (msg: string, errCode: ErrorCodes) {
 	msg = msg + ';\n  errCode: ' + errCode;
 	const level = errorsLevels[`err${errCode}`] || errorsLevels.base;

@@ -2,20 +2,25 @@
 
 import type { fn } from './types.ts';
 
+/** a lightweight event */
 export class Event <Listener extends fn> {
 	#listeners: fn[] = [];
 	
+	/** listen to this event */
 	listen (listener: Listener) {
 		this.#listeners.push(listener);
 	}
+	/** unlisten from this event */
 	unlisten (listener: Listener) {
 		this.#listeners = this.#listeners.filter(fn => fn !== listener)
 	}
 
+	/** trigger the event */
 	trigger (...args: Parameters<Listener>) {
 		for (const listener of this.#listeners) listener(...args);
 	}
 
+	/** listen for the event one time */
 	once (listener: Listener) {
 		const fn = (...args: any[]) => {
 			listener(...args);
@@ -24,6 +29,7 @@ export class Event <Listener extends fn> {
 		this.#listeners.push(fn as Listener);;
 	}
 	
+	/** wait till the event is triggered */
 	async awaitForIt (): Promise<Parameters<Listener>> {
 		return new Promise(res => 
 			this.once(((...args) => res(args as any)) as Listener)
@@ -31,7 +37,7 @@ export class Event <Listener extends fn> {
 	}
 }
 
-// one time init event
+/** one time init event */
 export class OTIEvent <Listener extends fn> extends Event<Listener> {
 	#listeners: fn[] = [];
 	#inited: boolean = false;
@@ -64,9 +70,11 @@ export class OTIEvent <Listener extends fn> extends Event<Listener> {
 	}
 }
 
+/** get the type of the listener */
 export type ListenerOf <event extends Event<fn>> = 
 	event extends Event<infer listener> ? listener : never;
 
+/** listen to an event until another event is triggered */
 export function listenUntil <listener extends fn>
   (source: Event<fn>, target: Event<listener>, listener: listener) {
 	target.listen(listener);

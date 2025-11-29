@@ -5,6 +5,7 @@ import type { Component } from "./comp.ts";
 import { infoDump as chunksInfoDump } from "../view/chunk.ts";
 import type { ParsedChunk } from "../../litedom/parse.ts";
 
+/** dump global information */
 export function infoDump (type: 'classes'): Record<string, ConstructorFor<Component>>;
 export function infoDump (type: 'providers'): Record<string, CompProvider>;
 export function infoDump (type: 'idMap'): Record<string, Component>;

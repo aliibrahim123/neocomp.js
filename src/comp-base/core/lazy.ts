@@ -5,6 +5,7 @@ import { attachedComp, Component } from "./comp.ts";
 import { onAdd } from "./globalEvents.ts";
 import { addProvider, get, has, registry } from "./registry.ts";
 
+/** a component for lazy loaded components */
 export class LazyComp {
 	el: HTMLElement | undefined;
 	#args: any[];
@@ -16,11 +17,12 @@ export class LazyComp {
 			if (added !== name) return;
 			const comp = new constructor(this.el, ...this.#args);
 			if (registry.root === this as any) registry.root = comp as any;
-			this.onInit.trigger(comp);
+			comp.onInit.listen(comp => this.onInit.trigger(comp));
 			onAdd.unlisten(listener);
 		}
 		onAdd.listen(listener);
 	}
+	/** event triggered when the component is initialized */
 	onInit = new OTIEvent<(comp: Component) => void>();
 }
 

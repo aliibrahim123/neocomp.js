@@ -7,16 +7,25 @@ import type { Linkable } from "../core/linkable.ts";
 import { throw_circular_dep_update } from "./errors.ts";
 import { Store } from "./store.ts";
 
+/** a unit encapsulating an effect */
 export interface EffectUnit {
+	/** properties it effect */
 	effect: number[],
+	/** properties effecting it directly */
 	effectedBy: number[],
+	/** the handler */
 	handler: () => void,
+	/** bindings the effect is bound to */
 	bindings: any[],
+	/** user defined metadata */
 	meta: object
 }
 
+/** unit responsible for dispatching updates */
 export class UpdateDispatcher {
+	/** effect units by effecting properties */
 	#records = new Map<number, EffectUnit[]>();
+	/** effect units by bindings */
 	#bindings = new Map<any, EffectUnit[]>();
 	constructor (store: Store) {
 		store.onChange.listen((_, props) => this.update(props.map(prop => prop.id)));
@@ -24,6 +33,7 @@ export class UpdateDispatcher {
 		store.onRemove.listen((_, prop) => this.remove([prop.id]));
 	}
 
+	/** add an effect */
 	add (
 		effectedBy: number[], effect: number[], handler: (this: EffectUnit) => void,
 		bindings: any[] = [], meta: object = {}
@@ -44,6 +54,7 @@ export class UpdateDispatcher {
 	#curUnitsInd = 0;
 	#unitsInvolved = new Set<EffectUnit>;
 	#propsInvolved = new Set<number>();
+	/** trigger an update */
 	update (props: number[]) {
 		// gather units
 		props = props.filter(prop => !this.#propsInvolved.has(prop));
@@ -74,6 +85,7 @@ export class UpdateDispatcher {
 		this.#curUnitsInd = 0;
 		this.#propsInvolved.clear();
 	}
+
 	#gatherUnits (props: number[]) {
 		// sort the units topologically
 		const sorted: EffectUnit[] = [];
@@ -112,6 +124,7 @@ export class UpdateDispatcher {
 		return sorted.reverse();
 	}
 
+	/** remove a effect */
 	remove (fn: (unit: EffectUnit) => boolean, props?: number[]): void;
 	remove (props: number[]): void;
 	remove (binding: any[]): void;
@@ -157,6 +170,7 @@ export class UpdateDispatcher {
 		}
 	}
 
+	/** dump information */
 	infoDump (type: 'records'): Record<number, EffectUnit[]>;
 	infoDump (type: 'records') {
 		if (type === 'records') {

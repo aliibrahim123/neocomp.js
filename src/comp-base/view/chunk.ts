@@ -14,6 +14,7 @@ if (!(globalThis as any).__neocomp_disable_chunk_parsing === true)
 
 const chunkRegistry = new Map<string[], ParsedChunk>();
 
+/** default template parse options */
 const parseOptions: Partial<Options> = {
 	rootTag: 'neo:template',
 	tagStart: /^[^'"=`<>/\s]/,
@@ -25,6 +26,7 @@ const parseOptions: Partial<Options> = {
 	lowerTag: false
 }
 
+/** parse a chunk from template */
 export function parseChunk (parts: string[], state?: ParseState) {
 	var chunk = _parseChunk(parts, parseOptions, state);
 	// gather actions at stops
@@ -169,10 +171,21 @@ export type ChunkInp<E extends HTMLElement = HTMLElement> =
 	| ChunkInpValue<Node | Component | ChunkPrimValue, E> | ArrayLike<Node>
 	| Record<string, ChunkInpValue<ChunkPrimValue, E>>;
 
-export type ChunkBuild = ReturnType<typeof createChunk>;
+/** unit responsible for building chunks */
+export interface ChunkBuild {
+	/** add a parsed section to the chunk  */
+	add: <E extends HTMLElement = HTMLElement> (chunk: ParsedChunk, args: ChunkInp<E>[]) => void;
+	/** template function for adding new sections */
+	$temp: <E extends HTMLElement = HTMLElement> (parts: TemplateStringsArray, ...args: ChunkInp<E>[]) => void;
+	/** ensure a condition is met */
+	$ensure: (cond: 'in_attrs' | 'in_content') => void;
+	/** end the build */
+	end: () => HTMLElement
+}
+/** create a chunk */
 export function createChunk (
 	comp: Component, el?: HTMLElement, liteConverters: Record<string, (lite: LiteNode) => Node> = {}
-) {
+): ChunkBuild {
 	let deferedFns: ((el: HTMLElement, comp: Component) => void)[] = [];
 	let lastEl: HTMLElement;
 
@@ -232,6 +245,7 @@ export function createChunk (
 	}
 }
 
+/** dump information */
 export function infoDump (type: 'chunks'): Record<string, ParsedChunk>;
 export function infoDump (type: 'chunks') {
 	if (type === 'chunks') return Object.fromEntries(

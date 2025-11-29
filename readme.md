@@ -22,9 +22,9 @@ this is the index of the documentation.
 - [zro router](./docs/zro-router.md)
 - **`comp-base` module:**
   - **core:**
-  - [`Component`](./docs/comp-base.core/component.md)
-  - [registry](./docs/comp-base.core/registry.md)
-  - [general utilities](./docs/comp-base.core/utilities.md)
+    - [`Component`](./docs/comp-base.core/component.md)
+    - [registry](./docs/comp-base.core/registry.md)
+    - [general utilities](./docs/comp-base.core/utilities.md)
   - **state:**
     - [fundamentals](./docs/comp-base.state/fundamentals.md)
     - [`Store`](./docs/comp-base.state/store.md)

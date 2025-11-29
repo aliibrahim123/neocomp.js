@@ -1,11 +1,11 @@
-import { Signal } from "./signal.ts";
-
+/** difference entry */
 interface Diff<T> {
 	type: 'add' | 'remove' | 'change',
 	index: number,
 	value: T
 }
 
+/** diff an array */
 export function diff<T> (
 	old: T[], New: T[], cb: (type: Diff<T>['type'] | 'none', ind: number, value: T, oldInd: number) => void
 ) {

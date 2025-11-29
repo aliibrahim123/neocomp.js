@@ -10,8 +10,11 @@ import { createChunk, type ChunkBuild } from "./chunk.ts";
 import type { Prop } from "../state/store.ts";
 import { unlink, type Linkable } from "../core/linkable.ts";
 
+/** options for `View` */
 export interface ViewOptions {
+	/** converters from litenode to native nodes */
 	liteConverters: Record<string, (lite: LiteNode) => Node>;
+	/** remove top element of removal */
 	removeEl: boolean;
 }
 
@@ -23,8 +26,11 @@ interface Chunk {
 	remove: () => void
 }
 
+/** unit responsible for dom interactions */
 export class View {
+	/** the host component */
 	comp: Component;
+	/** the top element */
 	el: HTMLElement;
 
 	constructor (comp: Component, el?: HTMLElement, options: Partial<ViewOptions> = {}) {
@@ -37,12 +43,15 @@ export class View {
 
 		if (this.options.removeEl) comp.onRemove.listen(() => this.el.remove());
 	}
+	/** options of the view */
 	options: ViewOptions;
+	/** default options of all view */
 	static defaults: ViewOptions = {
 		liteConverters: {},
 		removeEl: true
 	}
 
+	/** create top element chunk build */
 	createTop () {
 		const chunk = createChunk(this.comp, undefined, this.options.liteConverters);
 
@@ -63,11 +72,13 @@ export class View {
 		return { ...chunk, end }
 	}
 
+	/** query all elements with matching a selector */
 	query<T extends HTMLElement = HTMLElement> (selector: string) {
 		return query<T>(selector, this.el);
 	}
 
 	#chunksInRemoving = 0;
+	/** create a chunk */
 	createChunk (el?: HTMLElement, destroyable?: false): ChunkBuild;
 	createChunk (el?: HTMLElement, destroyable?: true): ChunkBuild & { remove: () => void };
 	createChunk (el?: HTMLElement, destroyable = false) {
@@ -146,7 +157,9 @@ export class View {
 		chunk.childs.splice(chunk.childs.indexOf(child), 1);
 	}
 
+	/** event triggered on cleanup request */
 	onCleanUp = new Event<(view: this) => void>();
+	/** cleanup the systems from deattached elements */
 	cleanup () {
 		// clean up effects for deattached elements
 		this.comp.store.dispatcher.remove((unit) =>
@@ -154,6 +167,7 @@ export class View {
 		this.onCleanUp.trigger(this);
 	}
 
+	/** dump information */
 	infoDump (type: '') {
 		throw_undefined_info_dump_type(type);
 	}
