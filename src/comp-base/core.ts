@@ -23,7 +23,9 @@ export type * from './state/query.ts';
 export * from './view/view.ts';
 export type * from './view/view.ts';
 export { createChunk, parseChunk } from './view/chunk.ts';
-export type { ChunkBuild } from './view/chunk.ts';
+import type { ChunkBuild } from './view/chunk.ts';
+export type $temp = ChunkBuild['$temp'];
+export type { ChunkBuild };
 export * from './view/chunkUtilities.ts'
 
 export { Event, OTIEvent, listenUntil } from '../common/event.ts';
