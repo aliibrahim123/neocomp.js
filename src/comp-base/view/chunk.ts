@@ -182,6 +182,16 @@ export interface ChunkBuild {
 	/** end the build */
 	end: () => HTMLElement
 }
+
+const defaultConverters = {
+	svg (lite: LiteNode) {
+		let node = document.createElementNS("http://www.w3.org/2000/svg", lite.tag);
+		for (let [attr, value] of lite.attrs) node.setAttribute(attr, value);
+		node.innerHTML = lite.children[0] as string;
+		return node
+	}
+}
+
 /** create a chunk */
 export function createChunk (
 	comp: Component, el?: HTMLElement, liteConverters: Record<string, (lite: LiteNode) => Node> = {}
@@ -198,7 +208,7 @@ export function createChunk (
 		// actions
 		let actions = lite.meta.get('actions');
 		if (actions) doActions(el, comp, actions, curArgs, deferedFns);
-	}, liteConverters);
+	}, { ...defaultConverters, ...liteConverters });
 
 	let parseState: ParsedChunk['state'] = undefined as any;
 	let curArgs: any[] = [];
