@@ -81,7 +81,7 @@ export class Component implements DataSource {
 			chunk.end();
 			this.#endTop = undefined;
 		}
-		return chunk;
+		return { ...chunk, end: this.#endTop as ChunkBuild['end'] };
 	}
 	/** finish initialization and notify the world */
 	fireInit () {
