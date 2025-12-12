@@ -103,7 +103,7 @@ additionally, they also accept a map of attributes and inputs of attribute place
 ```typescript
 $temp`<div ${el => el.animate(/* ... */)}>animate on creation</div>`
 $temp`<div ${el => this.someEl = el}>store a reference to the element</div>`
-$temp`<div ${{ id: 'id', class: { active: () => !disabled.value } }}}>`
+$temp`<div ${{ id: 'id', class: { active: () => !disabled.value } }}>`
 ```
 
 ### content placeholders
