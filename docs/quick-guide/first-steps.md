@@ -20,7 +20,7 @@ and you are good to go.
 ### using vite
 neocomp provide a [vite plugin](../plugin.md) for build time template generation. it is possible to generate the templates at runtime, but using the plugin reduce the bundle size and first load time.
 
-to use the plugin, add the it to your vite config.
+to use the plugin, add this to your vite config.
 
 ```typescript
 import { neoTempPlugin } from "@neocomp/full/build";
@@ -41,9 +41,8 @@ import { Component, registry } from "@neocomp/full/comp-base";
 
 // a class that contains the component logic
 class ExampleComponent extends Component {
-	constructor (el?: HTMLElement) {
-		// el: an optional element for the component to wrap
-		super(el);
+	constructor (el) {
+		super();
 
 		// construct the dom structure
 		const { $temp } = this.createTop();
@@ -59,7 +58,7 @@ registry.add('example', ExampleComponent);
 ```
 
 # integrating neocomp
-neocomp components are be used freely as independent units. but if used as the base of a site, they must start from a common root.
+neocomp components can be used freely as independent units. but if used as the base of a site, they must start from a common root.
 
 that root is called the root component, and it is registered through.
 
@@ -70,5 +69,6 @@ registry.setRoot(new RootComponent(rootElement));
 ```
 
 where `rootElement` is the root element of the page
+
 -----
 next step: [basic state](./basic-state.md)

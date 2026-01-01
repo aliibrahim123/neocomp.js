@@ -203,3 +203,31 @@ const native = liteToNative(node); // => <div id="parent">hallo <span>world</spa
 const native = /* <div id="parent">hallo <span>world</span></div> */
 const lite = nativeToLite(native); // => new LiteNode('div', { id: 'parent' }, ['hallo ', new LiteNode('span', {}, ['world'])])
 ```
+
+## `builder` module
+```typescript
+export function builder (
+	el: HTMLElement | string = 'div',
+	refiner: (lite: LiteNode, native: HTMLElement) => void = () => { },
+	converters: Record<string, (lite: LiteNode) => Node> = {}
+): {
+	add (chunk: ParsedChunk): void;
+	end (): HTMLElement;
+}
+```
+this module export `builder` function that build a DOM structure from a series of `ParsedChunk`s.
+
+it take optionaly `el`, the root element or its tag, a `refiner` function called on each element to adjust it, and a map of `converters` that converts litenodes of specific tag into dom nodes. 
+
+`refiner` is called multiple times on the same element if encountered in deffirent chunks.
+
+#### example
+```typescript
+let { add, end } = builder('div', (lite, el) => {
+	if (lite.meta.has('id')) el.setAttribute('data-id', lite.meta.get('id'));
+});
+
+add(parseChunk(['<span >hello</span>']));
+add(parseChunk(['<span> world</span>']));
+
+end() // => <div><span>hello</span><span> world</span></div>

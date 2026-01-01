@@ -1,11 +1,25 @@
 # neocomp
 board of frameworks magic, want a lightweight solution for building scalable web apps and sites.
 
-introducing **neocomp**, a lightweight, fast, flexible and modern javascript web framework simplifing
+introducing **neocomp**, a lightweight, fast, and modern javascript web framework simplifing
 web develepment without sacrificing maintainability or language identity.
 
-it achieves this goal by being close to the root, favoring direct DOM interaction and minimizing the
-internals depth.
+it achieves this goal through fine grained reactivity, driven by imperative construction, with the use of chunked templating.
+
+```typescript
+class Counter extends Component {
+	constructor () {
+		super();
+		const { $temp } = this.createTop();
+		
+		let count = this.signal(0);
+		$temp`<button on:click=${() => count.value++}>count: ${count}</button>`;
+
+		this.fireInit();
+	}
+}
+```
+
 
 # quick start
 - [first steps](./docs/quick-guide/first-steps.md)
@@ -33,6 +47,7 @@ this is the index of the documentation.
     - [`View`](./docs/comp-base.view/view.md)
     - [chunk reference](./docs/comp-base.view/chunk.md)
 - [vite plugin](./docs/plugin.md)
+- [examples and patterns](./docs/examples.md)
 
 # blogpost
 check out the latest blogposts about neocomp at [recomputed](https://aliibrahim123.github.io/recomputed/web-dev).
