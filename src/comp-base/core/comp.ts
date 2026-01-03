@@ -19,7 +19,7 @@ import type { ChunkBuild } from "../core.ts";
 import type { ChunkInp } from "../view/chunk.ts";
 
 /** status of the component */
-export type Status = 'coreInit' | 'domInit' | 'inited' | 'removing' | 'removed';
+export type Status = 'initing' | 'inited' | 'removing' | 'removed';
 
 /** options for `Comp` */
 export type CompOptions = {
@@ -55,7 +55,7 @@ export class Component implements DataSource {
 	/** a human readable name of the component */
 	name: string = '';
 	/** the status of the component */
-	status: Status = 'coreInit';
+	status: Status = 'initing';
 	/** the options of the component */
 	options: CompOptions;
 	/** the default options of all components */
@@ -72,9 +72,10 @@ export class Component implements DataSource {
 	#endTop?: () => void;
 	/** start top element chunk building */
 	createTop () {
-		if (this.status !== 'coreInit')
-			throw_incorrect_init_sequence(this, 'domInit', this.status);
-		this.status = 'domInit';
+		if (this.status !== 'initing')
+			throw_incorrect_init_sequence(this, 'createTop', this.status);
+		if (this.#endTop)
+			throw_incorrect_init_sequence(this, 'createTop twice', this.status);
 
 		const chunk = this.view.createTop();
 		this.#endTop = () => {
@@ -85,8 +86,8 @@ export class Component implements DataSource {
 	}
 	/** finish initialization and notify the world */
 	fireInit () {
-		if (this.status !== 'domInit')
-			throw_incorrect_init_sequence(this, 'inited', this.status);
+		if (this.status !== 'initing')
+			throw_incorrect_init_sequence(this, 'fireInit', this.status);
 
 		if (this.#endTop) this.#endTop();
 
@@ -106,14 +107,6 @@ export class Component implements DataSource {
 
 	/** the store of the component */
 	store: Store = undefined as any;
-	/** get property of id */
-	get<T = any> (id: PropId<T> | number) {
-		return this.store.get(id);
-	}
-	/** set property of id */
-	set<T = any> (id: PropId<T> | number, value: T) {
-		this.store.set(id, value);
-	}
 	/** create a new signal, of optionally default value */
 	signal<T = any> (value?: T) {
 		return this.store.signal(value);

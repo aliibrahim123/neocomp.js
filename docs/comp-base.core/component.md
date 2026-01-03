@@ -8,8 +8,9 @@ components are typesafe, reactive, oraganizable, flixible and lightweight.
 a component is a class that contains: 
 - a `HTMLElement` that it owns.
 - states contains in a specific unit called `Store`.
-- a `View` that manage the DOM interactions and bindings.
-- logic in methods that alter the states.
+- `constructor` that initializes the component.
+- methods that create sections (reusable mini ui fragments). 
+- logic methods that alter the states.
 - additional metadata and utilities for ease of use.
 
 in general, the flow of control in a component is:    
@@ -78,7 +79,7 @@ export class Component {
 	status: Status;
 }
 
-export type Status = 'coreInit' | 'domInit' | 'inited' | 'removing' | 'removed';
+export type Status = 'preInit' | 'inited' | 'removing' | 'removed';
 ```
 
 `id`: the identifier of the component, it is globaly unique, so it can be used as a key.
@@ -90,8 +91,7 @@ by default, it is the id of the element given at construction, else the result o
 it is given by the `neo:name` attribute of the element given at construction, else empty string unless changed by the user at initialization.
 
 `status`: the status of the component, it can be one of the following:
-- `'coreInit'`: the core of the component has been inited.
-- `'domInit'`: the initial dom structure is being built.
+- `initing`: the component is under initialization.
 - `inited`: component has been initialized completly.
 - `removing`: component is in the removing phase, triggering remove events.
 - `removed`: component has been fully removed, if you see this there is memory leak.
@@ -331,8 +331,6 @@ comp.remove(); // context2 unlinked automatically
 ## store
 ```typescript
 export class Component {
-	get<T = any> (id: PropId<T> | number): T;
-	set<T = any> (id: PropId<T> | number, value: T): void;
 	signal<T = any> (value?: T): Signal<T>;
 	computed<T = any> (fn: () => T): ReadOnlySignal<T>;
 	computed<T = any> (effectedBy: EffectingProp[], fn: () => T): ReadOnlySignal<T>;
@@ -343,8 +341,6 @@ export class Component {
 }
 ```
 every component has a `Store` that contains the state.
-
-`get` and `set`: get and set a given property.
 
 `signal`: creates a signal for a new property.
 

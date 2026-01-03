@@ -30,7 +30,7 @@ export function compInfo (comp: Component, name = 'comp') {
 	return `${name}: ${comp.constructor.name}#${comp.id}`;
 }
 
-export function throw_incorrect_init_sequence (comp: Component, calling: Status, at: Status) {
+export function throw_incorrect_init_sequence (comp: Component, calling: string, at: Status) {
 	raiseError(`init: incorrect init sequence (calling ${calling} at ${at}, ${compInfo(comp)})`, 107);
 }
 

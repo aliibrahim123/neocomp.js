@@ -35,7 +35,7 @@ DOM nodes.
 
 #### example
 ```typescript
-class Example extends Component<TypeMap> {
+class Example extends Component {
 	static defaults = {
 		//...
 		view: {

@@ -6,7 +6,7 @@ states are stored in `Store` units, units that manage state storage and updating
 ## fundamentals of states
 ### `Signal`
 ```typescript
-class Example extends Component<TypeMap> {
+class Example extends Component {
 	count = this.signal(0);
 	increment () {
 		this.count.value++;
@@ -19,7 +19,7 @@ it is created by calling `Component.signal` with an optional default value and c
 
 ### effects
 ```typescript
-class Example extends Component<TypeMap> {
+class Example extends Component {
 	constructor (el: HTMLElement) {
 		let count = this.signal(0);
 		let countPlus1 = this.signal(0);
@@ -36,7 +36,7 @@ they dependencies are detected automatically.
 
 ### `computed`
 ```typescript
-class Example extends Component<TypeMap> {
+class Example extends Component {
 	count = this.signal(0);
 	countPlus1 = this.computed(() => this.count.value + 1);
 }
