@@ -110,6 +110,7 @@ function transformMacroMod (source: string, options: Options) {
 			}
 			args.push(src.slice(argStart, ind - 1));
 		}
+		if (src.endsWith('}')) parts.push('');
 
 		// parse chunk
 		let chunk = parseChunk(parts, lastState);
