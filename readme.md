@@ -1,7 +1,7 @@
 # neocomp
-board of frameworks magic, want a lightweight solution for building scalable web apps and sites.
+bored of frameworks magic, want a lightweight solution for building scalable web apps and sites.
 
-introducing **neocomp**, a lightweight, fast, and modern javascript web framework simplifing
+introducing **neocomp**, a lightweight, fast, and modern javascript web framework simplifying
 web develepment without sacrificing maintainability or language identity.
 
 it achieves this goal through fine grained reactivity, driven by imperative construction, with the use of chunked templating.
