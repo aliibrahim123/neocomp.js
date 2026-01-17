@@ -24,7 +24,7 @@ export * from './view/view.ts';
 export type * from './view/view.ts';
 export { createChunk, parseChunk } from './view/chunk.ts';
 import type { ChunkBuild } from './view/chunk.ts';
-export type $temp = ChunkBuild['$temp'];
+export type html = ChunkBuild['html'];
 export type { ChunkBuild };
 export * from './view/chunkUtilities.ts'
 

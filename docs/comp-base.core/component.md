@@ -138,7 +138,7 @@ the root chunk is ended implicitly with `fireInit`, it can be ended manually thr
 ```typescript
 constructor (el?: HTMLElement, ...args) {
 	super(el);
-	const { $temp } = this.createTop(); 
+	const { html } = this.createTop(); 
 	// most init code
 	this.fireInit(); // fully inited
 	// async code / external system if required
@@ -146,11 +146,11 @@ constructor (el?: HTMLElement, ...args) {
 
 // wraps an element
 constructor (el?: HTMLElement) {
-	const { $temp } = this.createTop();
-	$temp`<div always-attr=some ${el ? attrsCaseGiven : attrsForDefault}>`;
+	const { html } = this.createTop();
+	html`<div always-attr=some ${el ? attrsCaseGiven : attrsForDefault}>`;
 	// ...
-	$temp`${el?.childNodes}`; // transfer elements
-	$temp`</div>`;
+	html`${el?.childNodes}`; // transfer elements
+	html`</div>`;
 	this.fireInit();
 }
 ```
@@ -392,7 +392,7 @@ every component has a `View` responsible for managing the DOM.
 class Example extends Component {
 	constructor () {
 		super();
-		this.createTop().$temp`<div id=comp>
+		this.createTop().html`<div id=comp>
 			<span>hallo</span><span>world</span>
 		</div>`;
 		this.fireInit();
@@ -405,11 +405,11 @@ comp.el[attachedComp] // => comp
 
 comp.query('span'); // => [<span>hello</span>, <span>world</span>]
 
-let { $temp, end } = comp.chunk();
-$temp`<div>hallo</div>`;
+let { html, end } = comp.chunk();
+html`<div>hallo</div>`;
 end(); // => <div>hallo</div>
 
-comp.chunk(({ $temp }) => $temp`<div>hallo</div>` }); // => <div>hallo</div>
+comp.chunk(({ html }) => html`<div>hallo</div>` }); // => <div>hallo</div>
 
 comp.$chunk`<div>hallo</div>`; // => <div>hallo</div>
 ```

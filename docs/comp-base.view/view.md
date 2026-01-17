@@ -77,20 +77,20 @@ chunk that need to be destroyed must set `destroyable` to true, in which a `remo
 
 #### example
 ```typescript
-const { $temp, end } = view.createChunk();
-$temp`<div>hallo</div>`;
+const { html, end } = view.createChunk();
+html`<div>hallo</div>`;
 end() // => <div>hallo</div>
 
-const { $temp, end } = view.createChunk(document.createElement('section'));
-$temp`<div>hallo</div>`;
+const { html, end } = view.createChunk(document.createElement('section'));
+html`<div>hallo</div>`;
 end() // => <section><div>hallo</div></section>
 
 let a = comp.signal(0);
-const { $temp, end, remove } = view.createChunk(undefined, true);
+const { html, end, remove } = view.createChunk(undefined, true);
 let b = comp.signal(0);
 comp.effect(() => console.log('a: ', a.value, ', b:', b.value));
-$temp`<div>hallo</div>`;
-$temp`${new SomeComp}`;
+html`<div>hallo</div>`;
+html`${new SomeComp}`;
 link(comp, someLinkable);
 end() // => <div>hallo</div>
 

@@ -7,15 +7,15 @@ export interface Options {
 	include: string[] = ['./src/']
 }
 ```
-this module exports the `neoTempPlugin`, a vite plugin that add support `$temp` macro.
+this module exports the `neoTempPlugin`, a vite plugin that add support `html` macro.
 
-this plugin optimise the `$temp` and `$chunk` macros at build time, by generation a direct representation of the chunks without requiring runtime parsing.
+this plugin optimise the `html` and `$chunk` macros at build time, by generation a direct representation of the chunks without requiring runtime parsing.
 
 `neoTempPlugin` takes `Options` and return a `VitePlugin`.
 
 `Options` consists of:
 - `libPath`: the path to neocomp, default `@neocomp/full/`.
-- `include`: a list of path that uses the `$temp` macro.
+- `include`: a list of path that uses the `html` macro.
 
 #### example
 ```typescript

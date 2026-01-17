@@ -1,8 +1,19 @@
 import type { ConstructorFor } from "../../common/types.ts";
 import { Signal } from "../state/signal.ts";
 import type { Component } from "../core/comp.ts";
-import { createChunk, isDefered, type ChunkBuild } from "./chunk.ts";
+import { isDefered, type ChunkBuild } from "./chunk.ts";
 import { diff } from "../state/arr.ts";
+
+/** syntax sugar for external chunks */
+export function snippet (builder: (build: ChunkBuild, comp: Component) => void) {
+	let fn = (el: Element, comp: Component) => {
+		let build = comp.view.createChunk();
+		builder(build, comp);
+		return build.end();
+	};
+	(fn as any).isSnippet = true;
+	return fn
+}
 
 /** defer an action */
 export function defer (fn: (el: HTMLElement, comp: Component) => void) {

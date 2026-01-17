@@ -149,7 +149,7 @@ export class Component implements DataSource {
 	/** templated function creating a chunk */
 	$chunk<E extends HTMLElement = HTMLElement> (parts: TemplateStringsArray, ...args: ChunkInp<E>[]) {
 		let build = this.view.createChunk();
-		build.$temp(parts, ...args);
+		build.html(parts, ...args);
 		return build.end();
 	}
 

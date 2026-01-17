@@ -10,10 +10,10 @@ it achieves this goal through fine grained reactivity, driven by imperative cons
 class Counter extends Component {
 	constructor () {
 		super();
-		const { $temp } = this.createTop();
+		const { html } = this.createTop();
 		
 		let count = this.signal(0);
-		$temp`<button on:click=${() => count.value++}>count: ${count}</button>`;
+		html`<button on:click=${() => count.value++}>count: ${count}</button>`;
 
 		this.fireInit();
 	}

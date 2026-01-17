@@ -6,9 +6,9 @@
 class Base extends Component {
 	constructor () {
 		super();
-		const { $temp } = this.createTop();
+		const { html } = this.createTop();
 		
-		$temp`<div>hallo world</div>`;
+		html`<div>hallo world</div>`;
 
 		this.fireInit();
 	}
@@ -20,10 +20,10 @@ class Base extends Component {
 class Counter extends Component {
 	constructor () {
 		super();
-		const { $temp } = this.createTop();
+		const { html } = this.createTop();
 		
 		let count = this.signal(0);
-		$temp`<button on:click=${() => count.value++}>count: ${count}</button>`;
+		html`<button on:click=${() => count.value++}>count: ${count}</button>`;
 
 		this.fireInit();
 	}
@@ -35,39 +35,39 @@ class Counter extends Component {
 class Greeting extends Component {
 	constructor (name: string, age: number) {
 		super();
-		const { $temp } = this.createTop();
+		const { html } = this.createTop();
 
-		$temp`<div>hallo ${name}, age: ${age}</div>`;
+		html`<div>hallo ${name}, age: ${age}</div>`;
 
 		this.fireInit();
 	}
 }
 
 // usage
-$temp`${new Greeting('alex', 25)}`;
+html`${new Greeting('alex', 25)}`;
 ```
 
 ## flow control
 ### conditional rendering
 ```typescript
 // static
-if (someCond) $temp`<div>content A</div>`;
-else $temp`<div>content B</div>`;
+if (someCond) html`<div>content A</div>`;
+else html`<div>content B</div>`;
 
 // dynamic
 let active = this.signal(false);
-$temp`<div ${showIf(active)}>active content</div>`;
+html`<div ${showIf(active)}>active content</div>`;
 ```
 
 ### list rendering
 ```typescript
 // static
-for (let i = 0; i < 10; i++) $temp`<div>${i}</div>`;
+for (let i = 0; i < 10; i++) html`<div>${i}</div>`;
 
 // dynamic
 let list = this.signal([1, 2, 3]);
-$temp`<div ${renderList(list, ({ $temp }, item) => 
-	$temp`<div>${item}</div>`
+html`<div ${renderList(list, ({ html }, item) => 
+	html`<div>${item}</div>`
 )}/>`;
 ```
 
@@ -75,16 +75,16 @@ $temp`<div ${renderList(list, ({ $temp }, item) =>
 ```typescript
 let status = this.signal('loading'); // loading, error, success
 
-$temp`<div ${showIf(() => status.value === 'loading')}>...</div>`;
-$temp`<div ${showIf(() => status.value === 'error')}>error</div>`;
-$temp`<div ${showIf(() => status.value === 'success')}>success</div>`;
+html`<div ${showIf(() => status.value === 'loading')}>...</div>`;
+html`<div ${showIf(() => status.value === 'error')}>error</div>`;
+html`<div ${showIf(() => status.value === 'success')}>success</div>`;
 ```
 
 ## dom interaction
 ### node reference
 ```typescript
 let el;
-$temp`<div ${node => el = node}>`;
+html`<div ${node => el = node}>`;
 ```
 
 ### actions (directives)
@@ -100,8 +100,8 @@ const bindChecked = (signal: Signal<boolean>) => ({
 })
 
 // usage
-$temp`<div ${clickOutside(() => console.log('clicked outside'))}></div>`;
-$temp`<input ${bindChecked(checked)}/>`;
+html`<div ${clickOutside(() => console.log('clicked outside'))}></div>`;
+html`<input ${bindChecked(checked)}/>`;
 ```
 
 ### dynamic styling
@@ -109,7 +109,7 @@ $temp`<input ${bindChecked(checked)}/>`;
 let active = this.signal(false);
 let color = this.signal('red');
 
-$temp`<div class:is-active=${active} style:color=${color}>styled content</div>`;
+html`<div class:is-active=${active} style:color=${color}>styled content</div>`;
 ```
 
 ### portals
@@ -118,8 +118,8 @@ class Modal extends Component {
 	constructor (content: string) {
 		super();
 		
-		const { $temp, remove, end } = this.view.createChunk(undefined, true);
-		$temp`<div class="modal">${content}</div>`;
+		const { html, remove, end } = this.view.createChunk(undefined, true);
+		html`<div class="modal">${content}</div>`;
 		document.body.append(end());
 		
 		this.onRemove.listen(remove);
@@ -131,7 +131,7 @@ class Modal extends Component {
 ### input binding
 ```typescript
 let text = this.signal('');
-$temp`<input on:input=${el => text.value = el.value}>`;
+html`<input on:input=${el => text.value = el.value}>`;
 ```
 
 ## composition
@@ -140,7 +140,7 @@ $temp`<input on:input=${el => text.value = el.value}>`;
 class Child extends Component {
 	constructor (name: string) {
 		super();
-		this.createTop().$temp`<div>i am ${name}</div>`;
+		this.createTop().html`<div>i am ${name}</div>`;
 		this.fireInit();
 	}
 }
@@ -148,8 +148,8 @@ class Child extends Component {
 class Parent extends Component {
 	constructor () {
 		super();
-		const { $temp } = this.createTop();
-		$temp`<div>
+		const { html } = this.createTop();
+		html`<div>
 			${new Child('a')}
 			${new Child('b')}
 		</div>`;
@@ -165,22 +165,22 @@ class Comp extends Component {
 		super();
 		
 		// inline
-		const section = (text: string) => $temp`<span>${text}</span>`;
+		const section = (text: string) => html`<span>${text}</span>`;
 		
 		section('hello');
-		this.#private($temp, 'world');
-		$temp`${external(comp, '!')}`;
+		this.#private(html, 'world');
+		html`${external('!')}`;
 
 		this.fireInit();
 	}
 
-	#private ($temp: $temp) {
-		$temp`<span>${text}</span>`;
+	#private (html: html) {
+		html`<span>${text}</span>`;
 	}
 }
 
-const external = (comp: Component, text: string) => comp.chunk(({ $temp }) => 
-	$temp`<span>${text}</span>`
+const external = (text: string) => snippet(({ html }) => 
+	html`<span>${text}</span>`
 );
 ```
 
@@ -189,9 +189,9 @@ const external = (comp: Component, text: string) => comp.chunk(({ $temp }) =>
 class Wrapper extends Component {
 	constructor (el: HTMLElement, title: string) {
 		super();
-		const { $temp } = this.createTop();
+		const { html } = this.createTop();
 		
-		$temp`<div class="box">
+		html`<div class="box">
 			<h1>${title}</h1>
 			<div>${el.childNodes}</div>
 		</div>`;
@@ -201,7 +201,7 @@ class Wrapper extends Component {
 }
 
 // usage
-$temp`<div ${wrapWith(Wrapper, 'example')}>content</div>`;
+html`<div ${wrapWith(Wrapper, 'example')}>content</div>`;
 ```
 
 ### slots
@@ -210,19 +210,19 @@ class Compose extends Component {
 	constructor (title: string, body: (build: ChunkBuild) => void) {
 		super();
 		let build = this.createTop();
-		let { $temp } = build;
-		$temp`<div>`;
+		let { html } = build;
+		html`<div>`;
 		
-		$temp`<h3>${title}</h3>`;
+		html`<h3>${title}</h3>`;
 		body(build);
 		
-		$temp`</div>`;
+		html`</div>`;
 		this.fireInit();
 	}
 }
 
 // usage
-new Compose('Title', ({ $temp }) => $temp`<div>body content</div>`);
+new Compose('Title', ({ html }) => html`<div>body content</div>`);
 ```
 
 ## state management
@@ -231,7 +231,7 @@ new Compose('Title', ({ $temp }) => $temp`<div>body content</div>`);
 let count = this.signal(1);
 let double = this.computed(() => count.value * 2);
 
-$temp`<div>${count} * 2 = ${double}</div>`;
+html`<div>${count} * 2 = ${double}</div>`;
 ```
 
 ### shared state (context)
@@ -243,8 +243,8 @@ class ThemeToggler extends Component {
 	constructor() {
 		super();
 		this.link(themeCtx); 
-		let { $temp } = this.createTop();
-		$temp`<button on:click=${() => isDark.value = !isDark.value}>toggle</button>`;
+		let { html } = this.createTop();
+		html`<button on:click=${() => isDark.value = !isDark.value}>toggle</button>`;
 		this.fireInit();
 	}
 }
@@ -253,8 +253,8 @@ class App extends Component {
 	constructor() {
 		super();
 		this.link(themeCtx);
-		let { $temp } = this.createTop();
-		$temp`<div style:background=${() => isDark.value ? '#333' : '#fff'}></div>`;
+		let { html } = this.createTop();
+		html`<div style:background=${() => isDark.value ? '#333' : '#fff'}></div>`;
 		this.fireInit();
 	}
 }
@@ -275,11 +275,11 @@ class Child extends Component {
 ## async & performance
 ### async regions
 ```typescript
-$temp`${$async(this, async ({ $temp }, fallback) => {
+html`${$async(this, async ({ html }, fallback) => {
 	fallback(this.$chunk`<span>waiting</span>`);
 
 	let data = await (await fetch('...')).text();
-	$temp`<div>${data}</div>`;
+	html`<div>${data}</div>`;
 })}`;
 ```
 
@@ -287,8 +287,8 @@ $temp`${$async(this, async ({ $temp }, fallback) => {
 ```typescript
 let query = query(this.store, fetch('...').then(r => r.text()));
 
-$temp`<div ${showIf(() => query.value.status === 'loading')}>waiting</div>`;
-$temp`<div ${showIf(() => query.value.status === 'success')}>
+html`<div ${showIf(() => query.value.status === 'loading')}>waiting</div>`;
+html`<div ${showIf(() => query.value.status === 'success')}>
 	value: ${() => query.value.value}
 </div>`;
 ```
@@ -300,7 +300,7 @@ class Heavy extends Component {}
 registry.add('heavy', Heavy);
 
 // main.ts
-$temp`${new (registry.get('@lazy:heavy'))}`;
+html`${new (registry.get('@lazy:heavy'))}`;
 import('./heavy'); 
 ```
 

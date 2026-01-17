@@ -45,8 +45,8 @@ class ExampleComponent extends Component {
 		super();
 
 		// construct the dom structure
-		const { $temp } = this.createTop();
-		$temp`<div></div>`;
+		const { html } = this.createTop();
+		html`<div></div>`;
 
 		// notify the outside world
 		this.fireInit();

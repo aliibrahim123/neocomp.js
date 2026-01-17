@@ -47,7 +47,7 @@ export function neoTempPlugin (options: Partial<Options> = {}): VitePlugin {
 
 function transformMacroMod (source: string, options: Options) {
 	let sample = source.slice(0, 1000);
-	if (!(sample.includes('$temp') || sample.includes('$chunk'))) return source;
+	if (!(sample.includes('html') || sample.includes('$chunk'))) return source;
 
 	let data: GenData = {
 		consts: {},
@@ -56,18 +56,18 @@ function transformMacroMod (source: string, options: Options) {
 		},
 	};
 
-	let chunks = ['// auto generated from $temp macro enabled module'];
+	let chunks = ['// auto generated from html macro enabled module'];
 
-	// substitute $temp with reference to the serialized chunk
+	// substitute html with reference to the serialized chunk
 	let serializedChunks: { name: string, source: string }[] = [];
 	let lastState: ParseState;
 	let curNameInd = 0, ind = 0;
-	// $temp, $chunk, $ensure
+	// html, $chunk, ensure
 	const pattern =
-		/(?:(?:\$temp|\$chunk)\s*`([^`]+)`)|(?:\$ensure\s*\(\s*["']([^"']+)["']\))/g;
+		/(?:(?:html|\$chunk)\s*`([^`]+)`)|(?:ensure\s*\(\s*["']([^"']+)["']\))/g;
 	let substituted = source.replaceAll(pattern, (match, src: string, cond: string, startInd: number) => {
-		// $ensure, set parse state and remove from source
-		if (match.startsWith('$ensure')) {
+		// ensure, set parse state and remove from source
+		if (match.startsWith('ensure')) {
 			lastState = cond === 'in_attrs'
 				? { inside: 'attrs', parentWSTags: 0 }
 				: { inside: 'content', parentWSTags: 0 };
@@ -121,7 +121,7 @@ function transformMacroMod (source: string, options: Options) {
 
 		// substitute it with call to build.add
 		if (match.startsWith('$chunk')) return `chunk(build => build.add(${name}, [${args.join(', ')}]))`;
-		return `$temp.add(${name}, [${args.join(', ')}])`;
+		return `html.add(${name}, [${args.join(', ')}])`;
 	})
 
 	// imports

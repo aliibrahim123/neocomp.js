@@ -6,6 +6,7 @@ import { attachedComp, Component } from "../core/comp.ts";
 import { ReadOnlySignal, Signal } from "../state/signal.ts";
 import { throw_chunk_cond_not_met } from "./errors.ts";
 import { throw_undefined_info_dump_type } from "../core/errors.ts";
+import type { fn } from "../../common/types.ts";
 
 // import parseChunk if specified
 let _parseChunk = undefined as any as typeof t_parseChunk;
@@ -149,8 +150,11 @@ function doActions (
 		// content
 		else {
 			let target = el.querySelector('stop-target') as ChildNode;
+
+			// snippets
+			if (arg?.isSnippet === true) target.replaceWith((arg as fn)(el, comp));
 			// static text
-			if (typeof (arg) === 'string') {
+			else if (typeof (arg) === 'string') {
 				let el = document.createElement('span');
 				el.innerText = arg;
 				target.replaceWith(...el.childNodes)
@@ -176,9 +180,9 @@ export interface ChunkBuild {
 	/** add a parsed section to the chunk  */
 	add: <E extends HTMLElement = HTMLElement> (chunk: ParsedChunk, args: ChunkInp<E>[]) => void;
 	/** template function for adding new sections */
-	$temp: <E extends HTMLElement = HTMLElement> (parts: TemplateStringsArray, ...args: ChunkInp<E>[]) => void;
+	html: <E extends HTMLElement = HTMLElement> (parts: TemplateStringsArray, ...args: ChunkInp<E>[]) => void;
 	/** ensure a condition is met */
-	$ensure: (cond: 'in_attrs' | 'in_content') => void;
+	ensure: (cond: 'in_attrs' | 'in_content') => void;
 	/** end the build */
 	end: () => HTMLElement
 }
@@ -213,15 +217,15 @@ export function createChunk (
 	let parseState: ParsedChunk['state'] = undefined as any;
 	let curArgs: any[] = [];
 
-	$temp.add = add;
-	return { add, $temp, $ensure, end }
+	html.add = add;
+	return { add, html, ensure, end }
 
 	function add<E extends HTMLElement = HTMLElement> (chunk: ParsedChunk, args: ChunkInp<E>[]) {
 		parseState = chunk.state;
 		curArgs = args;
 		addPart(chunk);
 	}
-	function $temp<E extends HTMLElement = HTMLElement> (
+	function html<E extends HTMLElement = HTMLElement> (
 		parts: TemplateStringsArray, ...args: ChunkInp<E>[]
 	) {
 		let _parts = parts as any as string[];
@@ -233,7 +237,7 @@ export function createChunk (
 
 		add(chunk, args);
 	}
-	function $ensure (cond: 'in_attrs' | 'in_content') {
+	function ensure (cond: 'in_attrs' | 'in_content') {
 		function check (res: boolean) {
 			if (!res) throw_chunk_cond_not_met(cond);
 		}
