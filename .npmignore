@@ -1,6 +1,5 @@
-node_modules/
-site/
 test/
-scripts/
 docs/
 readme.md
+vite.config.ts
+tsconfig.json

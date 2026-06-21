@@ -1,0 +1,28 @@
+{
+	"tasks": {
+		"start": "vite .",
+		"build": "vite build ."
+	},
+	"lint": {
+		"include": ["src/"],
+		"rules": {
+			"tags": ["recommended"]
+		}
+	},
+	"fmt": {
+		"useTabs": true,
+		"lineWidth": 100,
+		"indentWidth": 4,
+		"semiColons": true,
+		"singleQuote": true,
+		"include": ["."]
+	},
+	"permissions": {
+		"default": {
+			"read": ["."],
+			"write": ["."],
+			"net": true,
+			"env": true
+		}
+	}
+}

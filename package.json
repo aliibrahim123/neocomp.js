@@ -1,34 +1,14 @@
 {
-	"name": "@neocomp/full",
-	"version": "0.5.14",
-	"description": "new generation of reactivity and speed",
+	"name": "@neocomp/core",
+	"version": "0.0.0",
+	"description": "new generation of reactivity and expressivity",
 	"author": "aliibrahim123",
 	"scripts": {
 		"start": "vite .",
-		"build": "vite build",
-		"generate-js-source": "node scripts/generateJSSource.js",
-		"generate-test-html": "node scripts/generateTestHTML.js"
+		"build": "vite build"
 	},
 	"type": "module",
-	"exports": {
-		"./rawdom": "./src/rawdom/index.ts",
-		"./rawdom/elements": "./src/rawdom/elements.ts",
-		"./litedom": "./src/litedom/core.ts",
-		"./litedom/parse": "./src/litedom/parse.ts",
-		"./litedom/builder": "./src/litedom/builder.ts",
-		"./zro-router": "./src/zro-router/index.ts",
-		"./comp-base": "./src/comp-base/core.ts",
-		"./build": "./src/build/plugin.ts",
-		"./dist/rawdom": "./dist/rawdom/index.js",
-		"./dist/rawdom/elements": "./dist/rawdom/elements.js",
-		"./dist/litedom": "./dist/litedom/core.js",
-		"./dist/litedom/parse": "./dist/litedom/parse.js",
-		"./dist/litedom/builder": "./dist/litedom/builder.js",
-		"./dist/zro-router": "./dist/zro-router/index.js",
-		"./dist/comp-base": "./dist/comp-base/core.js",
-		"./dist/comp-base/tempGen": "./dist/comp-base/tempGen.js",
-		"./dist/build": "./dist/build/plugin.js"
-	},
+	"main": "./src/index.js",
 	"homepage": "https://aliibrahim123.github.io/neocomp.js/",
 	"bugs": {
 		"url": "https://github.com/aliibrahim123/neocomp.js/issues"
@@ -38,9 +18,7 @@
 		"url": "https://github.com/aliibrahim123/neocomp.js.git"
 	},
 	"license": "MIT",
-	"devDependencies": {
-		"@types/node": "^22.10.5",
-		"vite": "^6.0.2",
-		"vite-plugin-directory-index": "^3.0.1"
+	"dependencies": {
+		"vite": "^8.0.16"
 	}
 }

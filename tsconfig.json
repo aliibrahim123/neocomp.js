@@ -1,20 +1,21 @@
 {
 	"compilerOptions": {
-		"esModuleInterop": true,
-		"skipLibCheck": true,
 		"target": "esnext",
+		"lib": ["esnext", "dom", "dom.iterable"],
 		"allowJs": true,
-		"resolveJsonModule": true,
+		"module": "preserve",
 		"moduleDetection": "force",
 		"moduleResolution": "bundler",
-		"isolatedModules": true,
-		"verbatimModuleSyntax": true,	
-		"strict": true,
 		"allowImportingTsExtensions": true,
-		"noImplicitOverride": true,	
-		"module": "preserve",
+		"resolveJsonModule": true,
+		"esModuleInterop": true,
+		"isolatedModules": true,
+		"verbatimModuleSyntax": true,
+		"strict": true,
+		"noImplicitOverride": true,
+		"noUncheckedIndexedAccess": true,
 		"noEmit": true,
-		"lib": ["esnext", "dom", "dom.iterable"],
+		"skipLibCheck": true
 	},
-	"include": ["src/**/*"],
+	"include": ["src/**/*"]
 }

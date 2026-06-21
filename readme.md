@@ -1,32 +1,37 @@
 # neocomp
+
 bored of frameworks magic, want a lightweight solution for building scalable web apps and sites.
 
-introducing **neocomp**, a lightweight, fast, and modern javascript web framework simplifying
-web develepment without sacrificing maintainability or language identity.
+introducing **neocomp**, a lightweight, fast, and modern javascript web framework simplifying web
+develepment without sacrificing maintainability or language identity.
 
-it achieves this goal through fine grained reactivity, driven by imperative construction, with the use of chunked templating.
+it achieves this goal through fine grained reactivity, driven by imperative construction, with the
+use of chunked templating.
 
 ```typescript
 class Counter extends Component {
-	constructor () {
+	constructor() {
 		super();
 		const { html } = this.createTop();
-		
+
 		let count = this.signal(0);
-		html`<button on:click=${() => count.value++}>count: ${count}</button>`;
+		html`
+			<button on:click="${() => count.value++}">count: ${count}</button>
+		`;
 
 		this.fireInit();
 	}
 }
 ```
 
-
 # quick start
+
 - [first steps](./docs/quick-guide/first-steps.md)
 - [basic state management](./docs/quick-guide/basic-state.md)
 - [templates](./docs/quick-guide/templates.md)
 
 # docs
+
 this is the index of the documentation.
 
 - [rawdom](./docs/rawdom.md)
@@ -50,10 +55,12 @@ this is the index of the documentation.
 - [examples and patterns](./docs/examples.md)
 
 # blogpost
-check out the latest blogposts about neocomp at [recomputed](https://aliibrahim123.github.io/recomputed/web-dev).
+
+check out the latest blogposts about neocomp at
+[recomputed](https://aliibrahim123.github.io/recomputed/web-dev).
 
 ---
 
-thanks for selecting neocomp as your base framework, if you noticed issues or have ideas dont be
-shy to share.  
+thanks for selecting neocomp as your base framework, if you noticed issues or have ideas dont be shy
+to share.\
 `request(new Time() |> filter(!bug))`.
