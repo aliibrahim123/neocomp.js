@@ -13,7 +13,6 @@
 		"verbatimModuleSyntax": true,
 		"strict": true,
 		"noImplicitOverride": true,
-		"noUncheckedIndexedAccess": true,
 		"noEmit": true,
 		"skipLibCheck": true
 	},

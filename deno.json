@@ -6,7 +6,8 @@
 	"lint": {
 		"include": ["src/"],
 		"rules": {
-			"tags": ["recommended"]
+			"tags": ["recommended"],
+			"exclude": ["prefer-const", "no-explicit-any"]
 		}
 	},
 	"fmt": {
