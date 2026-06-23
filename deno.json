@@ -7,7 +7,7 @@
 		"include": ["src/"],
 		"rules": {
 			"tags": ["recommended"],
-			"exclude": ["prefer-const", "no-explicit-any"]
+			"exclude": ["prefer-const", "no-explicit-any", "no-inner-declarations"]
 		}
 	},
 	"fmt": {
