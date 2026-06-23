@@ -78,7 +78,6 @@ export function parse(parts: string[]): Element {
 							last_ind === ind && ind < part.length && part[ind] !== '>' &&
 							part[ind] !== '/'
 						) {
-							console.log(part.slice(ind - 2, ind + 2), part[ind]);
 							throw new SyntaxError('expected whitespace');
 						}
 					} else {

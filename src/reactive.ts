@@ -1,5 +1,8 @@
+import type { Context } from './index.ts';
+
 export type PropId<T> = number & { __type: T };
 export type SlabID = number & { __type: 'slab' };
+
 export class Store {
 	#props = new Map<number, any>();
 	#cur_prop = 0;
@@ -20,7 +23,7 @@ export class Store {
 		return id as SlabID;
 	}
 	has_slab(id: SlabID): boolean {
-		return this.#slabs.has(id);
+		return this.#slabs.has(id) && !this.#slabs_to_remove.includes(id);
 	}
 	remove_slab(id: SlabID) {
 		if (!this.#slabs.has(id)) throw new Error(`slab ${id} does not exist`);
@@ -29,11 +32,16 @@ export class Store {
 	}
 	#remove_slab(id: SlabID) {
 		let slab = this.#slabs.get(id)!;
-		for (let prop of slab.props) this.#props.delete(prop);
+		for (let prop of slab.props) {
+			this.#props.delete(prop);
+			this.#read_effect_map.delete(prop);
+		}
 		for (let effect of slab.effects) {
 			for (let read of this.#effects.get(effect)!.read) {
-				let ind = this.#read_effect_map.get(read)!.indexOf(effect);
-				this.#read_effect_map.get(read)?.splice(ind, 1);
+				let map = this.#read_effect_map.get(read);
+				if (map) {
+					map.splice(map.indexOf(effect), 1);
+				}
 			}
 			this.#effects.delete(effect);
 		}
@@ -46,6 +54,9 @@ export class Store {
 		this.#cur_prop += 1;
 		if (slab != undefined) this.#slabs.get(slab)?.props.push(id);
 		return id as PropId<T>;
+	}
+	has(id: PropId<any>): boolean {
+		return this.#props.has(id);
 	}
 
 	get<T>(id: PropId<T>): T {
@@ -69,7 +80,8 @@ export class Store {
 	signal<T>(value: T, slab: SlabID | undefined = undefined): Signal<T> {
 		return new Signal(this, this.prop(value, slab));
 	}
-	singal_for<T>(id: PropId<T>): Signal<T> {
+
+	signal_for<T>(id: PropId<T>): Signal<T> {
 		return new Signal(this, id);
 	}
 
@@ -232,5 +244,32 @@ export class ROSignal<T> extends SignalBase<T> {
 	}
 	peek(): T {
 		return this.store.peek(this.prop);
+	}
+}
+
+export class StoreProv {
+	#ctx: Context = undefined as any;
+	#slab: SlabID | undefined = undefined;
+	init(ctx: Context, slab: SlabID | undefined = undefined) {
+		this.#ctx = ctx;
+		this.#slab = slab;
+	}
+	get ctx(): Context {
+		return this.#ctx;
+	}
+	get store(): Store {
+		return this.#ctx.store;
+	}
+	get slab(): SlabID | undefined {
+		return this.#slab;
+	}
+	signal<T>(value: T): Signal<T> {
+		return this.store.signal(value, this.#slab);
+	}
+	effect(fun: () => void) {
+		return this.store.effect(fun, this.#slab);
+	}
+	computed<T>(fun: () => T): ROSignal<T> {
+		return this.store.computed(fun, this.#slab);
 	}
 }
