@@ -1,6 +1,6 @@
 import type { Element as LiteElement } from './html-parser.ts';
 import type { Context } from './index.ts';
-import { ROSignal, Signal, type SlabID, Store, StoreProv } from './reactive.ts';
+import { ROSignal, Signal, type SlabID, StoreProv } from './reactive.ts';
 
 const parse = (globalThis as any).__neocomp_enable_chunk_parsing
 	? (await import('./html-parser.ts')).parse
@@ -54,7 +54,7 @@ function construct_child(
 	args: any[],
 ) {
 	if (typeof (child as any)?.tag === 'string') {
-		let _child = contruct_el(build, child as any, args);
+		let _child = construct_el(build, child as any, args);
 		el.append(_child);
 	} else if ((child as any)?.type === 'do') {
 		build.__el_stack.push(el);
@@ -74,7 +74,7 @@ function construct_child(
 	}
 }
 
-function contruct_el(build: ChunkBuild, lite: LiteElement, args: any[]): Element {
+function construct_el(build: ChunkBuild, lite: LiteElement, args: any[]): Element {
 	let el = document.createElement(lite.tag);
 	for (let { attr, value } of lite.attrs) {
 		let arg = typeof value === 'string' ? value : args[value];
@@ -94,12 +94,12 @@ function contruct_el(build: ChunkBuild, lite: LiteElement, args: any[]): Element
 }
 
 export class ChunkBuild extends StoreProv {
-	#base_el: Element;
+	base_el: Element;
 	__el_stack: Element[];
 	constructor(ctx: Context, base_el: Element, slab: SlabID | undefined = undefined) {
 		super();
 		super.init(ctx, slab);
-		this.#base_el = base_el;
+		this.base_el = base_el;
 		this.__el_stack = [base_el];
 
 		Object.assign(this, {
@@ -110,9 +110,6 @@ export class ChunkBuild extends StoreProv {
 		});
 	}
 
-	get base_el(): Element {
-		return this.#base_el;
-	}
 	get cur_el(): Element {
 		return this.__el_stack.at(-1)!;
 	}
@@ -134,4 +131,15 @@ export class RemovableChunk extends ChunkBuild {
 		this.base_el.remove();
 		if (this.slab != undefined) this.store.remove_slab(this.slab);
 	}
+}
+
+export function show_if(value: boolean | Signal<boolean> | ROSignal<boolean> | (() => boolean)) {
+	return (build: ChunkBuild, el: HTMLElement) => {
+		if (value == false) el.style.display = 'none';
+		else if (value instanceof Signal || value instanceof ROSignal) {
+			build.effect(() => (el.style.display = value.value ? '' : 'none'));
+		} else if (typeof value === 'function') {
+			build.effect(() => (el.style.display = value() ? '' : 'none'));
+		}
+	};
 }

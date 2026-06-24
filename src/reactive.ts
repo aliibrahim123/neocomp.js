@@ -94,9 +94,9 @@ export class Store {
 		this.#add_effect(fun, read, write, slab);
 	}
 	effect_manual(
-		fun: () => void,
 		read: number[],
 		write: number[],
+		fun: () => void,
 		slab: SlabID | undefined = undefined,
 		init_run = true,
 	) {
@@ -215,69 +215,61 @@ export class Store {
 }
 
 class SignalBase<T> {
-	#prop: PropId<T>;
-	#store: Store;
+	id: PropId<T>;
+	store: Store;
 	constructor(store: Store, prop: PropId<T>) {
-		this.#prop = prop;
-		this.#store = store;
-	}
-	get prop(): PropId<T> {
-		return this.#prop;
-	}
-	get store(): Store {
-		return this.#store;
+		this.id = prop;
+		this.store = store;
 	}
 }
 
 export class Signal<T> extends SignalBase<T> {
 	get value(): T {
-		return this.store.get(this.prop);
+		return this.store.get(this.id);
 	}
 	set value(value: T) {
-		this.store.set(this.prop, value);
+		this.store.set(this.id, value);
 	}
 	peek(): T {
-		return this.store.peek(this.prop);
+		return this.store.peek(this.id);
 	}
 	update(updater: (value: T) => T) {
-		this.store.update(this.prop, updater);
+		this.store.update(this.id, updater);
 	}
 	as_ro(): ROSignal<T> {
-		return new ROSignal(this.store, this.prop);
+		return new ROSignal(this.store, this.id);
 	}
 }
 export class ROSignal<T> extends SignalBase<T> {
 	get value(): T {
-		return this.store.get(this.prop);
+		return this.store.get(this.id);
 	}
 	peek(): T {
-		return this.store.peek(this.prop);
+		return this.store.peek(this.id);
 	}
+}
+export interface ReadSignal<T> extends SignalBase<T> {
+	value: T;
+	peek(): T;
 }
 
 export class StoreProv {
-	#ctx: Context = undefined as any;
-	#slab: SlabID | undefined = undefined;
+	ctx: Context = undefined as any;
+	slab: SlabID | undefined = undefined;
 	init(ctx: Context, slab: SlabID | undefined = undefined) {
-		this.#ctx = ctx;
-		this.#slab = slab;
-	}
-	get ctx(): Context {
-		return this.#ctx;
+		this.ctx = ctx;
+		this.slab = slab;
 	}
 	get store(): Store {
-		return this.#ctx.store;
-	}
-	get slab(): SlabID | undefined {
-		return this.#slab;
+		return this.ctx.store;
 	}
 	signal<T>(value: T): Signal<T> {
-		return this.store.signal(value, this.#slab);
+		return this.store.signal(value, this.slab);
 	}
 	effect(fun: () => void) {
-		return this.store.effect(fun, this.#slab);
+		return this.store.effect(fun, this.slab);
 	}
 	computed<T>(fun: () => T): ROSignal<T> {
-		return this.store.computed(fun, this.#slab);
+		return this.store.computed(fun, this.slab);
 	}
 }

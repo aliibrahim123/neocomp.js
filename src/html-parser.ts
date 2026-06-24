@@ -117,7 +117,7 @@ export function parse(parts: string[]): Element {
 					ind += 1;
 					ind = eat_ws(part, ind);
 					el_stack.pop();
-				} else if (void_tags.has(cur_el.tag)) el_stack.pop();
+				} else if (void_tags.has(cur_el.tag.toLowerCase())) el_stack.pop();
 
 				if (part[ind] !== '>') unexpected_token(part[ind], '">"');
 				ind += 1;
