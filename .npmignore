@@ -3,3 +3,5 @@ docs/
 readme.md
 vite.config.ts
 tsconfig.json
+deno.lock
+.prettierrc.json

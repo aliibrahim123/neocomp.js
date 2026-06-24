@@ -5,3 +5,4 @@ dist/
 types.d.ts
 types.d.ts.map
 scripts/*.js
+deno.lock

@@ -10,14 +10,6 @@
 			"exclude": ["prefer-const", "no-explicit-any", "no-inner-declarations"]
 		}
 	},
-	"fmt": {
-		"useTabs": true,
-		"lineWidth": 100,
-		"indentWidth": 4,
-		"semiColons": true,
-		"singleQuote": true,
-		"include": ["."]
-	},
 	"permissions": {
 		"default": {
 			"read": ["."],

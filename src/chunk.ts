@@ -5,14 +5,15 @@ import { ROSignal, Signal, type SlabID, Store, StoreProv } from './reactive.ts';
 const parse = (globalThis as any).__neocomp_enable_chunk_parsing
 	? (await import('./html-parser.ts')).parse
 	: () => {
-		throw new Error('chunk parsing not enabled');
-	};
+			throw new Error('chunk parsing not enabled');
+		};
 
 const chunk_registery = new Map<string[], LiteElement>();
 
 const class_prefix = 'class:';
 const style_prefix = 'style:';
 const prop_prefix = 'prop:';
+const on_prefix = 'on:';
 function apply_attr(el: Element, attr: string, value: any) {
 	if (attr.startsWith(class_prefix)) el.classList.toggle(attr.slice(class_prefix.length), value);
 	else if (attr.startsWith(style_prefix)) {
@@ -46,32 +47,49 @@ function dynamic_node(build: ChunkBuild, el: Element, getter: () => any) {
 	}
 }
 
-function contruct(build: ChunkBuild, lite: LiteElement, args: any[]): Element {
+function construct_child(
+	build: ChunkBuild,
+	el: Element,
+	child: LiteElement['children'][number],
+	args: any[],
+) {
+	if (typeof (child as any)?.tag === 'string') {
+		let _child = contruct_el(build, child as any, args);
+		el.append(_child);
+	} else if ((child as any)?.type === 'do') {
+		build.__el_stack.push(el);
+		args[(child as any).arg](build, el);
+		build.__el_stack.pop();
+	} else {
+		let arg = typeof child === 'number' ? args[child] : child;
+		if (arg instanceof ChunkBuild) {
+			el.append(arg.base_el);
+			if (arg instanceof RemovableChunk && build.slab !== undefined) {
+				build.store.add_cleaner(build.slab, () => arg.remove());
+			}
+		} else if (arg instanceof Signal || arg instanceof ROSignal) {
+			dynamic_node(build, el, () => arg.value);
+		} else if (typeof arg === 'function') dynamic_node(build, el, arg);
+		else el.append(into_node(arg));
+	}
+}
+
+function contruct_el(build: ChunkBuild, lite: LiteElement, args: any[]): Element {
 	let el = document.createElement(lite.tag);
 	for (let { attr, value } of lite.attrs) {
 		let arg = typeof value === 'string' ? value : args[value];
-		if (arg instanceof Signal || arg instanceof ROSignal) {
+		if (attr.startsWith(on_prefix)) {
+			el.addEventListener(attr.slice(on_prefix.length), (event) => {
+				arg(event);
+				build.store.flush_updates();
+			});
+		} else if (arg instanceof Signal || arg instanceof ROSignal) {
 			build.effect(() => apply_attr(el, attr, arg.value));
 		} else if (typeof arg === 'function') {
 			build.effect(() => apply_attr(el, attr, arg()));
-		} else apply_attr(el, attr, value);
+		} else apply_attr(el, attr, arg);
 	}
-	for (let child of lite.children) {
-		if (typeof (child as any)?.tag == 'string') {
-			let _child = contruct(build, child as any, args);
-			el.append(_child);
-		} else if ((child as any)?.type === 'do') {
-			build.__el_stack.push(el);
-			args[(child as any).arg](build, el);
-			build.__el_stack.pop();
-		} else {
-			let arg = typeof child === 'number' ? args[child] : child;
-			if (arg instanceof Signal || arg instanceof ROSignal) {
-				dynamic_node(build, el, () => arg.value);
-			} else if (typeof arg === 'function') dynamic_node(build, el, arg);
-			else el.append(into_node(arg));
-		}
-	}
+	for (let child of lite.children) construct_child(build, el, child, args);
 	return el;
 }
 
@@ -83,6 +101,13 @@ export class ChunkBuild extends StoreProv {
 		super.init(ctx, slab);
 		this.#base_el = base_el;
 		this.__el_stack = [base_el];
+
+		Object.assign(this, {
+			html: this.html.bind(this),
+			signal: this.signal.bind(this),
+			effect: this.effect.bind(this),
+			computed: this.computed.bind(this),
+		});
 	}
 
 	get base_el(): Element {
@@ -92,7 +117,7 @@ export class ChunkBuild extends StoreProv {
 		return this.__el_stack.at(-1)!;
 	}
 
-	chunk(parts: TemplateStringsArray, ...args: any[]) {
+	html(parts: TemplateStringsArray, ...args: any[]) {
 		let _parts = parts as any as string[];
 		if (chunk_registery.has(_parts)) return this.__add(chunk_registery.get(_parts)!, args);
 		let lite = parse(_parts);
@@ -100,7 +125,7 @@ export class ChunkBuild extends StoreProv {
 		this.__add(lite, args);
 	}
 	__add(lite: LiteElement, args: any[]) {
-		this.cur_el.append(contruct(this, lite, args));
+		for (let child of lite.children) construct_child(this, this.cur_el, child, args);
 	}
 }
 

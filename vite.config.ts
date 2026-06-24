@@ -4,7 +4,6 @@ import { defineConfig } from 'vite';
 export default defineConfig({
 	server: {
 		port: 8080,
-		open: true,
 	},
 	build: {
 		target: 'esnext',
@@ -12,7 +11,7 @@ export default defineConfig({
 		manifest: true,
 		rollupOptions: {
 			input: {
-				'index.js': './index.js',
+				index: './src/index.ts',
 			},
 			preserveEntrySignatures: 'allow-extension',
 			output: {

@@ -8,8 +8,20 @@ const name_regex = /^[^<>'"`=/\s]+/;
 
 // deno-fmt-ignore
 const void_tags = new Set([
-	'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source',
-	'track', 'wbr',
+	'area',
+	'base',
+	'br',
+	'col',
+	'embed',
+	'hr',
+	'img',
+	'input',
+	'link',
+	'meta',
+	'param',
+	'source',
+	'track',
+	'wbr',
 ]);
 
 function eat_ws(part: string, ind: number): number {
@@ -30,13 +42,15 @@ function eat_name(part: string, ind: number, expected: string): [string, number]
 }
 
 export function parse(parts: string[]): Element {
-	let el_stack: Element[] = [{
-		tag: 'html',
-		attrs: [],
-		children: [],
-	}];
+	let el_stack: Element[] = [
+		{
+			tag: 'html',
+			attrs: [],
+			children: [],
+		},
+	];
 
-	let state: 'in_content' | 'in_attr' | 'in_do' = 'in_content';
+	let state: 'in_content' | 'in_attr' | 'in_do' | 'in_attr_quoted' = 'in_content';
 
 	for (let [part_ind, part] of parts.entries()) {
 		let ind = 0;
@@ -44,9 +58,15 @@ export function parse(parts: string[]): Element {
 			let cur_el = el_stack.at(-1)!;
 
 			if (state === 'in_do') {
+				ind = eat_ws(part, ind);
+				if (part[ind] === '/') ind += 1;
 				if (part[ind] !== '>') unexpected_token(part[ind], '>');
 				ind += 1;
 				state = 'in_content';
+			} else if (state === 'in_attr_quoted') {
+				if (part[ind] !== '"' && part[ind] !== "'") unexpected_token(part[ind], "'\"'");
+				ind += 1;
+				state = 'in_attr';
 			} else if (state === 'in_attr') {
 				ind = eat_ws(part, ind);
 
@@ -63,7 +83,11 @@ export function parse(parts: string[]): Element {
 							cur_el.attrs.push({ attr, value: part_ind });
 							break while_part;
 						}
-
+						if ((part[ind] === '"' || part[ind] === "'") && part.length === ind + 1) {
+							cur_el.attrs.push({ attr, value: part_ind });
+							state = 'in_attr_quoted';
+							break while_part;
+						}
 						if (part[ind] === '"' || part[ind] === "'") {
 							let quote = part[ind];
 							let end = part.indexOf(quote, ind + 1);
@@ -75,7 +99,9 @@ export function parse(parts: string[]): Element {
 						let last_ind = ind;
 						ind = eat_ws(part, ind);
 						if (
-							last_ind === ind && ind < part.length && part[ind] !== '>' &&
+							last_ind === ind &&
+							ind < part.length &&
+							part[ind] !== '>' &&
 							part[ind] !== '/'
 						) {
 							throw new SyntaxError('expected whitespace');
@@ -93,7 +119,7 @@ export function parse(parts: string[]): Element {
 					el_stack.pop();
 				} else if (void_tags.has(cur_el.tag)) el_stack.pop();
 
-				if (part[ind] !== '>') unexpected_token(part[ind], '>');
+				if (part[ind] !== '>') unexpected_token(part[ind], '">"');
 				ind += 1;
 				state = 'in_content';
 			} else {
@@ -127,7 +153,7 @@ export function parse(parts: string[]): Element {
 						throw new SyntaxError(`expected end tag "${cur_el.tag}" but got "${tag}"`);
 					}
 					ind = eat_ws(part, ind);
-					if (part[ind] !== '>') unexpected_token(part[ind], '>');
+					if (part[ind] !== '>') unexpected_token(part[ind], '">"');
 					ind += 1;
 					el_stack.pop();
 				} else {

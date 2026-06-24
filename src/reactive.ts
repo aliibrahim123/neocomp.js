@@ -6,7 +6,7 @@ export type SlabID = number & { __type: 'slab' };
 export class Store {
 	#props = new Map<number, any>();
 	#cur_prop = 0;
-	#slabs = new Map<number, { props: number[]; effects: number[] }>();
+	#slabs = new Map<number, { props: number[]; effects: number[]; cleaners: (() => void)[] }>();
 	#slabs_to_remove: SlabID[] = [];
 	#cur_slab = 0;
 	#is_updating = false;
@@ -18,7 +18,7 @@ export class Store {
 
 	new_slab(): SlabID {
 		let id = this.#cur_slab;
-		this.#slabs.set(id, { props: [], effects: [] });
+		this.#slabs.set(id, { props: [], effects: [], cleaners: [] });
 		this.#cur_slab += 1;
 		return id as SlabID;
 	}
@@ -32,6 +32,7 @@ export class Store {
 	}
 	#remove_slab(id: SlabID) {
 		let slab = this.#slabs.get(id)!;
+		for (let cleaner of slab.cleaners) cleaner();
 		for (let prop of slab.props) {
 			this.#props.delete(prop);
 			this.#read_effect_map.delete(prop);
@@ -39,13 +40,14 @@ export class Store {
 		for (let effect of slab.effects) {
 			for (let read of this.#effects.get(effect)!.read) {
 				let map = this.#read_effect_map.get(read);
-				if (map) {
-					map.splice(map.indexOf(effect), 1);
-				}
+				if (map) map.splice(map.indexOf(effect), 1);
 			}
 			this.#effects.delete(effect);
 		}
 		this.#slabs.delete(id);
+	}
+	add_cleaner(slab: SlabID, cleaner: () => void) {
+		this.#slabs.get(slab)?.cleaners.push(cleaner);
 	}
 
 	prop<T>(value: T, slab: SlabID | undefined = undefined): PropId<T> {
@@ -164,13 +166,19 @@ export class Store {
 
 		this.#is_updating = true;
 		while (this.#dirty_props.size > 0) {
-			let to_run: number[] = [], visited = new Set<number>(), visiting: number[] = [];
+			let to_run: number[] = [],
+				visited = new Set<number>(),
+				visiting: number[] = [];
 			for (let prop of this.#dirty_props) {
 				visit(this, prop, to_run, visited, visiting);
 			}
 			this.#dirty_props.clear();
 			for (let i = to_run.length - 1; i >= 0; i -= 1) {
-				this.#effects.get(to_run[i])!.fun();
+				try {
+					this.#effects.get(to_run[i])!.fun();
+				} catch (e) {
+					console.error(e);
+				}
 			}
 		}
 		this.#is_updating = false;

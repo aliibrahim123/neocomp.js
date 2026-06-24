@@ -23,7 +23,10 @@ export class Context extends StoreProv {
 	root_chunk() {
 		return new ChunkBuild(this, this.#root_el);
 	}
-	romovable_chunk(base_el: Element) {
+	removable_chunk(base_el: Element) {
 		return new RemovableChunk(this, base_el, this.store.new_slab());
 	}
 }
+
+export { ChunkBuild, RemovableChunk } from './chunk.ts';
+export { type PropId, ROSignal, Signal, type SlabID, Store, StoreProv } from './reactive.ts';

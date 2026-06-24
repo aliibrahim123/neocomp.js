@@ -15,9 +15,7 @@ class Counter extends Component {
 		const { html } = this.createTop();
 
 		let count = this.signal(0);
-		html`
-			<button on:click="${() => count.value++}">count: ${count}</button>
-		`;
+		html` <button on:click="${() => count.value++}">count: ${count}</button> `;
 
 		this.fireInit();
 	}
@@ -36,21 +34,21 @@ this is the index of the documentation.
 
 - [rawdom](./docs/rawdom.md)
 - **litedom:**
-  - [core](./docs/litedom/core.md)
-  - [parse](./docs/litedom/parse.md)
+    - [core](./docs/litedom/core.md)
+    - [parse](./docs/litedom/parse.md)
 - [zro router](./docs/zro-router.md)
 - **`comp-base` module:**
-  - **core:**
-    - [`Component`](./docs/comp-base.core/component.md)
-    - [registry](./docs/comp-base.core/registry.md)
-    - [general utilities](./docs/comp-base.core/utilities.md)
-  - **state:**
-    - [fundamentals](./docs/comp-base.state/fundamentals.md)
-    - [`Store`](./docs/comp-base.state/store.md)
-    - [state utilities](./docs/comp-base.state/utilities.md)
-  - **view:**
-    - [`View`](./docs/comp-base.view/view.md)
-    - [chunk reference](./docs/comp-base.view/chunk.md)
+    - **core:**
+        - [`Component`](./docs/comp-base.core/component.md)
+        - [registry](./docs/comp-base.core/registry.md)
+        - [general utilities](./docs/comp-base.core/utilities.md)
+    - **state:**
+        - [fundamentals](./docs/comp-base.state/fundamentals.md)
+        - [`Store`](./docs/comp-base.state/store.md)
+        - [state utilities](./docs/comp-base.state/utilities.md)
+    - **view:**
+        - [`View`](./docs/comp-base.view/view.md)
+        - [chunk reference](./docs/comp-base.view/chunk.md)
 - [vite plugin](./docs/plugin.md)
 - [examples and patterns](./docs/examples.md)
 
