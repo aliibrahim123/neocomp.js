@@ -2,6 +2,7 @@ node_modules/
 package-lock.json
 test/
 dist/
+docs/
 types.d.ts
 types.d.ts.map
 scripts/*.js

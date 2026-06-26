@@ -156,6 +156,7 @@ export class Store {
 	}
 	#mark_dirty(id: number) {
 		if (this.#is_updating) return;
+		if (this.#dirty_props.size == 0) queueMicrotask(() => this.flush_updates());
 		this.#dirty_props.add(id);
 	}
 	force_update(id: PropId<any>) {
