@@ -48,6 +48,23 @@ function resolve_escapes(str: string) {
 	});
 }
 
+function find_unescaped(src: string, char: string, start: number): number {
+	let i = start;
+	while (true) {
+		i = src.indexOf(char, i);
+		if (i === -1) return -1;
+
+		let backslash_count = 0;
+		let j = i - 1;
+		while (j >= 0 && src[j] === '\\') {
+			backslash_count++;
+			j--;
+		}
+		if (backslash_count % 2 === 0) return i;
+		i++;
+	}
+}
+
 type Context = {
 	ind: number;
 	chunks: (string | null)[];
@@ -63,7 +80,7 @@ type TemplateCallbacks = {
 function skip_template(src: string, ctx: Context) {
 	ctx.result.push('`');
 	walk_template(src, ctx, {
-		part: (part) => ctx.result.push(resolve_escapes(part)),
+		part: (part) => ctx.result.push(part),
 		before_arg: () => ctx.result.push('${'),
 		after_arg: () => ctx.result.push('}'),
 	});
@@ -72,13 +89,17 @@ function skip_template(src: string, ctx: Context) {
 
 function walk_template(src: string, ctx: Context, callbacks: TemplateCallbacks) {
 	ctx.ind += 1;
-	let end = src.indexOf('`', ctx.ind);
-	if (end === -1) throw new Error('unclosed template');
+
 	while (true) {
-		let next_arg = src.indexOf('${', ctx.ind);
+		let end = find_unescaped(src, '`', ctx.ind);
+		if (end === -1) throw new Error('unclosed template');
+		let next_arg = find_unescaped(src, '${', ctx.ind);
+		if (next_arg > end) next_arg = -1;
+
 		let part = src.slice(ctx.ind, next_arg == -1 ? end : next_arg);
 		callbacks.part(part);
-		if (next_arg === -1 || next_arg > end) {
+
+		if (next_arg === -1) {
 			ctx.ind = end + 1;
 			break;
 		}
@@ -87,28 +108,30 @@ function walk_template(src: string, ctx: Context, callbacks: TemplateCallbacks) 
 		ctx.ind = last_stop;
 		callbacks.before_arg();
 		let curly_depth = 1;
+
 		while (true) {
 			let cur_char = src[ctx.ind];
 			if (cur_char === '{') curly_depth += 1;
 			if (cur_char === '}') curly_depth -= 1;
 			if (curly_depth === 0) break;
+
 			if (cur_char === "'" || cur_char === '"') {
-				while (true) {
-					ctx.ind = src.indexOf(cur_char, ctx.ind + 1);
-					if (ctx.ind === -1) throw new Error('unclosed string');
-					if (src[ctx.ind - 1] !== '\\') break;
-				}
+				ctx.ind = find_unescaped(src, cur_char, ctx.ind + 1);
+				if (ctx.ind === -1) throw new Error('unclosed string');
 			}
+
 			if (cur_char === '`') {
 				ctx.result.push(src.slice(last_stop, ctx.ind));
+
 				if (src.slice(ctx.ind - 4, ctx.ind) === 'html') compile_template(src, ctx);
 				else skip_template(src, ctx);
+
 				last_stop = ctx.ind;
-				end = src.indexOf('`', ctx.ind + 1);
-				if (end === -1) throw new Error('unclosed template');
+				continue;
 			}
 			ctx.ind += 1;
 		}
+
 		ctx.result.push(src.slice(last_stop, ctx.ind));
 		ctx.ind += 1;
 		callbacks.after_arg();
@@ -121,7 +144,7 @@ function compile_template(src: string, ctx: Context) {
 	ctx.result.push(`.__add(__neocomp_chunk_${id}, [`);
 	ctx.chunks.push(null);
 	walk_template(src, ctx, {
-		part: (part) => parts.push(part),
+		part: (part) => parts.push(resolve_escapes(part)),
 		before_arg: () => {},
 		after_arg: () => ctx.result.push(', '),
 	});
@@ -132,9 +155,12 @@ function compile_template(src: string, ctx: Context) {
 function compile_templates(src: string, _opts: Options): string {
 	let ctx: Context = { ind: 0, chunks: [], result: [] };
 	while (ctx.ind < src.length) {
-		let next_template = src.indexOf('`', ctx.ind);
+		let next_template = find_unescaped(src, '`', ctx.ind);
 		ctx.result.push(src.slice(ctx.ind, next_template === -1 ? src.length : next_template));
+
 		if (next_template === -1) break;
+		ctx.ind = next_template;
+
 		if (src.slice(next_template - 4, next_template) === 'html') compile_template(src, ctx);
 		else skip_template(src, ctx);
 	}

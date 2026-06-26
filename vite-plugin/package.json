@@ -4,7 +4,7 @@
 	"description": "vite plugin for neocomp",
 	"author": "aliibrahim123",
 	"type": "module",
-	"main": "./src/index.js",
+	"main": "./src/index.ts",
 	"homepage": "https://aliibrahim123.github.io/neocomp.js/",
 	"bugs": {
 		"url": "https://github.com/aliibrahim123/neocomp.js/issues"

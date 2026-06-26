@@ -10,7 +10,9 @@
 	"type": "module",
 	"main": "./src/index.js",
 	"exports": {
-		"./html-parser": "./src/html-parser.ts"
+		".": "./src/index.ts",
+		"./html-parser": "./src/html-parser.ts",
+		"./enable_chunk_parsing": "./src/enable_chunk_parsing.ts"
 	},
 	"homepage": "https://aliibrahim123.github.io/neocomp.js/",
 	"bugs": {
