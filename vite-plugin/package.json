@@ -4,7 +4,7 @@
 	"description": "vite plugin for neocomp",
 	"author": "aliibrahim123",
 	"type": "module",
-	"main": "./src/index.ts",
+	"main": "./dist/index.js",
 	"homepage": "https://aliibrahim123.github.io/neocomp.js/",
 	"bugs": {
 		"url": "https://github.com/aliibrahim123/neocomp.js/issues"
@@ -16,7 +16,7 @@
 	"license": "MIT",
 	"dependencies": {
 		"vite": "^8.0.16",
-		"@neocomp/core": "^0.0.0"
+		"@neocomp/core": "^0.1.0"
 	},
 	"devDependencies": {
 		"@types/node": "^26.0.0"

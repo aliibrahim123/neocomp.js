@@ -1,7 +1,10 @@
 test/
 docs/
+.vscode/
+vite-plugin/
 readme.md
 vite.config.ts
 tsconfig.json
+deno.json
 deno.lock
 .prettierrc.json

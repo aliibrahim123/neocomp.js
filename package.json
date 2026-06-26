@@ -1,6 +1,6 @@
 {
 	"name": "@neocomp/core",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "new generation of reactivity and expressivity",
 	"author": "aliibrahim123",
 	"scripts": {
@@ -12,7 +12,9 @@
 	"exports": {
 		".": "./src/index.ts",
 		"./html-parser": "./src/html-parser.ts",
-		"./enable_chunk_parsing": "./src/enable_chunk_parsing.ts"
+		"./enable_chunk_parsing": "./src/enable_chunk_parsing.ts",
+		"./js/": "./dist/index.js",
+		"./js/enable_chunk_parsing": "./src/enable_chunk_parsing.js"
 	},
 	"homepage": "https://aliibrahim123.github.io/neocomp.js/",
 	"bugs": {
