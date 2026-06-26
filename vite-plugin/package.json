@@ -1,17 +1,10 @@
 {
-	"name": "@neocomp/core",
+	"name": "@neocomp/vite-plugin",
 	"version": "0.0.0",
-	"description": "new generation of reactivity and expressivity",
+	"description": "vite plugin for neocomp",
 	"author": "aliibrahim123",
-	"scripts": {
-		"start": "vite .",
-		"build": "vite build"
-	},
 	"type": "module",
 	"main": "./src/index.js",
-	"exports": {
-		"./html-parser": "./src/html-parser.ts"
-	},
 	"homepage": "https://aliibrahim123.github.io/neocomp.js/",
 	"bugs": {
 		"url": "https://github.com/aliibrahim123/neocomp.js/issues"
@@ -21,7 +14,11 @@
 		"url": "https://github.com/aliibrahim123/neocomp.js.git"
 	},
 	"license": "MIT",
+	"dependencies": {
+		"vite": "^8.0.16",
+		"@neocomp/core": "^0.0.0"
+	},
 	"devDependencies": {
-		"vite": "^8.0.16"
+		"@types/node": "^26.0.0"
 	}
 }

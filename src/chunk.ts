@@ -102,12 +102,11 @@ export class ChunkBuild extends StoreProv {
 		this.base_el = base_el;
 		this.__el_stack = [base_el];
 
-		Object.assign(this, {
-			html: this.html.bind(this),
-			signal: this.signal.bind(this),
-			effect: this.effect.bind(this),
-			computed: this.computed.bind(this),
-		});
+		this.html = this.html.bind(this);
+		(this.html as any).__add = this.__add.bind(this);
+		this.signal = this.signal.bind(this);
+		this.effect = this.effect.bind(this);
+		this.computed = this.computed.bind(this);
 	}
 
 	get cur_el(): Element {

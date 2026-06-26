@@ -4,7 +4,7 @@
 		"build": "vite build ."
 	},
 	"lint": {
-		"include": ["src/"],
+		"include": ["src/", "vite-plugin/src/"],
 		"rules": {
 			"tags": ["recommended"],
 			"exclude": ["prefer-const", "no-explicit-any", "no-inner-declarations"]
