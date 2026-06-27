@@ -1,7 +1,8 @@
 {
 	"tasks": {
 		"start": "vite .",
-		"build": "vite build ."
+		"build": "vite build .",
+		"doc": "typedoc ./src --plugin typedoc-github-theme"
 	},
 	"lint": {
 		"include": ["src/", "vite-plugin/src/"],
