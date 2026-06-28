@@ -2,7 +2,7 @@
 	"tasks": {
 		"start": "vite .",
 		"build": "vite build .",
-		"doc": "typedoc ./src --plugin typedoc-github-theme"
+		"doc": "typedoc --entryPoints ./src/index.ts --plugin typedoc-github-theme --projectDocuments ./chunk-ref.md --alwaysCreateEntryPointModule false"
 	},
 	"lint": {
 		"include": ["src/", "vite-plugin/src/"],

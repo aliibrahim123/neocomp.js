@@ -2,6 +2,16 @@ import type { ChunkBuild, RemovableChunk } from './chunk.ts';
 import type { Context } from './index.ts';
 import type { ReadSignal, Signal } from './reactive.ts';
 
+/** render a list dynamicly
+ *
+ * `render_list` takes a list reactive property and render it by `item_chunk` to the parent element, when the property changes, it diff it and patch the ui through removing, moving and inserting the new items.
+ *
+ * it diffs by a `key_fn` that returns a unique key for each item, an identity function is used if `key_fn` is `null`.
+ *
+ * the `item_chunk` is called with the item and a chunk of element tagged `tag` having its own scope, and `render_list` is used as a do block.
+ *
+ * for index signal see {@linkcode render_list_enumerated}
+ */
 export function render_list<T, K>(
 	prop: ReadSignal<T[]>,
 	key_fn: ((item: T) => K) | null,
@@ -14,6 +24,10 @@ export function render_list<T, K>(
 		);
 }
 
+/** render enumerated list
+ *
+ * like {@linkcode render_list} but `item_chunk` is called with a signal reflecting the item index in the list
+ */
 export function render_list_enumerated<T, K>(
 	prop: ReadSignal<T[]>,
 	key_fn: ((item: T) => K) | null,
@@ -26,6 +40,7 @@ export function render_list_enumerated<T, K>(
 		);
 }
 
+/** render list functionality */
 function render_list_core<T, K>(
 	build: ChunkBuild,
 	prop: ReadSignal<T[]>,
@@ -37,9 +52,10 @@ function render_list_core<T, K>(
 	let key_fn = _key_fn ?? ((item: T) => item as any as K);
 	let list = prop.value;
 
-	let items: (Item | null)[] = new Array(list.length).fill(null);
-	let keys: K[] = new Array(list.length);
+	let items = new Array<Item | null>(list.length).fill(null);
+	let keys = new Array<K>(list.length);
 
+	// initial render
 	for (let [ind, item_value] of list.entries()) {
 		keys[ind] = key_fn(item_value);
 
@@ -58,13 +74,11 @@ function render_list_core<T, K>(
 		let patcher = new Patcher(parent, items, new_items, (ind) => {
 			return build_item(build.ctx, tag, list[ind], enumerate ? ind : null, item_chunk);
 		});
-
 		diff(keys, new_keys, patcher);
 
 		items = new_items;
 		keys = new_keys;
 	};
-
 	build.store.effect_manual([prop.id], [], patcher, build.slab, false);
 
 	if (build.slab !== undefined)
@@ -91,6 +105,7 @@ function build_item<T>(
 	return { index, build };
 }
 
+/** callback for `diff` */
 export interface ReconcileOps {
 	insert(new_ind: number, reference: number | null): void;
 	move(new_ind: number, reference: number | null): void;

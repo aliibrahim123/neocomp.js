@@ -8,7 +8,7 @@ const parse = (globalThis as any).__neocomp_enable_chunk_parsing
 			throw new Error('chunk parsing not enabled');
 		};
 
-const chunk_registery = new Map<string[], LiteElement>();
+const chunk_cache = new Map<string[], LiteElement>();
 
 const class_prefix = 'class:';
 const style_prefix = 'style:';
@@ -79,10 +79,7 @@ function construct_el(build: ChunkBuild, lite: LiteElement, args: any[]): Elemen
 	for (let { attr, value } of lite.attrs) {
 		let arg = typeof value === 'string' ? value : args[value];
 		if (attr.startsWith(on_prefix)) {
-			el.addEventListener(attr.slice(on_prefix.length), (event) => {
-				arg(event);
-				build.store.flush_updates();
-			});
+			el.addEventListener(attr.slice(on_prefix.length), arg);
 		} else if (arg instanceof Signal || arg instanceof ROSignal) {
 			build.effect(() => apply_attr(el, attr, arg.value));
 		} else if (typeof arg === 'function') {
@@ -93,8 +90,19 @@ function construct_el(build: ChunkBuild, lite: LiteElement, args: any[]): Elemen
 	return el;
 }
 
+/** builder of a ui chunk
+ *
+ * the `ChunkBuild` is a tree builder for ui, it takes multiple html structure chunks using {@linkcode html} and append them into the target element, possibly with nesting.
+ *
+ * `ChunkBuild` is a {@linkcode StoreProv} having a specific scope.
+ *
+ * for the chunk syntax see [chunk reference](../chunk-ref.md)
+ * @hideconstructor
+ */
 export class ChunkBuild extends StoreProv {
+	/** the target element of the chunk */
 	base_el: Element;
+	/** @private */
 	__el_stack: Element[];
 	constructor(ctx: Context, base_el: Element, slab: SlabID | undefined = undefined) {
 		super();
@@ -102,6 +110,7 @@ export class ChunkBuild extends StoreProv {
 		this.base_el = base_el;
 		this.__el_stack = [base_el];
 
+		// bind methods for distructing ability
 		this.html = this.html.bind(this);
 		(this.html as any).__add = this.__add.bind(this);
 		this.signal = this.signal.bind(this);
@@ -109,29 +118,50 @@ export class ChunkBuild extends StoreProv {
 		this.computed = this.computed.bind(this);
 	}
 
+	/** the current element the `ChunkBuild` is working on */
 	get cur_el(): Element {
 		return this.__el_stack.at(-1)!;
 	}
 
+	/** append an html structure at the current element.
+	 *
+	 * this method is a tagged template that parse the html structure and insert it with the bindings into the current element.
+	 *
+	 * to enable chunk parsing at runtime import `@neocomp/core/enable_chunk_parsing`.
+	 *
+	 * for the chunk syntax see [chunk reference](../chunk-ref.md)
+	 */
 	html(parts: TemplateStringsArray, ...args: any[]) {
 		let _parts = parts as any as string[];
-		if (chunk_registery.has(_parts)) return this.__add(chunk_registery.get(_parts)!, args);
+		if (chunk_cache.has(_parts)) return this.__add(chunk_cache.get(_parts)!, args);
 		let lite = parse(_parts);
-		chunk_registery.set(_parts, lite);
+		chunk_cache.set(_parts, lite);
 		this.__add(lite, args);
 	}
+	/** @private append parsed chunk */
 	__add(lite: LiteElement, args: any[]) {
 		for (let child of lite.children) construct_child(this, this.cur_el, child, args);
 	}
 }
 
+/** a {@linkcode ChunkBuild} that can be removed
+ *
+ * it has its own scope
+ */
 export class RemovableChunk extends ChunkBuild {
+	/** remove the chunk with its own scope */
 	remove() {
 		this.base_el.remove();
 		if (this.slab != undefined) this.store.remove_slab(this.slab);
 	}
 }
 
+/** show the element based on a boolean.
+ *
+ * the `value` can be a static boolean, or a dynamic signal or computed expression that returns a boolean.
+ *
+ * this function is used as a do block and uses the css `display: none` to hide the element.
+ */
 export function show_if(value: boolean | Signal<boolean> | ROSignal<boolean> | (() => boolean)) {
 	return (build: ChunkBuild, el: HTMLElement) => {
 		if (value == false) el.style.display = 'none';
