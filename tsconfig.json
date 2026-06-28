@@ -16,5 +16,5 @@
 		"noEmit": true,
 		"skipLibCheck": true
 	},
-	"include": ["."]
+	"include": ["src/**/*"]
 }
