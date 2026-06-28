@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite';
 
-// config
 export default defineConfig({
 	server: {
 		port: 8080,
