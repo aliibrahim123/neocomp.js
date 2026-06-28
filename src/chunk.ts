@@ -96,6 +96,8 @@ function construct_el(build: ChunkBuild, lite: LiteElement, args: any[]): Elemen
  *
  * `ChunkBuild` is a {@linkcode StoreProv} having a specific scope.
  *
+ * after a chunk is created, the generated struture can be modify in whatever way as the bindings work on the target elements directly.
+ *
  * for the chunk syntax see [chunk reference](../chunk-ref.md)
  * @hideconstructor
  */
