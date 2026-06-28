@@ -8,3 +8,4 @@ tsconfig.json
 deno.json
 deno.lock
 .prettierrc.json
+.github/
